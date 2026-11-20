@@ -2,13 +2,34 @@
   "id": "com.latino.streamer",
   "version": "1.0.1",
   "name": "Latino Stream Addon",
-  "description": "Catálogos de ejemplo y streams configurados por el administrador. No incluye extractores de sitios externos.",
-  "resources": ["catalog", "meta", "stream"],
-  "types": ["movie", "series"],
-  "idPrefixes": ["tt"],
+  "description": "Catálogos de ejemplo, fuentes configuradas y extracción estática experimental opcional de Embed69/FlixLatam.",
+  "resources": [
+    "catalog",
+    "meta",
+    "stream"
+  ],
+  "types": [
+    "movie",
+    "series"
+  ],
+  "idPrefixes": [
+    "tt"
+  ],
   "catalogs": [
-    { "id": "movies", "name": "Películas (ejemplo)", "type": "movie" },
-    { "id": "series", "name": "Series (ejemplo)", "type": "series" },
-    { "id": "anime", "name": "Anime (ejemplo)", "type": "series" }
+    {
+      "id": "movies",
+      "name": "Películas (ejemplo)",
+      "type": "movie"
+    },
+    {
+      "id": "series",
+      "name": "Series (ejemplo)",
+      "type": "series"
+    },
+    {
+      "id": "anime",
+      "name": "Anime (ejemplo)",
+      "type": "series"
+    }
   ]
 }

@@ -6,8 +6,9 @@
   "scripts": {
     "start": "node index.js",
     "test": "node --test",
-    "check": "node --check index.js && node --check engines/embed69/index.js && node --check engines/embed69/extractor.js && node --check scripts/embed69-live.js && node --check engines/embed69/network.js && node --check engines/embed69/cache.js",
-    "test:live": "node scripts/embed69-live.js"
+    "check": "node --check index.js && node --check engines/embed69/index.js && node --check engines/embed69/extractor.js && node --check scripts/embed69-live.js && node --check engines/embed69/network.js && node --check engines/embed69/cache.js && node --check engines/media/index.js && node --check engines/flixlatam/index.js && node --check scripts/flixlatam-live.js",
+    "test:live": "node scripts/embed69-live.js",
+    "test:flixlatam": "node scripts/flixlatam-live.js"
   },
   "engines": {
     "node": ">=22.0.0"

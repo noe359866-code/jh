@@ -1,0 +1,41 @@
+name: FlixLatam live extraction
+on:
+  push:
+    branches: ['arena/0a433310-jh']
+  workflow_dispatch:
+    inputs:
+      page:
+        description: Exact movie or episode player URL you are authorized to test (no hash)
+        required: true
+        type: string
+      allowed_hosts:
+        description: Trusted page, player and media hosts, comma-separated
+        required: true
+        default: flixlatam.com,www.flixlatam.com
+        type: string
+permissions:
+  contents: read
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run test:flixlatam
+        env:
+          FLIXLATAM_TEST_PAGE: ${{ inputs.page || 'https://flixlatam.com/pelicula/el-secreto-r02nyv' }}
+          FLIXLATAM_ALLOWED_HOSTS: ${{ inputs.allowed_hosts || 'flixlatam.com,www.flixlatam.com' }}
+      - name: Print sanitized diagnostic report
+        if: always()
+        run: node -e "const fs=require('node:fs');const p='reports/flixlatam-live.json';if(fs.existsSync(p)) console.log(fs.readFileSync(p,'utf8'));"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: flixlatam-live-report
+          path: reports/flixlatam-live.json
+          retention-days: 7

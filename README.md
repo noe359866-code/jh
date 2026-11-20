@@ -82,7 +82,7 @@ docker run --rm -p 8080:8080 \
 
 `npm run check`, `npm test` y `npm audit --omit=dev` comprueban sintaxis, contrato HTTP, resolución de configuración y dependencias respectivamente. Las pruebas usan dominios de ejemplo y no descargan videos: **no validan reproducción real ni extractores externos**. CI está configurada para Node 22 y 24; la ejecución local se verificó en Node 22. La imagen Docker necesita una comprobación adicional en un entorno con Docker.
 
-JH mantiene Embed69 como único proveedor de descubrimiento previsto. No se incluyen ni se mantienen adaptadores para otros sitios. Incluye un extractor estático experimental HLS/MP4: no se ha confirmado todavía su compatibilidad con el reproductor real de Embed69.
+JH incluye el descubrimiento experimental Embed69 y un adaptador estático experimental FlixLatam (ver configuración al final). Incluye un extractor estático experimental HLS/MP4: no se ha confirmado todavía su compatibilidad con el reproductor real de Embed69.
 
 
 ## Integración experimental: Embed69
@@ -134,3 +134,64 @@ Este workflow debe publicarse en GitHub para poder ejecutarse; GitHub puede exig
 Cada instancia deduplica peticiones simultáneas al mismo título, mantiene hasta 100 resultados y limita a dos trabajos distintos concurrentes por resolver (descubrimiento y extracción tienen presupuestos separados). Caché de extracción: 30 segundos si hay medios y 5 segundos si no los hay; errores no se cachean. Descubrimiento se cachea 30 segundos. Estos límites no sustituyen controles de tráfico en el proxy. Las URLs temporales pueden expirar incluso dentro de ese período.
 
 El workflow en vivo permite probar películas o episodios y sube `embed69-live-report` incluso cuando falla. El reporte contiene disponibilidad, hosts encontrados/bloqueados y conteos, **no URLs, queries, HTML ni tokens**. Si aparece `blocked-frame` o `blocked-host`, revisa el dominio antes de autorizarlo; nunca habilites dominios automáticamente. Los reportes locales quedan en `reports/`, fuera de Git. Un reporte fallido sin eventos puede indicar fallo de API, validación o conectividad antes de iniciar el análisis HTML.
+
+## FlixLatam: extractor HLS/MP4 experimental
+
+Implementación en `engines/flixlatam/` con motor compartido `engines/media/`.
+Extrae URLs literales de HTML, configuración JS y scripts externos autorizados,
+recorre iframes y admite `<source type="application/x-mpegURL">` o `video/mp4`
+con URLs sin extensión. **No ejecuta JavaScript**. Comprueba la firma de cada
+respuesta; no devuelve páginas HTML como videos. Un iframe secundario roto no
+impide comprobar las demás fuentes. Se conservan los límites y el transporte
+público seguro del extractor anterior.
+
+### Probar una página exacta
+
+```sh
+FLIXLATAM_TEST_PAGE='https://flixlatam.com/RUTA-REAL' \
+FLIXLATAM_ALLOWED_HOSTS='flixlatam.com,www.flixlatam.com,HOST-REAL-DEL-REPRODUCTOR,HOST-REAL-DEL-VIDEO' \
+npm run test:flixlatam
+```
+
+Sustituye los marcadores por URLs/hosts inspeccionados y autorizados. El comando
+falla si no encuentra medios verificables. Produce `reports/flixlatam-live.json`
+sin URLs ni tokens. También existe el workflow manual **FlixLatam live extraction**.
+No se ha ejecutado contra el proveedor real desde este entorno; sus dominios no
+están habilitados en la red del sandbox. Las pruebas automatizadas usan fixtures
+sintéticos, no capturas del reproductor real de FlixLatam.
+
+### Usar en Stremio / Render
+
+El sitio usa slugs propios: no se ha verificado una API de búsqueda por IMDb.
+Por eso el addon **no inventa URLs ni correspondencias**. Configura un JSON externo
+con una URL de página/reproductor por ID exacto:
+
+```json
+{
+  "movie:tt0137523": "https://flixlatam.com/RUTA-REAL-DE-LA-PELICULA"
+}
+```
+
+Este ejemplo es solo estructura, no una fuente funcional. Para episodios la clave
+es `series:IMDb:temporada:episodio`. La URL debe identificar el reproductor de ese
+episodio: **no se admite `#s1-e2`**, pues un fetch no ejecuta la navegación por hash
+y podría devolver otro episodio. No se ofrece descubrimiento automático de episodios.
+
+Variables de Render:
+
+```text
+FLIXLATAM_ENABLED=true
+FLIXLATAM_PAGES_FILE=/ruta/al/archivo-de-paginas.json
+FLIXLATAM_ALLOWED_HOSTS=flixlatam.com,www.flixlatam.com,DOMINIOS-REALES-VERIFICADOS
+```
+
+El archivo se valida al arrancar. Sin archivo el mapa está vacío y no hay fuentes.
+Si están activados ambos proveedores, FlixLatam tiene prioridad y no hay fallback
+silencioso a Embed69. Las fuentes directas de `streams.json` siguen teniendo
+prioridad sobre ambos. Caché y control de concurrencia se aplican por instancia.
+No hay endpoint público que permita solicitar URLs arbitrarias al servidor.
+
+**Límite:** esto implementa extracción estática, no confirma compatibilidad con
+el reproductor actual de FlixLatam ni reproducción completa en Stremio. No soporta
+DRM, CAPTCHA, sesiones privadas, tokens calculados ni APIs dinámicas no inspeccionadas.
+Usa únicamente fuentes que tengas autorización para reproducir/distribuir.

@@ -3,6 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const manifest = require('./manifest.json');
 const embed69Provider = require('./engines/embed69');
+const { createProvider: createFlixlatam } = require('./engines/flixlatam');
 const { createResolverCache } = require('./engines/embed69/cache');
 
 // Sample metadata only; these entries do not imply that a stream is available.
@@ -60,9 +61,11 @@ function loadStreams() {
   return validateStreams(JSON.parse(fs.readFileSync(filename, 'utf8')));
 }
 
-function createApp({ streams = loadStreams(), embed69 = embed69Provider, enableEmbed69 = process.env.EMBED69_ENABLED === 'true' } = {}) {
+function createApp({ streams = loadStreams(), embed69 = embed69Provider, enableEmbed69 = process.env.EMBED69_ENABLED === 'true', flixlatam, enableFlixlatam = process.env.FLIXLATAM_ENABLED === 'true' } = {}) {
   validateStreams(streams);
   const app = express();
+  const flixProvider = enableFlixlatam ? (flixlatam || createFlixlatam()) : null;
+  const resolveFlixlatam = createResolverCache(request => flixProvider.resolve(request));
   const resolveEmbed69 = createResolverCache(request => embed69.resolve(request));
   const discoverEmbed69 = createResolverCache(async request => [await embed69.discover(request)]);
   app.disable('x-powered-by');
@@ -135,20 +138,20 @@ function createApp({ streams = loadStreams(), embed69 = embed69Provider, enableE
     if (!manifest.types.includes(type)) return res.status(404).json({ error: 'Unsupported type' });
     if (!validId(type, id)) return res.status(400).json({ error: 'Expected IMDb ID; series require :season:episode' });
     const configured = (streams[`${type}:${id}`] || []).map(({ url, name, title }) => ({ url, name, title }));
-    if (configured.length || !enableEmbed69) return res.json({ streams: configured });
+    if (configured.length || (!enableEmbed69 && !enableFlixlatam)) return res.json({ streams: configured });
     const [imdbId, season, episode] = id.split(':');
     try {
-      const found = await resolveEmbed69({ type: type === 'series' ? 'episode' : 'movie', imdbId, season, episode });
+      const found = await (enableFlixlatam ? resolveFlixlatam : resolveEmbed69)({ type: type === 'series' ? 'episode' : 'movie', imdbId, season, episode });
       return res.json({ streams: found });
     } catch (error) {
       if (error.code === 'EXTRACTOR_BUSY') return res.status(503).set('Retry-After', '10').json({ error: 'Extractor busy' });
       // Provider outages must not masquerade as a successful empty lookup.
-      return res.status(502).json({ error: 'Embed69 extraction failed' });
+      return res.status(502).json({ error: enableFlixlatam ? 'FlixLatam extraction failed' : 'Embed69 extraction failed' });
     }
   });
 
   app.get(['/', '/config'], (req, res) => {
-    res.type('html').send('<!doctype html><html lang="es"><meta charset="utf-8"><title>Latino Stream Addon</title><h1>Latino Stream Addon</h1><p>Catálogos de ejemplo: películas, series y anime (tipo series).</p><p>Incluye extracción estática experimental de Embed69, desactivada por defecto. Consulta configuración y límites en README.md.</p><p>El administrador puede configurar enlaces directos HLS/MP4 autorizados en streams.json o STREAMS_FILE. Consulta README.md.</p><a href="/manifest.json">Ver manifiesto para Stremio</a></html>');
+    res.type('html').send('<!doctype html><html lang="es"><meta charset="utf-8"><title>Latino Stream Addon</title><h1>Latino Stream Addon</h1><p>Catálogos de ejemplo: películas, series y anime (tipo series).</p><p>Incluye extracción estática experimental de Embed69 y FlixLatam, desactivada por defecto. Consulta configuración y límites en README.md.</p><p>El administrador puede configurar enlaces directos HLS/MP4 autorizados en streams.json o STREAMS_FILE. Consulta README.md.</p><a href="/manifest.json">Ver manifiesto para Stremio</a></html>');
   });
   app.use((req, res) => res.status(404).json({ error: 'Not found' }));
   return app;
