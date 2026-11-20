@@ -2,6 +2,7 @@ const express = require('express');
 const fs = require('node:fs');
 const path = require('node:path');
 const manifest = require('./manifest.json');
+const embed69Provider = require('./engines/embed69');
 
 // Sample metadata only; these entries do not imply that a stream is available.
 const catalogs = {
@@ -20,8 +21,8 @@ const catalogs = {
 };
 
 function validId(type, id) {
-  return type === 'movie' ? /^tt\d{7,}$/.test(id)
-    : type === 'series' && /^tt\d{7,}:[1-9]\d*:[1-9]\d*$/.test(id);
+  return type === 'movie' ? /^tt\\d{7,}$/.test(id)
+    : type === 'series' && /^tt\\d{7,}:[1-9]\\d*:[1-9]\\d*$/.test(id);
 }
 
 // Explicit administrator-supplied media, not guessed player-page URLs.
@@ -43,7 +44,7 @@ function validateStreams(config) {
       let url;
       try { url = new URL(stream.url); } catch { /* Handled below. */ }
       if (!url || !['https:', 'http:'].includes(url.protocol) || url.username || url.password
-        || !/\.(m3u8|mp4)$/i.test(url.pathname)
+        || !/\\.(m3u8|mp4)$/i.test(url.pathname)
         || (stream.name !== undefined && typeof stream.name !== 'string')
         || (stream.title !== undefined && typeof stream.title !== 'string')) {
         throw new Error(`Expected a direct HTTP(S) HLS/MP4 URL for ${key}`);
@@ -58,7 +59,7 @@ function loadStreams() {
   return validateStreams(JSON.parse(fs.readFileSync(filename, 'utf8')));
 }
 
-function createApp({ streams = loadStreams() } = {}) {
+function createApp({ streams = loadStreams(), embed69 = embed69Provider } = {}) {
   validateStreams(streams);
   const app = express();
   app.disable('x-powered-by');
@@ -98,6 +99,28 @@ function createApp({ streams = loadStreams() } = {}) {
       return res.json({ meta: { ...meta, videos } });
     }
     return res.json({ meta });
+  });
+
+  // Diagnostic discovery endpoint. Embed69 pages are not direct playable streams.
+  app.get('/providers/embed69/check/:type/:id.json', async (req, res) => {
+    const { type, id } = req.params;
+    if (!['movie', 'series', 'episode'].includes(type)) {
+      return res.status(400).json({ error: 'Type must be movie, series, or episode' });
+    }
+    try {
+      const request = { type, imdbId: id };
+      if (type === 'episode') {
+        request.season = req.query.season;
+        request.episode = req.query.episode;
+      }
+      const result = await embed69.discover(request);
+      return res.json(result);
+    } catch (error) {
+      return res.status(502).json({
+        error: 'Embed69 discovery failed',
+        message: error.message
+      });
+    }
   });
 
   app.get('/stream/:type/:id.json', (req, res) => {
