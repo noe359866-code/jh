@@ -19,6 +19,10 @@ const report = { startedAt: new Date().toISOString(), success: false, verifiedMe
   process.exitCode = 1;
 }).finally(() => {
   report.finishedAt = new Date().toISOString();
+  if (process.env.GITHUB_ACTIONS === 'true' && !report.success) {
+    const diagnostic = JSON.stringify({ failure: report.failure, events: report.events }).replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A');
+    console.log('::error title=FlixLatam live diagnostics::' + diagnostic);
+  }
   fs.mkdirSync('reports', { recursive: true });
   fs.writeFileSync('reports/flixlatam-live.json', JSON.stringify(report, null, 2) + '\n');
 });
