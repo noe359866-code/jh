@@ -1,3 +1,4 @@
+const { publicFetch } = require('./network');
 const API_ENDPOINT = 'https://apiz.6969009.xyz/api/check';
 const EMBED_BASE_URL = 'https://embed69.org/f/';
 
@@ -33,7 +34,7 @@ function buildEmbedUrl(request) {
   return new URL(encodeURIComponent(normalized.imdbId) + suffix, EMBED_BASE_URL).toString();
 }
 
-async function checkAvailability(request, { fetchImpl = globalThis.fetch, timeoutMs = 10000 } = {}) {
+async function checkAvailability(request, { fetchImpl = publicFetch, timeoutMs = 10000 } = {}) {
   if (typeof fetchImpl !== 'function') throw new TypeError('A Fetch implementation is required');
   if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1) throw new TypeError('timeoutMs must be a positive integer');
   const normalized = normalizeRequest(request);
@@ -43,7 +44,7 @@ async function checkAvailability(request, { fetchImpl = globalThis.fetch, timeou
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const response = await fetchImpl(url, {
-      method: 'GET', headers: { accept: 'application/json' }, signal: controller.signal
+      method: 'GET', redirect: 'error', headers: { accept: 'application/json' }, signal: controller.signal
     });
     if (!response.ok) throw new Error('Embed69 availability API returned HTTP ' + response.status);
     let payload;
@@ -66,8 +67,19 @@ async function discover(request, options) {
     available: result.available,
     pageUrl: result.embedUrl,
     playable: false,
-    limitation: 'Embed69 page extraction is not implemented yet'
+    limitation: 'Discovery only; use the opt-in stream resolver to attempt media extraction'
   };
 }
 
 module.exports = { API_ENDPOINT, EMBED_BASE_URL, normalizeRequest, buildEmbedUrl, checkAvailability, discover };
+
+// Opt-in: only explicitly trusted public hosts may be fetched by the extractor.
+async function resolve(request, options = {}) {
+  const available = await checkAvailability(request, options);
+  options.onEvent?.({ stage: 'availability', available: available.available });
+  if (!available.available) return [];
+  const { createExtractor } = require('./extractor');
+  const allowedHosts = (process.env.EMBED69_ALLOWED_HOSTS || 'embed69.org').split(',').map(s => s.trim()).filter(Boolean);
+  return createExtractor({ allowedHosts, ...options }).extract(available.embedUrl);
+}
+module.exports.resolve = resolve;

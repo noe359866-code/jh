@@ -1,6 +1,6 @@
 # Latino Stream Addon
 
-Addon HTTP para Stremio. Incluye catálogos **de ejemplo**, metadatos básicos y resolución de streams directos configurados por el administrador. **No incluye un catálogo actualizado ni extractores funcionales para sitios externos.**
+Addon HTTP para Stremio. Incluye catálogos **de ejemplo**, metadatos básicos y resolución de streams directos configurados por el administrador. **No incluye un catálogo actualizado. La extracción experimental Embed69 requiere activación y verificación contra el proveedor real.**
 
 ## Ejecutar
 
@@ -82,7 +82,7 @@ docker run --rm -p 8080:8080 \
 
 `npm run check`, `npm test` y `npm audit --omit=dev` comprueban sintaxis, contrato HTTP, resolución de configuración y dependencias respectivamente. Las pruebas usan dominios de ejemplo y no descargan videos: **no validan reproducción real ni extractores externos**. CI está configurada para Node 22 y 24; la ejecución local se verificó en Node 22. La imagen Docker necesita una comprobación adicional en un entorno con Docker.
 
-JH mantiene Embed69 como único proveedor de descubrimiento previsto. No se incluyen ni se mantienen adaptadores para otros sitios. La extracción directa HLS/MP4 de Embed69 sigue pendiente: hasta verificar el flujo real del reproductor, el addon no anunciará páginas HTML o iframes como streams reproducibles.
+JH mantiene Embed69 como único proveedor de descubrimiento previsto. No se incluyen ni se mantienen adaptadores para otros sitios. Incluye un extractor estático experimental HLS/MP4: no se ha confirmado todavía su compatibilidad con el reproductor real de Embed69.
 
 
 ## Integración experimental: Embed69
@@ -101,4 +101,36 @@ Endpoint de diagnóstico:
 - `GET /providers/embed69/check/series/tt0944947.json`
 - `GET /providers/embed69/check/episode/tt0944947.json?season=1&episode=5`
 
-**Límite importante:** este primer adaptador descubre la página Embed69, pero todavía no extrae una URL directa HLS/MP4. El resultado marca `playable: false` y no se inyecta en `/stream`, porque Stremio no puede reproducir de forma fiable una página HTML/iframe como si fuera un archivo de video. La siguiente fase requiere inspeccionar y probar el reproductor real de Embed69 y sus respuestas de red, y solo entonces implementar el extractor de medios.
+**El endpoint de diagnóstico sigue siendo solo descubrimiento** (`playable: false`). El resolver experimental descrito abajo es independiente y solo devuelve candidatos cuya respuesta tenga firma HLS o MP4. No se ha verificado contra Embed69 en vivo.
+
+
+## Extractor estático HLS/MP4 (experimental)
+
+```sh
+EMBED69_ENABLED=true EMBED69_ALLOWED_HOSTS=embed69.org npm start
+```
+
+`/stream` prioriza las fuentes configuradas. Si no hay fuentes y se activa el proveedor, consulta disponibilidad y analiza HTML, cadenas JS con URLs literales y hasta cinco páginas/iframes. Agrega explícitamente los hosts de iframes y medios a `EMBED69_ALLOWED_HOSTS` (separados por comas) después de comprobar que son confiables. Solo HTTPS, sin credenciales, sin redirecciones automáticas. Limita tamaño de página, tiempo por petición, diez candidatos y dos extracciones simultáneas por instancia. Un fallo del proveedor produce 502; saturación produce 503.
+
+Cada candidato se solicita con Range y se inspecciona su firma: `#EXTM3U` o caja MP4 `ftyp`. **Esto no prueba reproducción completa**, segmentos HLS, codecs, audio latino, permisos, CORS ni duración. No se inventan URLs. No ejecuta JavaScript, desempaqueta código, resuelve CAPTCHA, usa cookies, evade DRM ni añade Referer: reproductores que dependan de eso o de APIs dinámicas no están soportados. Una lista vacía puede significar formato no soportado, no necesariamente ausencia del título.
+
+El transporte Undici valida el IPv4 que entrega al socket, sin una segunda resolución DNS entre la validación y la conexión. Se rechazan IPs privadas, reservadas e IPv6 y se desactivan redirecciones también en la API de disponibilidad. Para servidores públicos utiliza filtrado de salida a nivel de red, únicamente hosts confiables y límites de solicitudes en el proxy inverso. La concurrencia limitada no sustituye rate limiting por cliente.
+
+### Prueba real en GitHub Actions
+
+El workflow **Embed69 live extraction** se ejecuta manualmente con `workflow_dispatch`, un IMDb que tengas autorización para probar y la lista de hosts confiables. Usa red real, no mocks, y **falla si no encuentra al menos un medio con firma válida**. No imprime URLs firmadas. Las entradas se pasan como variables de entorno, no se interpolan en comandos shell.
+
+Equivalente local (requiere acceso a esos dominios):
+
+```sh
+EMBED69_TEST_IMDB=ttXXXXXXX EMBED69_ALLOWED_HOSTS=embed69.org npm run test:live
+```
+
+Este workflow debe publicarse en GitHub para poder ejecutarse; GitHub puede exigir que `workflow_dispatch` exista primero en la rama predeterminada. No se afirma que haya pasado: el entorno de desarrollo solo permite salida a GitHub y registros de paquetes, no a Embed69. Si falla, inspecciona el flujo real y ajusta el adaptador o los hosts; no conviertas un fallo en un skip. Las pruebas de `npm test` son deterministas y no sustituyen esta comprobación.
+
+
+### Caché y diagnósticos
+
+Cada instancia deduplica peticiones simultáneas al mismo título, mantiene hasta 100 resultados y limita a dos trabajos distintos concurrentes por resolver (descubrimiento y extracción tienen presupuestos separados). Caché de extracción: 30 segundos si hay medios y 5 segundos si no los hay; errores no se cachean. Descubrimiento se cachea 30 segundos. Estos límites no sustituyen controles de tráfico en el proxy. Las URLs temporales pueden expirar incluso dentro de ese período.
+
+El workflow en vivo permite probar películas o episodios y sube `embed69-live-report` incluso cuando falla. El reporte contiene disponibilidad, hosts encontrados/bloqueados y conteos, **no URLs, queries, HTML ni tokens**. Si aparece `blocked-frame` o `blocked-host`, revisa el dominio antes de autorizarlo; nunca habilites dominios automáticamente. Los reportes locales quedan en `reports/`, fuera de Git. Un reporte fallido sin eventos puede indicar fallo de API, validación o conectividad antes de iniciar el análisis HTML.
