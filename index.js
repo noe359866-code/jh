@@ -42,7 +42,7 @@ app.get('/manifest.json', (req, res) => {
   });
 });
 
-// Catalog: Movies - returns items with IDs resolvable to streams
+// Catalog: Movies
 app.get('/catalog/movies.json', async (req, res) => {
   try {
     const movies = [
@@ -133,7 +133,7 @@ app.get('/stream/anime/:imdbId.json', async (req, res) => {
   }
 });
 
-// Resolve stream function - tries all 5 supported sites
+// Resolve stream function
 async function resolveStream(type, imdbId) {
   const sites = [
     { name: 'flixlatam', fn: getFlixLatamStream },
@@ -187,7 +187,7 @@ async function getDoramasytStream(imdbId) {
 
 // Serve web configuration interface
 app.get('/config', (req, res) => {
-  res.send('<html><body><h1>Latino Stream Addon</h1><p>Catalogs: movies, series, anime</p><p>Streams resolved from: flixlatam, area-documental, documaniatv, seriesperu, doramasyt</p></body></html>');
+  res.send('<html><body><h1>Latino Stream Addon</h1><p>Catalogs: movies, series, anime</p><p>Stream extraction URLs configured for: flixlatam, area-documental, documaniatv, seriesperu, doramasyt</p></body></html>');
 });
 
 // Default route

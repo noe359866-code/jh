@@ -2,9 +2,9 @@ name: Test HLS/MP4 Extractors
 
 on:
   push:
-    branches: [ arena/0e9df339-jh ]
+    branches: [ arena/d5972f45-jh ]
   pull_request:
-    branches: [ arena/0e9df339-jh ]
+    branches: [ arena/d5972f45-jh ]
 
 jobs:
   test-extractors:
