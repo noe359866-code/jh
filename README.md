@@ -83,3 +83,22 @@ docker run --rm -p 8080:8080 \
 `npm run check`, `npm test` y `npm audit --omit=dev` comprueban sintaxis, contrato HTTP, resolución de configuración y dependencias respectivamente. Las pruebas usan dominios de ejemplo y no descargan videos: **no validan reproducción real ni extractores externos**. CI está configurada para Node 22 y 24; la ejecución local se verificó en Node 22. La imagen Docker necesita una comprobación adicional en un entorno con Docker.
 
 Para integrar FlixLatam, Area Documental, Documaniatv, SeriesPeru o DoramasYT hace falta implementar y probar adaptadores reales, identificación de títulos/episodios y resolución de medios autorizados. Esta revisión no pudo verificar esos sitios porque el entorno restringe las conexiones externas a registros de paquetes y GitHub.
+
+
+## Integración experimental: Embed69
+
+El plugin WordPress **ToroPlay Embed69 Auto 1.1.0** no contiene un extractor de video. Su código consulta `https://apiz.6969009.xyz/api/check` y construye páginas `https://embed69.org/f/...`; además automatiza cómo WordPress guarda esos enlaces en los metadatos de ToroPlay. Por eso no se copió el plugin PHP ni se presentó una página HTML como si fuera un stream reproducible.
+
+JH incorpora ahora un adaptador Node.js aislado en `engines/embed69/` que:
+- valida IMDb IDs;
+- consulta disponibilidad de películas, series y episodios;
+- conserva el formato de episodio `IMDb-temporadaxepisodio` con dos dígitos;
+- construye la URL de la página Embed69 solo cuando la API confirma disponibilidad;
+- falla de forma explícita ante respuestas HTTP o JSON inesperadas.
+
+Endpoint de diagnóstico:
+- `GET /providers/embed69/check/movie/tt0137523.json`
+- `GET /providers/embed69/check/series/tt0944947.json`
+- `GET /providers/embed69/check/episode/tt0944947.json?season=1&episode=5`
+
+**Límite importante:** este primer adaptador descubre la página Embed69, pero todavía no extrae una URL directa HLS/MP4. El resultado marca `playable: false` y no se inyecta en `/stream`, porque Stremio no puede reproducir de forma fiable una página HTML/iframe como si fuera un archivo de video. La siguiente fase requiere inspeccionar y probar el reproductor real de Embed69 y sus respuestas de red, y solo entonces implementar el extractor de medios.

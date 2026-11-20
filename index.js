@@ -2,6 +2,7 @@ const express = require('express');
 const fs = require('node:fs');
 const path = require('node:path');
 const manifest = require('./manifest.json');
+const embed69Provider = require('./engines/embed69');
 
 // Sample metadata only; these entries do not imply that a stream is available.
 const catalogs = {
@@ -58,7 +59,7 @@ function loadStreams() {
   return validateStreams(JSON.parse(fs.readFileSync(filename, 'utf8')));
 }
 
-function createApp({ streams = loadStreams() } = {}) {
+function createApp({ streams = loadStreams(), embed69 = embed69Provider } = {}) {
   validateStreams(streams);
   const app = express();
   app.disable('x-powered-by');
@@ -98,6 +99,32 @@ function createApp({ streams = loadStreams() } = {}) {
       return res.json({ meta: { ...meta, videos } });
     }
     return res.json({ meta });
+  });
+
+  // Diagnostic discovery endpoint. Embed69 pages are not direct playable streams.
+  app.get('/providers/embed69/check/:type/:id.json', async (req, res) => {
+    const { type, id } = req.params;
+    if (!['movie', 'series', 'episode'].includes(type)) {
+      return res.status(400).json({ error: 'Type must be movie, series, or episode' });
+    }
+    if (!/^tt\d{7,}$/.test(id)) {
+      return res.status(400).json({ error: 'Expected a valid IMDb ID' });
+    }
+    try {
+      const request = { type, imdbId: id };
+      if (type === 'episode') {
+        request.season = req.query.season;
+        request.episode = req.query.episode;
+      }
+      const result = await embed69.discover(request);
+      return res.json(result);
+    } catch (error) {
+      const status = error instanceof TypeError ? 400 : 502;
+      return res.status(status).json({
+        error: status === 400 ? 'Invalid Embed69 request' : 'Embed69 discovery failed',
+        message: error.message
+      });
+    }
   });
 
   app.get('/stream/:type/:id.json', (req, res) => {
