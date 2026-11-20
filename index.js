@@ -37,6 +37,7 @@ app.get('/manifest.json', (req, res) => {
       { "id": "anime", "name": "Anime", "type": "anime", "parent_id": "anime" }
     ],
     "behaviour_hints": {
+      "types": ["movie", "series", "anime"],
       "previews": ["https://image.tmdb.org/t/p/w300"]
     }
   });
