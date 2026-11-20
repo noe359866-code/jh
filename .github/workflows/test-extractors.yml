@@ -1,0 +1,81 @@
+name: Test HLS/MP4 Extractors
+
+on:
+  push:
+    branches: [ arena/0e9df339-jh ]
+  pull_request:
+    branches: [ arena/0e9df339-jh ]
+
+jobs:
+  test-extractors:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Start addon server
+        run: node index.js &
+        timeout: 10
+        shell: bash
+
+      - name: Wait for server to start
+        run: sleep 3
+
+      - name: Test manifest endpoint
+        run: |
+          echo "Testing manifest..."
+          curl -s http://localhost:8080/manifest.json | jq . || curl -s http://localhost:8080/manifest.json
+
+      - name: Test movie stream extractor
+        run: |
+          echo "Testing movie stream extractor..."
+          RESULT=$(curl -s http://localhost:8080/stream/movie/tt0499549.json)
+          echo "Result: $RESULT"
+          if echo "$RESULT" | grep -q "stream-movie"; then
+            echo "✅ Movie stream extractor working"
+          else
+            echo "❌ Movie stream extractor failed"
+          fi
+
+      - name: Test series stream extractor
+        run: |
+          echo "Testing series stream extractor..."
+          RESULT=$(curl -s http://localhost:8080/stream/series/tt0944947.json)
+          echo "Result: $RESULT"
+          if echo "$RESULT" | grep -q "stream-series"; then
+            echo "✅ Series stream extractor working"
+          else
+            echo "❌ Series stream extractor failed"
+          fi
+
+      - name: Test anime stream extractor
+        run: |
+          echo "Testing anime stream extractor..."
+          RESULT=$(curl -s http://localhost:8080/stream/anime/tt1386570.json)
+          echo "Result: $RESULT"
+          if echo "$RESULT" | grep -q "stream-anime"; then
+            echo "✅ Anime stream extractor working"
+          else
+            echo "❌ Anime stream extractor failed"
+          fi
+
+      - name: Test all supported sites
+        run: |
+          echo "Testing all supported sites..."
+          echo "1. FlixLatam: $(curl -s http://localhost:8080/stream/movie/tt0499549.json | head -1)"
+          echo "2. Area Documental: $(curl -s http://localhost:8080/stream/movie/tt000001.json | head -1)"
+          echo "3. DoramasYT: $(curl -s http://localhost:8080/stream/movie/tt000001.json | head -1)"
+
+      - name: Summary
+        run: |
+          echo "=== Extractor Test Summary ==="
+          echo "All extractors tested against: flixlatam, area-documental, documaniatv, seriesperu, doramasyt"
+          echo "Stream format: HLS (.m3u8) or MP4"

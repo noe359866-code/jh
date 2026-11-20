@@ -1,0 +1,17 @@
+{
+  "name": "Latino Stream Addon",
+  "id": "com.latino.streamer",
+  "version": "1.0.0",
+  "description": "Stremio addon for Latino streaming sites",
+  "type": "video",
+  "resource": "https://{id}.json",
+  "id_prefixes": ["tt", ""],
+  "catalogs": [
+    { "id": "movies", "name": "Movies", "parent_id": "movies" },
+    { "id": "series", "name": "Series", "parent_id": "series" },
+    { "id": "anime", "name": "Anime", "parent_id": "anime" }
+  ],
+  "behaviour_hints": {
+    "previews": ["https://image.tmdb.org/t/p/w300"]
+  }
+}
