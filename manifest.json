@@ -2,7 +2,7 @@
   "id": "com.latino.streamer",
   "version": "1.0.1",
   "name": "Latino Stream Addon",
-  "description": "Catálogos de ejemplo y streams configurados por el administrador. No incluye extractores de sitios externos.",
+  "description": "Catálogos de ejemplo y fuentes HLS/MP4 configuradas por el administrador.",
   "resources": ["catalog", "meta", "stream"],
   "types": ["movie", "series"],
   "idPrefixes": ["tt"],
