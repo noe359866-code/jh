@@ -1,203 +1,125 @@
 const express = require('express');
-const axios = require('axios');
-const cheerio = require('cheerio');
-const app = express();
-const port = process.env.PORT || 8080;
+const fs = require('node:fs');
+const path = require('node:path');
+const manifest = require('./manifest.json');
 
-// Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Sample metadata only; these entries do not imply that a stream is available.
+const catalogs = {
+  movies: [
+    { id: 'tt0137523', type: 'movie', name: 'Fight Club', releaseInfo: '1999' },
+    { id: 'tt0816692', type: 'movie', name: 'Interstellar', releaseInfo: '2014' }
+  ],
+  series: [
+    { id: 'tt0944947', type: 'series', name: 'Game of Thrones', releaseInfo: '2011–2019' },
+    { id: 'tt8111088', type: 'series', name: 'The Mandalorian', releaseInfo: '2019–' }
+  ],
+  anime: [
+    { id: 'tt4644488', type: 'series', name: 'Dragon Ball Super', releaseInfo: '2015–2018' },
+    { id: 'tt13616990', type: 'series', name: 'Chainsaw Man', releaseInfo: '2022–' }
+  ]
+};
 
-// CORS headers for Stremio
-app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  next();
-});
+function validId(type, id) {
+  return type === 'movie' ? /^tt\d{7,}$/.test(id)
+    : type === 'series' && /^tt\d{7,}:[1-9]\d*:[1-9]\d*$/.test(id);
+}
 
-// Handle OPTIONS preflight
-app.options('*', (req, res) => {
-  res.status(200).send();
-});
-
-// Manifest endpoint
-app.get('/manifest.json', (req, res) => {
-  res.json({
-    "name": "Latino Stream Addon",
-    "id": "com.latino.streamer",
-    "version": "1.0.0",
-    "description": "Stremio addon for Latino streaming sites",
-    "type": "video",
-    "resource": "https://{id}.json",
-    "id_prefixes": ["tt", ""],
-    "catalogs": [
-      { "id": "movies", "name": "Movies", "type": "movie", "parent_id": "movies" },
-      { "id": "series", "name": "Series", "type": "series", "parent_id": "series" },
-      { "id": "anime", "name": "Anime", "type": "anime", "parent_id": "anime" }
-    ],
-    "behaviour_hints": {
-      "types": ["movie", "series", "anime"],
-      "previews": ["https://image.tmdb.org/t/p/w300"]
+// Explicit administrator-supplied media, not guessed player-page URLs.
+function validateStreams(config) {
+  if (!config || typeof config !== 'object' || Array.isArray(config)) {
+    throw new Error('Stream configuration must be an object');
+  }
+  for (const [key, streams] of Object.entries(config)) {
+    const separator = key.indexOf(':');
+    const type = key.slice(0, separator);
+    const id = key.slice(separator + 1);
+    if (separator < 0 || !validId(type, id) || !Array.isArray(streams)) {
+      throw new Error(`Invalid stream configuration key or list: ${key}`);
     }
-  });
-});
-
-// Catalog: Movies
-app.get('/catalog/movies.json', async (req, res) => {
-  try {
-    const movies = [
-      { id: 'tt0499549', name: 'Fight Club', year: '1999', posters: ['https://image.tmdb.org/t/p/w300'] },
-      { id: 'tt0944947', name: 'Game of Thrones', year: '2011', posters: ['https://image.tmdb.org/t/p/w300'] },
-      { id: 'tt1386570', name: 'Interstellar', year: '2014', posters: ['https://image.tmdb.org/t/p/w300'] },
-    ];
-    res.json(movies);
-  } catch (err) {
-    console.error('Error fetching movies catalog:', err.message);
-    res.status(500).json({ error: 'Failed to fetch catalog' });
-  }
-});
-
-// Catalog: Series
-app.get('/catalog/series.json', async (req, res) => {
-  try {
-    const series = [
-      { id: 'tt0944947', name: 'Game of Thrones', year: '2011', posters: ['https://image.tmdb.org/t/p/w300'] },
-      { id: 'tt1392768', name: 'The Mandalorian', year: '2019', posters: ['https://image.tmdb.org/t/p/w300'] },
-    ];
-    res.json(series);
-  } catch (err) {
-    console.error('Error fetching series catalog:', err.message);
-    res.status(500).json({ error: 'Failed to fetch catalog' });
-  }
-});
-
-// Catalog: Anime
-app.get('/catalog/anime.json', async (req, res) => {
-  try {
-    const anime = [
-      { id: 'tt1569564', name: 'Dragon Ball Super', year: '2015', posters: ['https://image.tmdb.org/t/p/w300'] },
-      { id: 'tt7951738', name: 'Chainsaw Man', year: '2022', posters: ['https://image.tmdb.org/t/p/w300'] },
-    ];
-    res.json(anime);
-  } catch (err) {
-    console.error('Error fetching anime catalog:', err.message);
-    res.status(500).json({ error: 'Failed to fetch catalog' });
-  }
-});
-
-// Stream endpoint - movie
-app.get('/stream/movie/:imdbId.json', async (req, res) => {
-  try {
-    const imdbId = req.params.imdbId;
-    const stream = await resolveStream('movie', imdbId);
-    if (stream && stream.streams && stream.streams.length > 0) {
-      res.json(stream);
-    } else {
-      res.status(404).json({ error: 'No stream found' });
-    }
-  } catch (err) {
-    console.error('Error fetching movie stream:', err.message);
-    res.status(500).json({ error: 'Failed to fetch stream' });
-  }
-});
-
-// Stream endpoint - series
-app.get('/stream/series/:imdbId.json', async (req, res) => {
-  try {
-    const imdbId = req.params.imdbId;
-    const stream = await resolveStream('series', imdbId);
-    if (stream && stream.streams && stream.streams.length > 0) {
-      res.json(stream);
-    } else {
-      res.status(404).json({ error: 'No stream found' });
-    }
-  } catch (err) {
-    console.error('Error fetching series stream:', err.message);
-    res.status(500).json({ error: 'Failed to fetch stream' });
-  }
-});
-
-// Stream endpoint - anime
-app.get('/stream/anime/:imdbId.json', async (req, res) => {
-  try {
-    const imdbId = req.params.imdbId;
-    const stream = await resolveStream('anime', imdbId);
-    if (stream && stream.streams && stream.streams.length > 0) {
-      res.json(stream);
-    } else {
-      res.status(404).json({ error: 'No stream found' });
-    }
-  } catch (err) {
-    console.error('Error fetching anime stream:', err.message);
-    res.status(500).json({ error: 'Failed to fetch stream' });
-  }
-});
-
-// Resolve stream function
-async function resolveStream(type, imdbId) {
-  const sites = [
-    { name: 'flixlatam', fn: getFlixLatamStream },
-    { name: 'area-documental', fn: getAreaDocumentalStream },
-    { name: 'documaniatv', fn: getDocumaniatvStream },
-    { name: 'seriesperu', fn: getSeriesPeruStream },
-    { name: 'doramasyt', fn: getDoramasytStream }
-  ];
-
-  for (const site of sites) {
-    try {
-      const url = await site.fn(imdbId);
-      if (url) {
-        return {
-          streams: [
-            {
-              url,
-              id: `stream-${type}-${imdbId}-${site.name}`
-            }
-          ]
-        };
+    for (const stream of streams) {
+      if (!stream || typeof stream !== 'object' || Array.isArray(stream) || typeof stream.url !== 'string') {
+        throw new Error(`Invalid stream entry for ${key}`);
       }
-    } catch (err) {
-      console.error(`Error checking ${site.name}:`, err.message);
-      continue;
+      let url;
+      try { url = new URL(stream.url); } catch { /* Handled below. */ }
+      if (!url || !['https:', 'http:'].includes(url.protocol) || url.username || url.password
+        || !/\.(m3u8|mp4)$/i.test(url.pathname)
+        || (stream.name !== undefined && typeof stream.name !== 'string')
+        || (stream.title !== undefined && typeof stream.title !== 'string')) {
+        throw new Error(`Expected a direct HTTP(S) HLS/MP4 URL for ${key}`);
+      }
     }
   }
-  return { streams: [] };
+  return config;
 }
 
-// Site stream functions
-async function getFlixLatamStream(imdbId) {
-  return `https://flixlatam.com/stream/${imdbId}/master.m3u8`;
+function loadStreams() {
+  const filename = process.env.STREAMS_FILE || path.join(__dirname, 'streams.json');
+  return validateStreams(JSON.parse(fs.readFileSync(filename, 'utf8')));
 }
 
-async function getAreaDocumentalStream(imdbId) {
-  return `https://www.area-documental.com/player.php?titulo=${imdbId}`;
+function createApp({ streams = loadStreams() } = {}) {
+  validateStreams(streams);
+  const app = express();
+  app.disable('x-powered-by');
+  app.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    next();
+  });
+  app.options('*', (req, res) => res.sendStatus(204));
+  app.get('/manifest.json', (req, res) => res.json(manifest));
+
+  app.get('/catalog/:type/:id.json', (req, res) => {
+    const catalog = manifest.catalogs.find(c => c.type === req.params.type && c.id === req.params.id);
+    if (!catalog) return res.status(404).json({ error: 'Unknown catalog' });
+    return res.json({ metas: catalogs[catalog.id] });
+  });
+
+  app.get('/meta/:type/:id.json', (req, res) => {
+    const meta = Object.values(catalogs).flat().find(m => m.type === req.params.type && m.id === req.params.id);
+    if (!meta) return res.status(404).json({ error: 'Unknown title' });
+    if (meta.type === 'series') {
+      const prefix = `series:${meta.id}:`;
+      const videos = Object.entries(streams)
+        .filter(([key, sources]) => key.startsWith(prefix) && sources.length > 0)
+        .map(([key]) => {
+          const id = key.slice('series:'.length);
+          const [, season, episode] = id.split(':');
+          return {
+            id,
+            title: `Temporada ${season}, episodio ${episode}`,
+            season: Number(season),
+            episode: Number(episode)
+          };
+        })
+        .sort((a, b) => a.season - b.season || a.episode - b.episode);
+      return res.json({ meta: { ...meta, videos } });
+    }
+    return res.json({ meta });
+  });
+
+  app.get('/stream/:type/:id.json', (req, res) => {
+    const { type, id } = req.params;
+    if (!manifest.types.includes(type)) return res.status(404).json({ error: 'Unsupported type' });
+    if (!validId(type, id)) return res.status(400).json({ error: 'Expected IMDb ID; series require :season:episode' });
+    return res.json({ streams: (streams[`${type}:${id}`] || []).map(({ url, name, title }) => ({ url, name, title })) });
+  });
+
+  app.get(['/', '/config'], (req, res) => {
+    res.type('html').send('<!doctype html><html lang="es"><meta charset="utf-8"><title>Latino Stream Addon</title><h1>Latino Stream Addon</h1><p>Catálogos de ejemplo: películas, series y anime (tipo series).</p><p>No incluye extractores de sitios externos. Sin fuentes configuradas devuelve streams vacíos.</p><p>El administrador puede configurar enlaces directos HLS/MP4 autorizados en streams.json o STREAMS_FILE. Consulta README.md.</p><a href="/manifest.json">Ver manifiesto para Stremio</a></html>');
+  });
+  app.use((req, res) => res.status(404).json({ error: 'Not found' }));
+  return app;
 }
 
-async function getDocumaniatvStream(imdbId) {
-  return `https://documaniatv.com/player.php?titulo=${imdbId}`;
+if (require.main === module) {
+  const port = process.env.PORT || 8080;
+  createApp().listen(port, '0.0.0.0', () => {
+    console.log(`Latino Stream Addon running on port ${port}`);
+  });
 }
 
-async function getSeriesPeruStream(imdbId) {
-  return `https://seriesperu.com/player.php?titulo=${imdbId}`;
-}
-
-async function getDoramasytStream(imdbId) {
-  return `https://www.doramasyt.com/player.php?titulo=${imdbId}`;
-}
-
-// Serve web configuration interface
-app.get('/config', (req, res) => {
-  res.send('<html><body><h1>Latino Stream Addon</h1><p>Catalogs: movies, series, anime</p><p>Stream extraction URLs configured for: flixlatam, area-documental, documaniatv, seriesperu, doramasyt</p></body></html>');
-});
-
-// Default route
-app.get('*', (req, res) => {
-  res.status(404).json({ error: 'Not found' });
-});
-
-app.listen(port, '0.0.0.0', () => {
-  console.log(`Latino Stream Addon running on port ${port}`);
-});
-
-module.exports = app;
+// Importing the app must not bind a port (tests and embedding).
+module.exports = { createApp, validateStreams };

@@ -1,17 +1,17 @@
 {
   "name": "latino-stremio-addon",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Stremio addon for Latino streaming sites",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "test": "node --test",
+    "check": "node --check index.js"
   },
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=22.0.0"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "axios": "^1.7.2",
-    "cheerio": "^1.0.0-rc.12"
+    "express": "^4.18.2"
   }
 }
