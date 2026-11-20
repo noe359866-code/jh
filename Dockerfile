@@ -4,6 +4,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 COPY index.js manifest.json streams.json ./
+COPY engines ./engines
 USER node
 EXPOSE 8080
 CMD ["node", "index.js"]

@@ -72,3 +72,34 @@ test('does not treat API errors as available content', async () => {
     /unexpected response/
   );
 });
+
+test('resolver integrates availability, page extraction and media verification', async () => {
+  const { resolve } = require('../engines/embed69');
+  const events = [];
+  const calls = [];
+  const streams = await resolve({ type: 'movie', imdbId: 'tt0137523' }, {
+    allowedHosts: ['embed69.org', 'media.example'],
+    lookupImpl: async () => [{ address: '93.184.216.34' }],
+    onEvent: event => events.push(event),
+    fetchImpl: async url => {
+      calls.push(url.hostname);
+      if (url.hostname === 'apiz.6969009.xyz') return new Response(JSON.stringify({ exists: true }));
+      if (url.hostname === 'embed69.org') return new Response('<source src="https://media.example/video.m3u8?token=secret-token">');
+      return new Response('#EXTM3U\n#EXT-X-VERSION:3\n');
+    }
+  });
+  assert.equal(streams.length, 1);
+  assert.deepEqual(calls, ['apiz.6969009.xyz', 'embed69.org', 'media.example']);
+  assert.ok(events.some(event => event.stage === 'candidate' && event.verified));
+  assert.equal(JSON.stringify(events).includes('secret-token'), false);
+});
+
+test('resolver does not fetch a player when the title is unavailable', async () => {
+  const { resolve } = require('../engines/embed69');
+  let calls = 0;
+  const streams = await resolve({ type: 'movie', imdbId: 'tt0137523' }, {
+    fetchImpl: async () => { calls++; return new Response(JSON.stringify({ exists: false })); }
+  });
+  assert.deepEqual(streams, []);
+  assert.equal(calls, 1);
+});

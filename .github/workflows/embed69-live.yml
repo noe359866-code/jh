@@ -1,0 +1,54 @@
+name: Embed69 live extraction
+on:
+  workflow_dispatch:
+    inputs:
+      imdb:
+        description: IMDb ID of a title you are authorized to test
+        required: true
+        type: string
+      type:
+        description: Content type
+        type: choice
+        options: [movie, episode]
+        default: movie
+      season:
+        description: Season for episode test
+        type: string
+        default: '1'
+      episode:
+        description: Episode number for episode test
+        type: string
+        default: '1'
+      allowed_hosts:
+        description: Comma-separated trusted hosts (include embed69.org and media/iframe hosts)
+        required: true
+        default: embed69.org
+        type: string
+permissions:
+  contents: read
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: node scripts/embed69-live.js
+        env:
+          EMBED69_TEST_TYPE: ${{ inputs.type }}
+          EMBED69_TEST_SEASON: ${{ inputs.season }}
+          EMBED69_TEST_EPISODE: ${{ inputs.episode }}
+          EMBED69_TEST_IMDB: ${{ inputs.imdb }}
+          EMBED69_ALLOWED_HOSTS: ${{ inputs.allowed_hosts }}
+      - name: Upload sanitized diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: embed69-live-report
+          path: reports/embed69-live.json
+          if-no-files-found: warn
+          retention-days: 7
