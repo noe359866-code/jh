@@ -107,7 +107,7 @@ function createApp({ streams = loadStreams(), embed69 = embed69Provider } = {}) 
     if (!['movie', 'series', 'episode'].includes(type)) {
       return res.status(400).json({ error: 'Type must be movie, series, or episode' });
     }
-    if (!/^tt\\d{7,}$/.test(id)) {
+    if (!/^tt\d{7,}$/.test(id)) {
       return res.status(400).json({ error: 'Expected a valid IMDb ID' });
     }
     try {
