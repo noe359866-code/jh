@@ -156,8 +156,8 @@ npm run test:flixlatam
 Sustituye los marcadores por URLs/hosts inspeccionados y autorizados. El comando
 falla si no encuentra medios verificables. Produce `reports/flixlatam-live.json`
 sin URLs ni tokens. También existe el workflow manual **FlixLatam live extraction**.
-No se ha ejecutado contra el proveedor real desde este entorno; sus dominios no
-están habilitados en la red del sandbox. Las pruebas automatizadas usan fixtures
+La prueba real se ejecutó desde GitHub Actions (ver resultado abajo); el sandbox
+local no tiene salida directa a esos dominios. Las pruebas unitarias usan fixtures
 sintéticos, no capturas del reproductor real de FlixLatam.
 
 ### Usar en Stremio / Render
@@ -195,3 +195,20 @@ No hay endpoint público que permita solicitar URLs arbitrarias al servidor.
 el reproductor actual de FlixLatam ni reproducción completa en Stremio. No soporta
 DRM, CAPTCHA, sesiones privadas, tokens calculados ni APIs dinámicas no inspeccionadas.
 Usa únicamente fuentes que tengas autorización para reproducir/distribuir.
+
+
+### Resultado de la comprobación real (2026-11-20)
+
+Se probó `https://flixlatam.com/pelicula/el-secreto-r02nyv` desde GitHub Actions.
+La página respondió HTTP 200 y contenía un iframe a `embed69.org`. Al autorizar
+ese host en una segunda configuración, el iframe y su script respondieron también
+HTTP 200, pero el análisis estático encontró **cero candidatos HLS/MP4**. El check
+falló con `NO_VERIFIED_MEDIA`; no se marcó como éxito ni se omitió la prueba.
+Esto solo verifica esa ficha y ese método, no todo el catálogo ni la ausencia de
+video en el sitio. Se necesita inspeccionar el flujo dinámico del reproductor para
+avanzar; cambiar de Embed69 a esta ficha de FlixLatam no eliminó esa dependencia.
+
+Ejecución: https://github.com/noe359866-code/jh/actions/runs/44821306666
+
+Las anotaciones y el artefacto `flixlatam-live-report` contienen el diagnóstico
+sanitizado. Las pruebas deterministas y Docker pasan por separado.
