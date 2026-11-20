@@ -21,8 +21,8 @@ const catalogs = {
 };
 
 function validId(type, id) {
-  return type === 'movie' ? /^tt\\d{7,}$/.test(id)
-    : type === 'series' && /^tt\\d{7,}:[1-9]\\d*:[1-9]\\d*$/.test(id);
+  return type === 'movie' ? /^tt\d{7,}$/.test(id)
+    : type === 'series' && /^tt\d{7,}:[1-9]\d*:[1-9]\d*$/.test(id);
 }
 
 // Explicit administrator-supplied media, not guessed player-page URLs.
@@ -44,7 +44,7 @@ function validateStreams(config) {
       let url;
       try { url = new URL(stream.url); } catch { /* Handled below. */ }
       if (!url || !['https:', 'http:'].includes(url.protocol) || url.username || url.password
-        || !/\\.(m3u8|mp4)$/i.test(url.pathname)
+        || !/\.(m3u8|mp4)$/i.test(url.pathname)
         || (stream.name !== undefined && typeof stream.name !== 'string')
         || (stream.title !== undefined && typeof stream.title !== 'string')) {
         throw new Error(`Expected a direct HTTP(S) HLS/MP4 URL for ${key}`);
