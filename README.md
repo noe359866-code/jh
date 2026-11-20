@@ -82,7 +82,7 @@ docker run --rm -p 8080:8080 \
 
 `npm run check`, `npm test` y `npm audit --omit=dev` comprueban sintaxis, contrato HTTP, resolución de configuración y dependencias respectivamente. Las pruebas usan dominios de ejemplo y no descargan videos: **no validan reproducción real ni extractores externos**. CI está configurada para Node 22 y 24; la ejecución local se verificó en Node 22. La imagen Docker necesita una comprobación adicional en un entorno con Docker.
 
-Para integrar FlixLatam, Area Documental, Documaniatv, SeriesPeru o DoramasYT hace falta implementar y probar adaptadores reales, identificación de títulos/episodios y resolución de medios autorizados. Esta revisión no pudo verificar esos sitios porque el entorno restringe las conexiones externas a registros de paquetes y GitHub.
+JH mantiene Embed69 como único proveedor de descubrimiento previsto. No se incluyen ni se mantienen adaptadores para otros sitios. La extracción directa HLS/MP4 de Embed69 sigue pendiente: hasta verificar el flujo real del reproductor, el addon no anunciará páginas HTML o iframes como streams reproducibles.
 
 
 ## Integración experimental: Embed69
