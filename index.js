@@ -32,9 +32,9 @@ app.get('/manifest.json', (req, res) => {
     "resource": "https://{id}.json",
     "id_prefixes": ["tt", ""],
     "catalogs": [
-      { "id": "movies", "name": "Movies", "parent_id": "movies" },
-      { "id": "series", "name": "Series", "parent_id": "series" },
-      { "id": "anime", "name": "Anime", "parent_id": "anime" }
+      { "id": "movies", "name": "Movies", "type": "movie", "parent_id": "movies" },
+      { "id": "series", "name": "Series", "type": "series", "parent_id": "series" },
+      { "id": "anime", "name": "Anime", "type": "anime", "parent_id": "anime" }
     ],
     "behaviour_hints": {
       "previews": ["https://image.tmdb.org/t/p/w300"]
