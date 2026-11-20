@@ -11,7 +11,7 @@ on:
       allowed_hosts:
         description: Trusted page, player and media hosts, comma-separated
         required: true
-        default: flixlatam.com,www.flixlatam.com
+        default: flixlatam.com,www.flixlatam.com,embed69.org
         type: string
 permissions:
   contents: read
@@ -29,7 +29,7 @@ jobs:
       - run: npm run test:flixlatam
         env:
           FLIXLATAM_TEST_PAGE: ${{ inputs.page || 'https://flixlatam.com/pelicula/el-secreto-r02nyv' }}
-          FLIXLATAM_ALLOWED_HOSTS: ${{ inputs.allowed_hosts || 'flixlatam.com,www.flixlatam.com' }}
+          FLIXLATAM_ALLOWED_HOSTS: ${{ inputs.allowed_hosts || 'flixlatam.com,www.flixlatam.com,embed69.org' }}
       - name: Print sanitized diagnostic report
         if: always()
         run: node -e "const fs=require('node:fs');const p='reports/flixlatam-live.json';if(fs.existsSync(p)) console.log(fs.readFileSync(p,'utf8'));"
