@@ -1,18 +1,14 @@
 {
-  "name": "Latino Stream Addon",
   "id": "com.latino.streamer",
-  "version": "1.0.0",
-  "description": "Stremio addon for Latino streaming sites",
-  "type": "video",
-  "resource": "https://{id}.json",
-  "id_prefixes": ["tt", ""],
+  "version": "1.0.1",
+  "name": "Latino Stream Addon",
+  "description": "Catálogos de ejemplo y streams configurados por el administrador. No incluye extractores de sitios externos.",
+  "resources": ["catalog", "meta", "stream"],
+  "types": ["movie", "series"],
+  "idPrefixes": ["tt"],
   "catalogs": [
-    { "id": "movies", "name": "Movies", "type": "movie", "parent_id": "movies" },
-    { "id": "series", "name": "Series", "type": "series", "parent_id": "series" },
-    { "id": "anime", "name": "Anime", "type": "anime", "parent_id": "anime" }
-  ],
-  "behaviour_hints": {
-    "types": ["movie", "series", "anime"],
-    "previews": ["https://image.tmdb.org/t/p/w300"]
-  }
+    { "id": "movies", "name": "Películas (ejemplo)", "type": "movie" },
+    { "id": "series", "name": "Series (ejemplo)", "type": "series" },
+    { "id": "anime", "name": "Anime (ejemplo)", "type": "series" }
+  ]
 }
