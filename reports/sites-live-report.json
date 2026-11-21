@@ -40,12 +40,19 @@
     },
     {
       "stage": "blocked-frame",
+      "host": "",
+      "site": "flixlatam"
+    },
+    {
+      "stage": "request",
       "host": "embed69.org",
       "site": "flixlatam"
     },
     {
-      "stage": "blocked-frame",
-      "host": "",
+      "stage": "page",
+      "host": "embed69.org",
+      "candidates": 0,
+      "frames": 0,
       "site": "flixlatam"
     },
     {
