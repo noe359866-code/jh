@@ -163,3 +163,25 @@ test('el proveedor declara los hosts imprescindibles: sitio, embed69 y players',
   }
   assert.equal(hosts.includes('cdn.evil.example'), false);
 });
+
+test('la ficha publica varios reproductores: se recorren todos', async () => {
+  // Antes solo se usaba el primer iframe; si ese fallaba (o no traía el
+  // dataLink) se perdían los players enlazados del resto de la ficha.
+  const ficha = '<html><iframe src="https://embed69.org/f/tt1/"></iframe>' +
+    '<a class="server" href="https://uqload.vc/embed-abc.html">uqload</a></html>';
+  const { crearProveedorFlixLatam } = require('../engines/sites/flixlatam');
+  const { hostsPermitidos } = require('../engines/sites');
+  const proveedor = crearProveedorFlixLatam({
+    allowedHosts: [...hostsPermitidos({}), 'uqload.vc'],
+    lookupImpl: async () => [{ address: '93.184.216.34' }],
+    fetchImpl: async (url) => {
+      if (url.hostname === 'flixlatam.com') return new Response(ficha);
+      if (url.hostname === 'embed69.org') return new Response(paginaEmbed69({ grupos: [] }));
+      return new Response('x');
+    }
+  });
+  const { servidores, reproductores } = await proveedor.descubrir('https://flixlatam.com/pelicula/x');
+  assert.equal(reproductores.length, 1);
+  assert.ok(servidores.some(s => s.url.includes('uqload.vc/embed-abc.html')), 'debe incluir el player enlazado');
+  assert.ok(servidores.every(s => typeof s.etiqueta === 'string' && s.etiqueta.length > 0));
+});

@@ -1,5 +1,5 @@
 const { createFetcher } = require('./extractor');
-const { encontrarReproductor, abrirReproductor, leerServidores, diagnosticar } = require('../embed69');
+const { encontrarReproductores, encontrarEmbeds, abrirReproductor, leerServidores, diagnosticar } = require('../embed69');
 
 // ---------------------------------------------------------------------------
 // Proveedor FlixLatam (tema Dooplay)
@@ -36,13 +36,27 @@ const crearProveedorFlixLatam = ({ allowedHosts, fetchImpl, lookupImpl, timeoutM
     // su idioma y nombre.
     async descubrir(pageUrl) {
       const html = await fetcher.getText(pageUrl);
-      const reproductor = encontrarReproductor(html, pageUrl);
-      emitir({ stage: 'flixlatam', host: new URL(pageUrl).hostname, reproductor: Boolean(reproductor) });
+      // La ficha publica varios reproductores y, a veces, players enlazados
+      // directamente: se recorren todos, no solo el primero.
+      const reproductores = encontrarReproductores(html, pageUrl);
+      const embeds = encontrarEmbeds(html, pageUrl);
+      const reproductor = reproductores[0] || null;
+      emitir({
+        stage: 'flixlatam', host: new URL(pageUrl).hostname,
+        reproductor: Boolean(reproductor), total: reproductores.length + embeds.length
+      });
 
       // Medios directos que la ficha pudiera publicar (algunos títulos sí).
       const { media } = fetcher.parsePage(html, pageUrl);
 
-      if (!reproductor) return { reproductor: null, media, servidores: [] };
+      if (!reproductor && !embeds.length) return { reproductor: null, media, servidores: [] };
+
+      // Enlaces de la ficha a players externos (uqload...) sin idioma conocido.
+      const servidoresEmbebidos = embeds.map(url => ({
+        idioma: '', servidor: new URL(url).hostname.replace(/^www\./, ''), url,
+        etiqueta: `Enlace · ${new URL(url).hostname.replace(/^www\./, '')}`
+      }));
+      if (!reproductor) return { reproductor: embeds[0], media, servidores: servidoresEmbebidos };
 
       const { html: htmlReproductor, anubis, pasado } = await abrirReproductor(fetcher, reproductor, { referer: pageUrl, onEvent: emitir });
       const servidores = leerServidores(htmlReproductor);
@@ -58,8 +72,9 @@ const crearProveedorFlixLatam = ({ allowedHosts, fetchImpl, lookupImpl, timeoutM
 
       return {
         reproductor,
+        reproductores,
         media: [...new Set([...media, ...mediosReproductor])],
-        servidores: servidores.map(servidor => {
+        servidores: [...servidores, ...servidoresEmbebidos].map(servidor => {
           const idioma = nombreIdioma(servidor.idioma);
           return {
             ...servidor,

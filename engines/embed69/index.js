@@ -282,24 +282,58 @@ function leerServidores(html) {
   return servidores;
 }
 
-// URL absoluta del reproductor a partir del HTML de la ficha de FlixLatam.
-function encontrarReproductor(html, base) {
+// URLs de reproductor a partir del HTML de la ficha de FlixLatam.
+//
+// La ficha publica VARIOS reproductores (Embed69 y otros como Uqload): antes se
+// usaba solo el primero, así que si ese fallaba se perdía el resto.
+function encontrarReproductores(html, base) {
   const texto = String(html);
   const patrones = [
-    /<iframe[^>]+src=["']([^"']*(?:\/vidurl\/|embed69\.org\/f\/)[^"']*)["']/i,
-    /["']((?:https?:)?\/\/(?:www\.)?embed69\.org\/f\/[^"']+)["']/i,
-    /["']([^"']*\/vidurl\/[^"']+)["']/i
+    /<iframe[^>]+src=["']([^"']*(?:\/vidurl\/|embed69\.org\/f\/)[^"']*)["']/gi,
+    /["']((?:https?:)?\/\/(?:www\.)?embed69\.org\/f\/[^"']+)["']/gi,
+    /["']([^"']*\/vidurl\/[^"']+)["']/gi
   ];
+  const urls = [];
   for (const patron of patrones) {
-    const encontrado = patron.exec(texto);
-    if (!encontrado) continue;
-    try { return new URL(encontrado[1].replace(/^\/\//, 'https://'), base).href; } catch { /* siguiente */ }
+    for (const encontrado of texto.matchAll(patron)) {
+      try {
+        const url = new URL(encontrado[1].replace(/^\/\//, 'https://'), base).href;
+        if (!urls.includes(url)) urls.push(url);
+      } catch { /* siguiente */ }
+    }
   }
-  return null;
+  return urls;
+}
+
+// Enlaces a players externos que la ficha publica como enlaces (no iframe):
+// `uqload.vc/embed-xxx.html`, `streamwish.to/e/xxx`, etc.
+const DOMINIOS_PLAYER = [
+  'uqload.vc', 'uqload.com', 'uqload.co', 'uqload.io', 'streamwish.to', 'hglink.to',
+  'vidhide.com', 'vidhidepro.com', 'filemoon.sx', 'filemoon.to', 'dood.la', 'do7go.com',
+  'voe.sx', 'lulustream.com', 'lulu.st', 'watchsb.com', 'sblona.com', 'streamtape.com'
+];
+
+function encontrarEmbeds(html, base) {
+  const texto = String(html);
+  const urls = [];
+  const patron = new RegExp(
+    `["'](https?:\\/\\/(?:[a-z0-9-]+\\.)*(?:${DOMINIOS_PLAYER.map(d => d.replace(/\./g, '\\.')).join('|')})\\/[^"'\\s<>]+)["']`,
+    'gi'
+  );
+  for (const encontrado of texto.matchAll(patron)) {
+    const url = encontrado[1].replace(/\\\//g, '/');
+    if (!urls.includes(url)) urls.push(url);
+  }
+  return urls;
+}
+
+// Primer reproductor (compatibilidad con el flujo anterior).
+function encontrarReproductor(html, base) {
+  return encontrarReproductores(html, base)[0] || null;
 }
 
 module.exports = {
   leerServidores, encontrarReproductor, leerRetoAnubis, descifrarEnlace,
   normalizarDestino, abrirReproductor, pasarAnubis, leerCookies, diagnosticar,
-  NOMBRES, ALIAS_DOMINIOS, normalizarDominio
+  encontrarReproductores, encontrarEmbeds, NOMBRES, ALIAS_DOMINIOS, normalizarDominio
 };
