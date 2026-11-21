@@ -31,8 +31,11 @@ function decodificarTexto(texto) {
 
 function decode(texto) {
   // Las barras escapadas se resuelven al final para no deshacer los \\u002F ya
-  // convertidos en el paso anterior.
-  return decodificarTexto(texto).replace(/\\\//g, '/');
+  // convertidos. El bucle cubre los dobles escapes que dejan algunos plugins
+  // (\\/ además de \/): sin esto quedan barras invertidas en la URL.
+  let salida = decodificarTexto(texto);
+  for (let i = 0; i < 3 && /\\\//.test(salida); i++) salida = salida.replace(/\\+\//g, '/');
+  return salida;
 }
 
 // ---------------------------------------------------------------------------
@@ -60,18 +63,36 @@ function parsePage(html, base) {
 
   const agregar = (raw) => {
     if (!raw) return;
+    // Un esquema inválido delante de '://' (p. ej. '1://host/x.m3u8' de un
+    // P.A.C.K.E.R. a medio desempaquetar) no es una URL: se descarta en vez de
+    // convertirla en una ruta inventada del sitio.
+    const posibleEsquema = /^[^/?#]*:\/\//.exec(raw);
+    if (posibleEsquema && !/^[a-z][a-z0-9+.-]*:\/\//i.test(raw)) return;
     let url;
     try {
-      // Las páginas mezclan \\/ y \/ (: https:\\/\\/host\\/files ...), lo que
-      // deja barras duplicadas dentro de la ruta. Se colapsan solo en la ruta:
-      // el "//" del esquema y la query se conservan intactos.
-      const limpia = raw.trim().replace(/([^:])\/{2,}/g, '$1/');
-      url = new URL(limpia, base).href;
-      const parsed = new URL(url);
-      parsed.pathname = parsed.pathname.replace(/\/{2,}/g, '/');
-      url = parsed.href;
+      // Las páginas mezclan \\/ y \/ (https:\\/\\/host\\/files ...), lo que deja
+      // barras duplicadas. Se normaliza SOLO el par esquema+host; la ruta y la
+      // query se conservan tal cual (colapsar la query rompe URLs con ?url=https://).
+      const limpia = raw.trim();
+      // Caso típico: https:/host/x (una sola barra) o https:///host/x.
+      const conEsquema = /^([a-z][a-z0-9+.-]*):\/+([^/?#].*)$/i.exec(limpia);
+      if (conEsquema) {
+        const resto = conEsquema[2];
+        const corte = resto.search(/[?#]/);
+        const ruta = (corte === -1 ? resto : resto.slice(0, corte)).replace(/\/{2,}/g, '/');
+        const cola = corte === -1 ? '' : resto.slice(corte);
+        url = new URL(`${conEsquema[1]}://${ruta}${cola}`, base).href;
+      } else {
+        const corte = limpia.search(/[?#]/);
+        const ruta = (corte === -1 ? limpia : limpia.slice(0, corte)).replace(/([^/])\/{2,}/g, '$1/');
+        const cola = corte === -1 ? '' : limpia.slice(corte);
+        url = new URL(ruta + cola, base).href;
+      }
     } catch { return; /* candidato malformado */ }
     if (!/^https?:/i.test(url)) return;
+    // Una URL con otro esquema dentro del host es un extracto de otra URL
+    // (p. ej. https://host/e/1://cdn/x.m3u8), no un destino real.
+    try { if (/:\/\//.test(new URL(url).hostname)) return; } catch { return; }
     // Una URL de media nunca es una página de reproductor, y viceversa.
     if (EXTENSION_MEDIA.test(new URL(url).pathname)) media.add(url);
     else frames.add(url);

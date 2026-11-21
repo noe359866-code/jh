@@ -88,4 +88,50 @@ function encontrarCifrado(html) {
   return null;
 }
 
-module.exports = { rc4, aesCbcDecrypt, aesCbcDecryptRaw, quitarRelleno, normalizarClave, encontrarCifrado };
+// AES-256-CBC con la clave derivada (SHA-256 de challenge+salt) y el IV en los
+// 16 primeros bytes del propio base64. Es el esquema de Embed69.
+function aesCbcDecryptIvIncluido(key, encryptedBase64) {
+  const raw = Buffer.from(encryptedBase64.replace(/\s+/g, ''), 'base64');
+  if (raw.length <= 16) return null;
+  const decipher = crypto.createDecipheriv('aes-256-cbc', normalizarClave(key).subarray(0, 32), raw.subarray(0, 16));
+  return Buffer.concat([decipher.update(raw.subarray(16)), decipher.final()]).toString('utf8');
+}
+
+// Clave de Embed69: SHA-256(LINK_CHALLENGE + LINK_SALT).
+function claveEmbed69(challenge, salt) {
+  return crypto.createHash('sha256').update(String(challenge) + String(salt), 'utf8').digest();
+}
+
+// Proof of work de Anubis: el hash SHA-256(randomData + nonce) debe empezar por
+// `difficulty` NIBBLES a cero, es decir `difficulty` caracteres hexadecimales
+// '0' (la implementación de referencia usa difficulty/2 bytes + medio byte: 8
+// significa '00' al inicio, no cuatro bytes). Devuelve { hash, nonce } o null
+// si se agota el presupuesto de intentos.
+function resolverAnubis(randomData, difficulty, { maxIntentos = 5_000_000 } = {}) {
+  const nibbles = Math.max(0, Math.floor(Number(difficulty) || 0));
+  const bytesLlenos = Math.floor(nibbles / 2);
+  const medioByte = nibbles % 2 !== 0;
+  const datos = String(randomData);
+  for (let nonce = 0; nonce < maxIntentos; nonce++) {
+    const digest = Uint8Array.from(crypto.createHash('sha256').update(datos + nonce, 'utf8').digest());
+    let valido = true;
+    for (let i = 0; i < bytesLlenos; i++) {
+      if (digest[i] !== 0) { valido = false; break; }
+    }
+    if (valido && medioByte && (digest[bytesLlenos] >> 4) !== 0) valido = false;
+    if (valido) return { hash: Buffer.from(digest).toString('hex'), nonce };
+  }
+  return null;
+}
+
+// Comprueba un resultado de PoW sin resolverlo (para tests y para validar).
+function verificarAnubis(randomData, difficulty, nonce, hashEsperado) {
+  const nibbles = Math.max(0, Math.floor(Number(difficulty) || 0));
+  const hex = crypto.createHash('sha256').update(String(randomData) + nonce, 'utf8').digest('hex');
+  return hex.startsWith('0'.repeat(nibbles)) && (!hashEsperado || hex === hashEsperado);
+}
+
+module.exports = {
+  rc4, aesCbcDecrypt, aesCbcDecryptRaw, quitarRelleno, normalizarClave, encontrarCifrado,
+  aesCbcDecryptIvIncluido, claveEmbed69, resolverAnubis, verificarAnubis
+};

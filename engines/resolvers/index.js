@@ -2,6 +2,7 @@ const { Resolvedor, crearResolvedorGenerico, normalizarDominio } = require('./ba
 const { crearResolvedorVoe } = require('./voe');
 const { crearResolvedorStreamtape } = require('./streamtape');
 const { crearResolvedorVidsrc } = require('./vidsrc');
+const { crearResolvedoresPacked, SERVIDORES } = require('./packed');
 
 // Dominios de reproductor conocidos: se autorizan explícitamente (además de los
 // hosts de sitio) porque son destinos legítimos de embed. Ampliar esta lista es
@@ -20,8 +21,9 @@ const HOSTS_REPRODUCTORES = [
   'sfastwish.com', 'wishembed.pro', 'embedwish.com', 'awish.pro', 'strwish.com', 'swhoi.com',
   'vidoza.net', 'vidoza.org', 'ok.ru', 'mixdrop.co', 'mixdrop.to', 'mixdrop.sx', 'mixdrop.bz',
   'upstream.to', 'vudeo.net', 'vudeo.io', 'embed69.org', 'netu.tv', 'waaw.to', 'pelisplus.lat',
-  // Vistos en la extracción real: FlixLatam sirve su reproductor desde uqload.
-  'uqload.vc', 'uqload.com', 'uqload.co', 'uqload.to', 'uqload.su', 'uqload.io'
+  // Todos los dominios de los players con P.A.C.K.E.R. (incluye los rotados
+  // que Embed69 devuelve: morencius.com, hglink.to, do7go.com...).
+  ...Object.values(SERVIDORES).flatMap(s => s.dominios)
 ];
 
 // Registry de resolvedores de reproductores. Equivale al listado de extractors
@@ -37,11 +39,14 @@ function crearRegistry({
 } = {}) {
   const hosts = [...new Set([...allowedHosts.map(normalizarDominio), ...HOSTS_REPRODUCTORES])];
 
+  const configuración = { allowedHosts: hosts, fetchImpl, lookupImpl, timeoutMs, deadlineMs, maxBytes, pageReferer, onEvent };
   const resolvers = [
-    crearResolvedorVoe({ allowedHosts: hosts, fetchImpl, lookupImpl, timeoutMs, deadlineMs, maxBytes, pageReferer, onEvent, clave: voeKey, iv: voeIv }),
-    crearResolvedorStreamtape({ allowedHosts: hosts, fetchImpl, lookupImpl, timeoutMs, deadlineMs, maxBytes, pageReferer, onEvent }),
-    crearResolvedorVidsrc({ allowedHosts: hosts, fetchImpl, lookupImpl, timeoutMs, deadlineMs, maxBytes, pageReferer, onEvent, claves: vidsrcKeys }),
-    crearResolvedorGenerico({ allowedHosts: hosts, fetchImpl, lookupImpl, timeoutMs, deadlineMs, maxBytes, pageReferer, onEvent })
+    crearResolvedorVoe({ ...configuración, clave: voeKey, iv: voeIv }),
+    crearResolvedorStreamtape(configuración),
+    crearResolvedorVidsrc({ ...configuración, claves: vidsrcKeys }),
+    // Players con P.A.C.K.E.R.: los que devuelve Embed69 en FlixLatam.
+    ...crearResolvedoresPacked(configuración),
+    crearResolvedorGenerico(configuración)
   ];
 
   function encontrarResolvedor(link) {
@@ -66,4 +71,4 @@ function crearRegistry({
 
 function hostsReproductores() { return [...HOSTS_REPRODUCTORES]; }
 
-module.exports = { crearRegistry, Resolvedor, HOSTS_REPRODUCTORES, hostsReproductores };
+module.exports = { crearRegistry, Resolvedor, HOSTS_REPRODUCTORES, hostsReproductores, SERVIDORES };

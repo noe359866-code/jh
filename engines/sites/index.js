@@ -1,15 +1,14 @@
-const { createFetcher, createExtractor } = require('./extractor');
+const { createFetcher } = require('./extractor');
+const { crearProveedorFlixLatam } = require('./flixlatam');
 const { crearRegistry, hostsReproductores } = require('../resolvers');
 
-// Proveedores de sitios: cada proveedor descubre las páginas de reproductor
-// (players/embeds) de una página de contenido y las resuelve con el registry.
-// Equivale a los *Provider.kt de Streamflix (FlixLatamProvider). La diferencia
-// es que aquí solo nos interesa la resolución de stream: no catálogos, no
-// metadatos, no demos.
+// Proveedores de sitios: cada proveedor conoce el flujo real de su sitio y
+// devuelve las páginas de reproductor o los servidores ya descifrados.
+// Equivale a los *Provider.kt de Streamflix.
 //
-// Solo FlixLatam: DocumaniaTV y PoseidonHD2 se retiraron por decisión del
-// administrador (el primero bloquea IPs de datacenter con HTTP 403 y el
-// segundo no expone los servidores en el HTML estático).
+// Solo FlixLatam: DocumaniaTV y PoseidonHD2 se retiraron (el primero bloquea
+// IPs de datacenter con HTTP 403 y el segundo no expone los servidores en el
+// HTML estático).
 const PROVEEDORES = [
   {
     clave: 'flixlatam',
@@ -19,15 +18,16 @@ const PROVEEDORES = [
   }
 ];
 
-// Hosts confiables por defecto: los dominios del sitio y los dominios de
-// reproductor conocidos del registry. Son destinos legítimos de embed, no se
-// descubren desde el HTML. Los medios servidos desde CDN deben añadirse
-// explícitamente con SITES_ALLOWED_HOSTS y nunca se autorizan automáticamente.
+// Hosts confiables por defecto: el dominio del sitio, el reproductor Embed69 y
+// los dominios de reproductor conocidos del registry. Son destinos legítimos
+// del flujo de resolución, no se descubren desde el HTML. Los medios servidos
+// desde CDN deben añadirse explícitamente con SITES_ALLOWED_HOSTS.
 function hostsPermitidos(entorno = process.env) {
   const extras = (entorno.SITES_ALLOWED_HOSTS || '')
     .split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
   return [...new Set([
     ...PROVEEDORES.flatMap(p => p.hosts.map(h => h.toLowerCase())),
+    'embed69.org',
     ...hostsReproductores(),
     ...extras
   ])];
@@ -50,7 +50,6 @@ function validarUrlSitio(raw) {
   return { url, proveedor };
 }
 
-// Limpieza mínima para no publicar tokens de sesión ni fragmentos.
 function sanitizarUrl(raw, quitarQuery = false) {
   try {
     const url = new URL(raw);
@@ -59,10 +58,10 @@ function sanitizarUrl(raw, quitarQuery = false) {
   } catch { return null; }
 }
 
-// Resolución de stream: valida la URL del sitio, descubre los reproductores y
-// los medios directos, y resuelve cada reproductor con el registry. Devuelve
-// [{ name, title, url }] verificados (formato de objeto Stream de Stremio);
-// lista vacía = nada verificable.
+// Resolución de stream: valida la URL, deja que el proveedor descubra los
+// servidores y resuelve cada uno con el registry de reproductores. Devuelve
+// [{ name, title, url }] verificados (objeto Stream de Stremio); lista vacía =
+// nada verificable.
 async function resolver(request, options = {}) {
   const { url, proveedor } = validarUrlSitio(request && request.url);
   const allowed = options.allowedHosts || hostsPermitidos();
@@ -77,28 +76,11 @@ async function resolver(request, options = {}) {
     onEvent: options.onEvent
   };
 
-  // El extractor recorre la página y sus iframes del mismo sitio (o de hosts
-  // autorizados) y verifica los candidatos .m3u8/.mp4 por firma.
-  const extractor = createExtractor({
-    ...configuracion,
-    maxPages: options.maxPages || 5,
-    name: proveedor.nombre,
-    // Dominios de reproductor conocidos: se descubren aunque el sitio los
-    // enlace en vez de embeberlos en un iframe.
-    playerHosts: hostsPermitidos().filter(host => hostsReproductores().includes(host))
-  });
-  const { media, embeds } = await extractor.descubrir(url.href);
+  const descubridor = crearProveedorFlixLatam(configuracion);
+  const { media, servidores } = await descubridor.descubrir(url.href);
 
-  // Los reproductores se resuelven con su resolvedor dedicado; el registry no
-  // amplía la lista de hosts con lo que aparezca en el HTML.
   const registry = crearRegistry({
-    allowedHosts: allowed,
-    fetchImpl: options.fetchImpl,
-    lookupImpl: options.lookupImpl,
-    timeoutMs: options.timeoutMs,
-    deadlineMs: options.deadlineMs,
-    maxBytes: options.maxBytes,
-    pageReferer: url.origin + '/',
+    ...configuracion,
     onEvent: options.onEvent,
     voeKey: options.voeKey,
     voeIv: options.voeIv,
@@ -107,20 +89,19 @@ async function resolver(request, options = {}) {
 
   const streams = [];
   const yaVistos = new Set();
-  const agregar = (stream) => {
+  const agregar = (stream, etiqueta) => {
     const limpia = sanitizarUrl(stream.url);
     if (!limpia || yaVistos.has(limpia)) return false;
     yaVistos.add(limpia);
     streams.push({
       name: proveedor.nombre,
-      title: stream.titulo || proveedor.titulo || 'HLS / MP4',
+      title: etiqueta || stream.titulo || proveedor.titulo || 'HLS / MP4',
       url: limpia
     });
     return true;
   };
 
-  // 1) Medios literales de la página del sitio, verificados por firma (con
-  //    concurrencia acotada y el mismo presupuesto de tiempo total).
+  // 1) Medios literales de la ficha o del reproductor, verificados por firma.
   const fetcherMedios = createFetcher(configuracion);
   for (const candidato of media.slice(0, 10)) {
     try {
@@ -130,13 +111,14 @@ async function resolver(request, options = {}) {
     }
   }
 
-  // 2) Reproductores descubiertos (iframes/embeds autorizados).
-  for (const servidor of embeds.slice(0, 10)) {
+  // 2) Servidores descifrados de Embed69: cada uno es un embed externo que el
+  //    registry resuelve a HLS/MP4. La etiqueta indica idioma y servidor.
+  for (const servidor of servidores.slice(0, 12)) {
     try {
-      const resueltos = await registry.resolver(servidor);
-      for (const stream of resueltos) agregar(stream);
+      const resueltos = await registry.resolver(servidor.url);
+      for (const stream of resueltos) agregar(stream, servidor.etiqueta);
     } catch (error) {
-      if (options.onEvent) options.onEvent({ stage: 'resolver-failed', host: new URL(servidor).hostname, error: error.message });
+      if (options.onEvent) options.onEvent({ stage: 'resolver-failed', host: new URL(servidor.url).hostname, error: error.message });
     }
   }
   return streams;
