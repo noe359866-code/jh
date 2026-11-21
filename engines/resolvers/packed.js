@@ -53,14 +53,24 @@ const SERVIDORES = {
 // interposición hay (formulario POST, redirección JS, meta refresh, loader).
 // Versión publicable de una página diminuta: se eliminan URLs, rutas, tokens
 // largos y valores de atributos; quedan etiquetas, nombres de atributo y texto.
+// Versión publicable de una página diminuta: se conserva la ESTRUCTURA
+// (etiquetas y texto visible) y se descartan todos los atributos, que es donde
+// viven los enlaces, tokens y valores CSRF. Así el reporte explica qué
+// interpone el player sin poder filtrar nada.
 function cuerpoRedactado(html, maximo = 1200) {
-  return String(html)
-    .slice(0, maximo)
-    .replace(/https?:\/\/[^\s"'<>]+/gi, '<url>')
-    .replace(/\/\/[^\s"'<>]{4,}/g, '<url>')
-    .replace(/["'][A-Za-z0-9+/=_-]{24,}["']/g, '"<token>"')
+  const texto = String(html).slice(0, maximo * 4);
+  const etiquetas = [];
+  for (const encontrado of texto.matchAll(/<\/?([a-z][a-z0-9-]*)/gi)) etiquetas.push(encontrado[1].toLowerCase());
+  const visible = texto
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&[a-z#0-9]+;/gi, ' ')
     .replace(/\s+/g, ' ')
-    .trim();
+    .trim()
+    .slice(0, maximo);
+  const resumen = etiquetas.slice(0, 30).join(' ');
+  return `etiquetas: ${resumen} | texto: ${visible}`.slice(0, maximo);
 }
 
 // ---------------------------------------------------------------------------
@@ -142,7 +152,7 @@ function rutaRedactada(ruta) {
 
 function formaPagina(html) {
   const texto = String(html);
-  const hosts = (listas) => listas.map(u => { try { return new URL(u).hostname; } catch { return '?'; } });
+  const hosts = (listas) => listas.map(u => { try { return new URL(u).hostname; } catch { return '-'; } });
   const acciones = [...texto.matchAll(/<form[^>]*action=["']([^"']+)["']/gi)].map(m => m[1]);
   const campos = [...texto.matchAll(/<input[^>]*name=["']([^"']+)["']/gi)].map(m => m[1]).slice(0, 4);
   const scripts = [...texto.matchAll(/<script[^>]*src=["']([^"']+)["']/gi)].map(m => m[1]).slice(0, 4);

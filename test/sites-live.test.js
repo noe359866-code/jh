@@ -35,7 +35,21 @@ test('sites-live valida la URL, intenta la extracción y escribe un reporte sin 
   // El reporte solo contiene host y conteos: ni rutas, ni queries, ni tokens.
   const serializado = JSON.stringify(reporte);
   assert.doesNotMatch(serializado, /patton|pelicula|\?|token/i);
-  const CLAVES = new Set(['stage', 'host', 'site', 'verified', 'candidates', 'frames', 'error']);
+  // Campos saneados permitidos. Cualquier diagnóstico nuevo se añade aquí a
+  // propósito: el contrato es que el reporte no puede llevar URLs, queries,
+  // HTML ni tokens, y este test es el que lo vigila.
+  const CLAVES = new Set([
+    'stage', 'host', 'site', 'verified', 'candidates', 'frames', 'error',
+    // Embed69 / Anubis
+    'dataLink', 'challenge', 'salt', 'anubisPendiente', 'anubisPasado', 'captcha',
+    'bloqueado', 'packer', 'jwplayer', 'soloJs', 'sinCuerpo', 'bytes', 'nonce',
+    'metodo', 'aviso', 'titulo', 'hacia', 'estado', 'cookies', 'auth',
+    'capasPacker', 'capas', 'forma', 'cuerpo', 'rutas', 'api', 'scripts', 'total',
+    'algorithm', 'intento',
+    // Loader y verificación humana
+    'fetch', 'xhr', 'atob', 'b64', 'eval', 'sha', 'ofuscado', 'literales',
+    'proveedor', 'formulario'
+  ]);
   for (const evento of reporte.events) {
     assert.ok(Object.keys(evento).every(clave => CLAVES.has(clave)), `evento con campo inesperado: ${JSON.stringify(evento)}`);
   }

@@ -330,3 +330,20 @@ test('un loader ofuscado se detecta y no se inventan rutas', async () => {
   // No se piden rutas al azar sacadas del array de cadenas.
   assert.ok(!pedidos.some(p => /^\/[A-Za-z0-9]{4,6}$/.test(p)), `pedidos: ${pedidos.join(',')}`);
 });
+
+test('el cuerpo redactado cumple el contrato del reporte saneado', () => {
+  // El reporte en vivo nunca puede llevar queries ni la palabra "token": el
+  // test de contrato de scripts/sites-live.js lo vigila. El diagnóstico nuevo
+  // (cuerpo, rutas del loader) también debe cumplirlo.
+  const { cuerpoRedactado, rutaRedactada } = require('../engines/resolvers/packed');
+  const conSecretos = '<script src="/style.css" data-cf-beacon=\'{"token":"abc123"}\'></script>' +
+    '<form method="post"><input name="_token" value="xyz">' +
+    '<input name="csrf_token" value="secreto"></form>' +
+    '<script>const api="/dl?op=player_api&file=abc&sig=deadbeef";</script>';
+  const cuerpo = cuerpoRedactado(conSecretos);
+  assert.doesNotMatch(cuerpo, /\?/, 'sin queries');
+  assert.doesNotMatch(cuerpo, /token/i, 'sin la palabra token');
+  assert.doesNotMatch(cuerpo, /abc123|deadbeef|secreto|xyz/, 'sin valores sensibles');
+  // Las rutas se publican sin valores de parámetros.
+  assert.equal(rutaRedactada('/dl?op=player_api&file=abc'), '/dl?op&file');
+});
