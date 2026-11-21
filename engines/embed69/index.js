@@ -5,7 +5,8 @@ const { normalizarDominio } = require('../resolvers/base');
 // Embed69: el reproductor que usa FlixLatam
 // ---------------------------------------------------------------------------
 //
-// Protocolo (verificado contra la implementación de referencia de CloudStream):
+// Protocolo (verificado contra la implementación de referencia de CloudStream
+// y contra la documentación de Anubis):
 //
 //  1. La página del reproductor (`embed69.org/f/<id>`) trae `let dataLink = [...]`
 //     en claro: un array JSON con los servidores agrupados por idioma.
@@ -14,7 +15,9 @@ const { normalizarDominio } = require('../resolvers/base');
 //  3. Los 16 primeros bytes del base64 son el IV y el resto el texto cifrado.
 //  4. El sitio está tras Anubis (proof of work): si la página trae
 //     `<script id="anubis_challenge">`, hay que resolver el reto y pedir
-//     `/ .within.website/x/cmd/anubis/api/pass-challenge` para obtener cookies.
+//     `/.within.website/x/cmd/anubis/api/pass-challenge` para obtener la cookie
+//     `*-anubis-auth`. Ese reto está ligado al User-Agent y a la cookie de
+//     verificación que emite la propia página del reto.
 //
 // Nada de esto ejecuta JavaScript del sitio: son regex, SHA-256 y AES.
 
@@ -22,6 +25,8 @@ const DATA_LINK = /let\s+dataLink\s*=\s*(\[[\s\S]*?\])\s*;/;
 const CHALLENGE = /LINK_CHALLENGE\s*=\s*'([^']+)'/;
 const SALT = /LINK_SALT\s*=\s*'([^']+)'/;
 const ANUBIS = /<script[^>]*id=["']anubis_challenge["'][^>]*>([\s\S]*?)<\/script>/i;
+const ANUBIS_PREFIX = /<script[^>]*id=["']anubis_base_prefix["'][^>]*>([\s\S]*?)<\/script>/i;
+const ANUBIS_VERSION = /<script[^>]*id=["']anubis_version["'][^>]*>([\s\S]*?)<\/script>/i;
 
 // Nombres legibles de los servidores de Embed69.
 const NOMBRES = {
@@ -53,19 +58,156 @@ function normalizarDestino(url) {
   return salida;
 }
 
-// Extrae el reto de Anubis: { randomData, difficulty, id }.
+// ---------------------------------------------------------------------------
+// Anubis
+// ---------------------------------------------------------------------------
+
+// Extrae el reto: la dificultad autoritativa está en `rules.difficulty`.
 function leerRetoAnubis(html) {
-  const encontrado = ANUBIS.exec(String(html));
+  const texto = String(html);
+  const encontrado = ANUBIS.exec(texto);
   if (!encontrado) return null;
-  try {
-    const raiz = JSON.parse(encontrado[1]);
-    const reto = raiz.challenge || raiz;
-    if (!reto || !reto.randomData) return null;
-    return { randomData: String(reto.randomData), difficulty: Number(reto.difficulty) || 0, id: String(reto.id || '') };
-  } catch { return null; }
+  let raiz;
+  try { raiz = JSON.parse(encontrado[1]); } catch { return null; }
+  const reto = raiz.challenge || raiz;
+  if (!reto || !reto.randomData) return null;
+
+  let prefijo = '';
+  const basePrefix = ANUBIS_PREFIX.exec(texto);
+  if (basePrefix) {
+    try {
+      const valor = JSON.parse(basePrefix[1]);
+      prefijo = typeof valor === 'string' ? valor : '';
+    } catch {
+      const simple = /"([^"]*)"/.exec(basePrefix[1]);
+      prefijo = simple ? simple[1] : '';
+    }
+  }
+
+  const reglas = raiz.rules || {};
+  return {
+    randomData: String(reto.randomData),
+    difficulty: Number(reglas.difficulty ?? reto.difficulty) || 0,
+    algorithm: String(reglas.algorithm || reto.method || 'fast').toLowerCase(),
+    id: String(reto.id || ''),
+    prefijo: prefijo.replace(/\/+$/, '')
+  };
 }
 
-// Descifra un enlace de dataLink. Devuelve null si el payload no es válido.
+function leerCookies(cabeceras) {
+  const cookies = {};
+  for (const linea of cabeceras || []) {
+    const par = String(linea).split(';')[0].trim();
+    const pos = par.indexOf('=');
+    if (pos > 0) cookies[par.slice(0, pos)] = par.slice(pos + 1);
+  }
+  return cookies;
+}
+
+function cabeceraCookies(cookies) {
+  return Object.entries(cookies).map(([k, v]) => `${k}=${v}`).join('; ');
+}
+
+// Resuelve el reto de Anubis y devuelve las cookies con acceso.
+//
+// - `fast`/`slow`: SHA-256 con `difficulty` nibbles a cero.
+// - `metarefresh`: no hay PoW; basta con volver a pedir la página tras la espera.
+// - `argon2id`/`preact`: no soportados sin dependencias nativas; se informa.
+//
+// La petición de pass-challenge se prueba en GET y POST, con `redir` como URL
+// completa y como ruta, porque distintas versiones aceptan formas distintas.
+// La cookie se acepta también cuando llega en un 302.
+async function pasarAnubis(fetcher, url, reto, { referer, cookies = {}, onEvent = () => {}, maxIntentos = 3_000_000 } = {}) {
+  const origen = new URL(url).origin;
+
+  if (reto.algorithm === 'metarefresh') {
+    onEvent({ stage: 'anubis', host: new URL(url).hostname, algorithm: 'metarefresh' });
+    await new Promise(r => setTimeout(r, Math.max(500, reto.difficulty * 200)));
+    return { ...cookies };
+  }
+  if (reto.algorithm !== 'fast' && reto.algorithm !== 'slow') {
+    onEvent({ stage: 'anubis-no-soportado', host: new URL(url).hostname, algorithm: reto.algorithm });
+    return null;
+  }
+
+  const inicio = Date.now();
+  const solucion = resolverAnubis(reto.randomData, reto.difficulty, { maxIntentos });
+  if (!solucion) {
+    onEvent({ stage: 'anubis-agotado', host: new URL(url).hostname, difficulty: reto.difficulty });
+    return null;
+  }
+  const transcurrido = Date.now() - inicio;
+  onEvent({ stage: 'anubis', host: new URL(url).hostname, difficulty: reto.difficulty, algorithm: reto.algorithm, nonce: solucion.nonce, ms: transcurrido });
+
+  // El servidor rechaza una respuesta enviada demasiado rápido: exige un tiempo
+  // mínimo proporcional a la dificultad (~80 ms por nivel).
+  const minimo = reto.difficulty * 80;
+  if (transcurrido < minimo) await new Promise(r => setTimeout(r, minimo - transcurrido));
+
+  const base = `${origen}${reto.prefijo || ''}/.within.website/x/cmd/anubis/api/pass-challenge`;
+  const redirCompleto = url;
+  const redirRuta = new URL(url).pathname + (new URL(url).search || '');
+  const campos = { id: reto.id, response: solucion.hash, nonce: String(solucion.nonce), elapsedTime: String(Date.now() - inicio) };
+  const cabeceras = {
+    ...(cabeceraCookies(cookies) ? { Cookie: cabeceraCookies(cookies) } : {}),
+    ...(referer ? { Referer: referer } : {}),
+    'Content-Type': 'application/x-www-form-urlencoded'
+  };
+
+  const intentos = [];
+  for (const redir of [redirCompleto, redirRuta]) {
+    const consulta = new URLSearchParams({ ...campos, redir });
+    intentos.push({ url: `${base}?${consulta}`, metodo: 'GET' });
+    intentos.push({ url: base, metodo: 'POST', cuerpo: new URLSearchParams({ ...campos, redir }).toString() });
+  }
+
+  const recibidas = { ...cookies };
+  for (const intento of intentos) {
+    try {
+      const respuesta = await fetcher.request(intento.url, cabeceras, {
+        method: intento.metodo, body: intento.cuerpo, redirect: 'manual', permitirRedireccion: true
+      });
+      const nuevas = leerCookies(respuesta.headers.getSetCookie ? respuesta.headers.getSetCookie() : []);
+      Object.assign(recibidas, nuevas);
+      // Algunas versiones devuelven la página real en vez de una cookie.
+      const cuerpo = (await fetcher.readLimited(respuesta)).toString('utf8');
+      if (DATA_LINK.test(cuerpo)) return { cookies: recibidas, html: cuerpo };
+      if (nuevas['within.website-x-cmd-anubis-auth'] || Object.keys(nuevas).some(k => k.includes('anubis-auth'))) {
+        return { cookies: recibidas };
+      }
+    } catch { /* siguiente variante */ }
+  }
+  return null;
+}
+
+// Descarga la página del reproductor resolviendo Anubis si está activo.
+// Devuelve { html, anubis, pasado }.
+async function abrirReproductor(fetcher, url, { referer, onEvent = () => {} } = {}) {
+  const baseHeaders = referer ? { Referer: referer } : {};
+  let cookies = {};
+  let html = '';
+  for (let vuelta = 0; vuelta < 2; vuelta++) {
+    const cabecera = cabeceraCookies(cookies);
+    const respuesta = await fetcher.request(url, { ...baseHeaders, ...(cabecera ? { Cookie: cabecera } : {}) });
+    html = (await fetcher.readLimited(respuesta)).toString('utf8');
+    Object.assign(cookies, leerCookies(respuesta.headers.getSetCookie ? respuesta.headers.getSetCookie() : []));
+
+    const reto = leerRetoAnubis(html);
+    if (!reto) return { html, anubis: vuelta > 0, pasado: true };
+    if (vuelta === 1) return { html, anubis: true, pasado: false };
+
+    const resultado = await pasarAnubis(fetcher, url, reto, { referer, cookies, onEvent });
+    if (!resultado) return { html, anubis: true, pasado: false };
+    cookies = resultado.cookies;
+    if (resultado.html) return { html: resultado.html, anubis: true, pasado: true };
+  }
+  return { html, anubis: true, pasado: false };
+}
+
+// ---------------------------------------------------------------------------
+// dataLink
+// ---------------------------------------------------------------------------
+
 function descifrarEnlace(cifrado, clave) {
   try {
     const texto = aesCbcDecryptIvIncluido(clave, cifrado);
@@ -85,7 +227,6 @@ function diagnosticar(html) {
     salt: SALT.test(texto),
     anubis: ANUBIS.test(texto),
     longitud: texto.length,
-    // Pistas de bloqueo (sin volcar el HTML).
     captcha: /cf-challenge|just a moment|attention required/i.test(texto),
     bloqueado: /403 forbidden|access denied|blocked/i.test(texto)
   };
@@ -93,9 +234,10 @@ function diagnosticar(html) {
 
 // Convierte el dataLink en claro en servidores descifrados.
 function leerServidores(html) {
-  const datos = DATA_LINK.exec(String(html));
-  const challenge = CHALLENGE.exec(String(html));
-  const salt = SALT.exec(String(html));
+  const texto = String(html);
+  const datos = DATA_LINK.exec(texto);
+  const challenge = CHALLENGE.exec(texto);
+  const salt = SALT.exec(texto);
   if (!datos || !challenge || !salt) return [];
   const clave = claveEmbed69(challenge[1], salt[1]);
   let lista;
@@ -139,74 +281,8 @@ function encontrarReproductor(html, base) {
   return null;
 }
 
-// Resuelve el PoW y hace la petición de pass-challenge. Devuelve las cookies
-// resultantes o null si el sitio no lo pide o el reto es irresoluble.
-async function pasarAnubis(fetcher, url, reto, { referer, cookies = {}, maxIntentos = 2_000_000 } = {}) {
-  const inicio = Date.now();
-  const solucion = resolverAnubis(reto.randomData, reto.difficulty, { maxIntentos });
-  if (!solucion) return null;
-  const transcurrido = Date.now() - inicio;
-  const origen = new URL(url).origin;
-  const destino = new URL(url);
-  const redir = destino.pathname + (destino.search || '');
-  const campos = {
-    id: reto.id, response: solucion.hash, nonce: String(solucion.nonce),
-    redir, elapsedTime: String(transcurrido)
-  };
-  const cookieHeader = Object.entries(cookies).map(([k, v]) => `${k}=${v}`).join('; ');
-  const cabeceras = {
-    ...(cookieHeader ? { Cookie: cookieHeader } : {}),
-    ...(referer ? { Referer: referer } : {}),
-    'Content-Type': 'application/x-www-form-urlencoded'
-  };
-  // Anubis acepta GET con query y POST con formulario. Se prueban ambos y se
-  // acepta también un 302 que traiga la cookie en lugar de una respuesta 200.
-  const intentos = [
-    { method: 'POST', body: new URLSearchParams(campos).toString(), url: `${origen}/.within.website/x/cmd/anubis/api/pass-challenge` },
-    { method: 'GET', url: `${origen}/.within.website/x/cmd/anubis/api/pass-challenge?${new URLSearchParams(campos)}` }
-  ];
-  const recibidas = { ...cookies };
-  for (const intento of intentos) {
-    try {
-      const respuesta = await fetcher.request(intento.url, cabeceras, {
-        method: intento.method, body: intento.body, redirect: 'manual', permitirRedireccion: true
-      });
-      const nuevas = leerCookies(respuesta.headers.getSetCookie ? respuesta.headers.getSetCookie() : []);
-      Object.assign(recibidas, nuevas);
-      if (Object.keys(nuevas).length) return recibidas;
-    } catch { /* siguiente método */ }
-  }
-  return null;
-}
-
-function leerCookies(cabeceras) {
-  const cookies = {};
-  for (const linea of cabeceras || []) {
-    const par = String(linea).split(';')[0].trim();
-    const pos = par.indexOf('=');
-    if (pos > 0) cookies[par.slice(0, pos)] = par.slice(pos + 1);
-  }
-  return cookies;
-}
-
-// Descarga la página del reproductor resolviendo Anubis si está activo.
-async function abrirReproductor(fetcher, url, { referer, onEvent = () => {} } = {}) {
-  const headers = referer ? { Referer: referer } : {};
-  const respuesta = await fetcher.request(url, headers);
-  let html = (await fetcher.readLimited(respuesta)).toString('utf8');
-  const cookies = leerCookies(respuesta.headers.getSetCookie ? respuesta.headers.getSetCookie() : []);
-  const reto = leerRetoAnubis(html);
-  if (!reto) return html;
-  onEvent({ stage: 'anubis', host: new URL(url).hostname, difficulty: reto.difficulty });
-  const pasadas = await pasarAnubis(fetcher, url, reto, { referer, cookies });
-  if (!pasadas) return html; // sin cookies: se devuelve lo que haya (lista vacía)
-  const cabecera = Object.entries(pasadas).map(([k, v]) => `${k}=${v}`).join('; ');
-  const segunda = await fetcher.request(url, { ...headers, Cookie: cabecera });
-  html = (await fetcher.readLimited(segunda)).toString('utf8');
-  return html;
-}
-
 module.exports = {
   leerServidores, encontrarReproductor, leerRetoAnubis, descifrarEnlace,
-  normalizarDestino, abrirReproductor, leerCookies, diagnosticar, NOMBRES, ALIAS_DOMINIOS
+  normalizarDestino, abrirReproductor, pasarAnubis, leerCookies, diagnosticar,
+  NOMBRES, ALIAS_DOMINIOS, normalizarDominio
 };

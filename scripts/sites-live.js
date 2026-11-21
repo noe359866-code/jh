@@ -34,10 +34,12 @@ function eventoSanitizado(evento) {
   if (Number.isFinite(evento.frames)) limpio.frames = evento.frames;
   if (evento.error) limpio.error = String(evento.error).slice(0, 200);
   // Diagnóstico booleano de Embed69 (nunca contenido de la página).
-  for (const clave of ['dataLink', 'challenge', 'salt', 'anubisPendiente', 'captcha', 'bloqueado']) {
+  for (const clave of ['dataLink', 'challenge', 'salt', 'anubisPendiente', 'anubisPasado', 'captcha', 'bloqueado']) {
     if (typeof evento[clave] === 'boolean') limpio[clave] = evento[clave];
   }
   if (Number.isFinite(evento.bytes)) limpio.bytes = evento.bytes;
+  if (Number.isFinite(evento.nonce)) limpio.nonce = evento.nonce;
+  if (evento.algorithm) limpio.algorithm = String(evento.algorithm).slice(0, 20);
   return limpio;
 }
 

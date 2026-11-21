@@ -61,8 +61,8 @@ jobs:
               + (t.error ? ' ERROR=' + t.error : '')).join(' | ');
             const diag = (r.events || []).filter(e => e.stage === 'servidores')
               .map(e => 'dataLink=' + e.dataLink + ' challenge=' + e.challenge + ' salt=' + e.salt
-                + ' anubisPendiente=' + e.anubisPendiente + ' bytes=' + e.bytes
-                + ' captcha=' + e.captcha + ' bloqueado=' + e.bloqueado).join(' ');
+                + ' anubisPendiente=' + e.anubisPendiente + ' anubisPasado=' + e.anubisPasado
+                + ' bytes=' + e.bytes + ' captcha=' + e.captcha + ' bloqueado=' + e.bloqueado).join(' ');
             const etapas = {};
             for (const e of r.events || []) etapas[e.stage] = (etapas[e.stage] || 0) + 1;
             const resumen = 'success=' + r.success + ' :: ' + porSitio + (diag ? ' :: ' + diag : '') + ' :: etapas=' + JSON.stringify(etapas);

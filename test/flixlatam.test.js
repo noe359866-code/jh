@@ -96,16 +96,15 @@ test('FlixLatam resuelve Anubis antes de leer el dataLink', async () => {
     fetchImpl: async (url, opciones) => {
       const host = url.hostname + url.pathname;
       if (host === 'flixlatam.com/pelicula/patton') return new Response(FICHA);
+      // El nombre real de la cookie es *-anubis-auth.
       if (url.pathname.startsWith('/.within.website/x/cmd/anubis/api/pass-challenge')) {
-        // Anubis acepta GET con query y POST con formulario: se prueban ambos.
         passChallenge = { url, metodo: opciones.method, cuerpo: opciones.body };
         assert.equal(opciones.redirect, 'manual');
-        // El sitio devuelve la cookie que da acceso.
-        return new Response(null, { status: 302, headers: { 'Set-Cookie': 'anubis=ok; Path=/; HttpOnly' } });
+        return new Response(null, { status: 302, headers: { 'Set-Cookie': 'within.website-x-cmd-anubis-auth=tok3n; Path=/; HttpOnly' } });
       }
       if (host === 'embed69.org/f/tt0066206/') {
         // Con cookie ya se sirve la página real con los servidores.
-        if (opciones.headers?.Cookie?.includes('anubis=ok')) {
+        if (opciones.headers?.Cookie?.includes('anubis-auth')) {
           return new Response(paginaEmbed69({ grupos: [{ idioma: 'LAT', servidores: [['voe', 'https://voe.sx/e/ok']] }] }));
         }
         return new Response(embedProtegido);
@@ -118,13 +117,15 @@ test('FlixLatam resuelve Anubis antes de leer el dataLink', async () => {
 
   assert.deepEqual(streams.map(s => s.url), ['https://voe.sx/hls/master.m3u8']);
   assert.ok(passChallenge, 'debe pedir pass-challenge');
-  // El primer intento es POST con formulario (el que usa Anubis hoy).
-  assert.equal(passChallenge.metodo, 'POST');
-  const campos = new URLSearchParams(passChallenge.cuerpo);
+  // El primer intento es GET con la respuesta en la query (protocolo Anubis).
+  assert.equal(passChallenge.metodo, 'GET');
+  const campos = passChallenge.url.searchParams;
   assert.equal(campos.get('id'), 'reto-1');
   assert.equal(campos.get('nonce'), String(solucion.nonce));
   assert.equal(campos.get('response'), solucion.hash);
-  assert.equal(campos.get('redir'), '/f/tt0066206/');
+  assert.equal(campos.get('redir'), 'https://embed69.org/f/tt0066206/');
+  // Y se espera el tiempo mínimo que exige el servidor (dificultad × 80 ms).
+  assert.ok(Number(campos.get('elapsedTime')) >= 4 * 80 - 5);
 });
 
 test('FlixLatam no inventa streams cuando el reproductor falla', async () => {

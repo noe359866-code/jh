@@ -68,9 +68,16 @@ test('Embed69 ignora payloads que no descifran o no son http', () => {
 });
 
 test('Embed69 detecta el reto de Anubis y el iframe del reproductor en la ficha', () => {
-  const reto = leerRetoAnubis('<script id="anubis_challenge" type="application/json">' +
-    '{"challenge":{"randomData":"abc","difficulty":4,"id":"xyz"}}</script>');
-  assert.deepEqual(reto, { randomData: 'abc', difficulty: 4, id: 'xyz' });
+  // Formato real de Anubis: la dificultad autoritativa está en rules.difficulty
+  // y hay prefijo de despliegue y algoritmo.
+  const reto = leerRetoAnubis('<script id="anubis_base_prefix" type="application/json">"/app"</script>' +
+    '<script id="anubis_challenge" type="application/json">' +
+    '{"rules":{"algorithm":"fast","difficulty":5},"challenge":{"randomData":"abc","difficulty":4,"id":"xyz"}}</script>');
+  assert.deepEqual(reto, { randomData: 'abc', difficulty: 5, algorithm: 'fast', id: 'xyz', prefijo: '/app' });
+  // Sin rules se cae a challenge.difficulty (compatibilidad).
+  assert.deepEqual(leerRetoAnubis('<script id="anubis_challenge" type="application/json">' +
+    '{"challenge":{"randomData":"abc","difficulty":4,"id":"xyz"}}</script>'),
+  { randomData: 'abc', difficulty: 4, algorithm: 'fast', id: 'xyz', prefijo: '' });
   assert.equal(leerRetoAnubis('<html>sin reto</html>'), null);
   // Las dos formas que usa FlixLatam: iframe a embed69 y al antiguo /vidurl/.
   assert.equal(encontrarReproductor('<iframe src="https://embed69.org/f/tt1/"></iframe>', 'https://flixlatam.com/pelicula/x'),

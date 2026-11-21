@@ -44,13 +44,14 @@ const crearProveedorFlixLatam = ({ allowedHosts, fetchImpl, lookupImpl, timeoutM
 
       if (!reproductor) return { reproductor: null, media, servidores: [] };
 
-      const htmlReproductor = await abrirReproductor(fetcher, reproductor, { referer: pageUrl, onEvent: emitir });
+      const { html: htmlReproductor, anubis, pasado } = await abrirReproductor(fetcher, reproductor, { referer: pageUrl, onEvent: emitir });
       const servidores = leerServidores(htmlReproductor);
       const diagnostico = diagnosticar(htmlReproductor);
       emitir({
         stage: 'servidores', host: new URL(reproductor).hostname, total: servidores.length,
         dataLink: diagnostico.dataLink, challenge: diagnostico.challenge, salt: diagnostico.salt,
-        anubisPendiente: diagnostico.anubis, bytes: diagnostico.longitud,
+        anubisPendiente: diagnostico.anubis, anubisPasado: anubis ? pasado : undefined,
+        bytes: diagnostico.longitud,
         captcha: diagnostico.captcha, bloqueado: diagnostico.bloqueado
       });
       const mediosReproductor = fetcher.parsePage(htmlReproductor, reproductor).media;
