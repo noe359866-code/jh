@@ -36,6 +36,20 @@ function parseUrls(entorno = process.env) {
   return raw.split(',').map(s => s.trim()).filter(Boolean);
 }
 
+// Campos saneados que puede llevar un evento del reporte. Es la lista única:
+// el test de contrato la importa, así un diagnóstico nuevo no puede olvidarse.
+const CAMPOS_SANEADOS = [
+  'stage', 'host', 'site', 'verified', 'candidates', 'frames', 'error',
+  // Embed69 / Anubis
+  'dataLink', 'challenge', 'salt', 'anubisPendiente', 'anubisPasado', 'captcha',
+  'bloqueado', 'packer', 'jwplayer', 'soloJs', 'sinCuerpo', 'bytes', 'nonce',
+  'metodo', 'aviso', 'titulo', 'hacia', 'estado', 'cookies', 'auth',
+  'capasPacker', 'capas', 'forma', 'cuerpo', 'rutas', 'api', 'scripts', 'total',
+  'algorithm', 'intento',
+  // Loader y verificación humana
+  'fetch', 'xhr', 'atob', 'b64', 'eval', 'sha', 'ofuscado', 'literales',
+  'proveedor', 'formulario'
+];
 // Eventos permitidos en el reporte: solo etapa y host. Nunca paths, queries,
 // HTML, cuerpos ni tokens.
 function eventoSanitizado(evento) {
@@ -96,6 +110,10 @@ function eventoSanitizado(evento) {
   if (evento.algorithm) limpio.algorithm = String(evento.algorithm).slice(0, 20);
   // Cierre defensivo: ningún diagnóstico (presente o futuro) puede publicar
   // queries, HTML ni la palabra token. El test de contrato lo verifica.
+  const PERMITIDOS = new Set(CAMPOS_SANEADOS);
+  for (const clave of Object.keys(limpio)) {
+    if (!PERMITIDOS.has(clave)) delete limpio[clave];
+  }
   for (const [clave, valor] of Object.entries(limpio)) {
     if (typeof valor === 'string') {
       limpio[clave] = valor
@@ -173,7 +191,9 @@ async function main(report) {
       if (streams.length) anyVerified = true;
       console.log(`${proveedor.clave}: ${streams.length ? `${streams.length} verified HLS/MP4 response(s)` : 'no verified HLS/MP4 found'}`);
     } catch (error) {
-      entry.error = error.message;
+      // El mensaje puede citar una URL: se pasa por el mismo saneado.
+      entry.error = String(error.message)
+        .replace(/\?[^\s"'<>]*/g, '').replace(/token/gi, 'campo').slice(0, 200);
       console.error(`${entry.host || pageUrl}: failed - ${error.message}`);
     }
     report.tested.push(entry);
@@ -197,20 +217,7 @@ async function main(report) {
   }
 }
 
-// Campos saneados que puede llevar un evento del reporte. Es la lista única:
-// el test de contrato la importa, así un diagnóstico nuevo no puede olvidarse.
-const CAMPOS_SANEADOS = [
-  'stage', 'host', 'site', 'verified', 'candidates', 'frames', 'error',
-  // Embed69 / Anubis
-  'dataLink', 'challenge', 'salt', 'anubisPendiente', 'anubisPasado', 'captcha',
-  'bloqueado', 'packer', 'jwplayer', 'soloJs', 'sinCuerpo', 'bytes', 'nonce',
-  'metodo', 'aviso', 'titulo', 'hacia', 'estado', 'cookies', 'auth',
-  'capasPacker', 'capas', 'forma', 'cuerpo', 'rutas', 'api', 'scripts', 'total',
-  'algorithm', 'intento',
-  // Loader y verificación humana
-  'fetch', 'xhr', 'atob', 'b64', 'eval', 'sha', 'ofuscado', 'literales',
-  'proveedor', 'formulario'
-];
+
 
 // El reporte se escribe siempre (también en fallo de validación o de red),
 // pero nunca se presenta como éxito si no hubo medios verificados.

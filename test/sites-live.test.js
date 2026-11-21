@@ -75,3 +75,16 @@ test('el saneado es defensivo: ningún diagnóstico puede publicar queries ni to
   assert.doesNotMatch(serializado, /<script/);
   assert.equal(sucio.bytes, 10);
 });
+
+test('los campos no declarados se descartan del reporte (no basta con redactarlos)', () => {
+  // El test de contrato no debe tener que perseguir cada diagnóstico nuevo:
+  // cualquier campo fuera de CAMPOS_SANEADOS desaparece.
+  const { eventoSanitizado, CAMPOS_SANEADOS } = require('../scripts/sites-live.js');
+  const evento = eventoSanitizado({
+    stage: 'nuevo', host: 'player.example',
+    diagnostico_futuro: 'algo', otraCosa: ['x'], total: 3
+  });
+  assert.ok(Object.keys(evento).every(clave => CAMPOS_SANEADOS.includes(clave)));
+  assert.equal(evento.diagnostico_futuro, undefined);
+  assert.equal(evento.total, 3);
+});
