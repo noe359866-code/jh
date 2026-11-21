@@ -20,7 +20,9 @@ const SERVIDORES = {
   vidhide: {
     nombre: 'Vidhide',
     dominios: ['vidhide.com', 'vidhidepro.com', 'vidhidevip.com', 'morencius.com', 'minochinos.com',
-      'mivalyo.com', 'dinisglows.com', 'dhtpre.com', 'vidhide.fun', 'vidhideplus.com']
+      'mivalyo.com', 'dinisglows.com', 'dhtpre.com', 'vidhide.fun', 'vidhideplus.com',
+      // Mirror al que redirige vidhidepro.com en vivo.
+      'vidhidefast.com', 'vidhidepre.com', 'vidhidehub.com']
   },
   filemoon: {
     nombre: 'Filemoon',
@@ -44,6 +46,28 @@ const SERVIDORES = {
     dominios: ['watchsb.com', 'sblona.com']
   }
 };
+
+// Describe la FORMA de una página que no tiene media, sin volcar contenido:
+// solo nombres de etiquetas, nombres de campos y hosts. Sirve para saber qué
+// interposición hay (formulario POST, redirección JS, meta refresh, loader).
+function formaPagina(html) {
+  const texto = String(html);
+  const hosts = (listas) => listas.map(u => { try { return new URL(u).hostname; } catch { return '?'; } });
+  const acciones = [...texto.matchAll(/<form[^>]*action=["']([^"']+)["']/gi)].map(m => m[1]);
+  const campos = [...texto.matchAll(/<input[^>]*name=["']([^"']+)["']/gi)].map(m => m[1]).slice(0, 4);
+  const scripts = [...texto.matchAll(/<script[^>]*src=["']([^"']+)["']/gi)].map(m => m[1]).slice(0, 4);
+  const saltos = [...texto.matchAll(/(?:location(?:\.href)?\s*=|window\.open\(|location\.replace\()\s*["']([^"']+)["']/gi)].map(m => m[1]).slice(0, 3);
+  return {
+    form: /<form/i.test(texto), metodo: ((/<form[^>]*method=["'](\w+)["']/i.exec(texto) || [, ''])[1] || '').toLowerCase(),
+    actions: hosts(acciones), campos,
+    scripts: hosts(scripts),
+    saltos: hosts(saltos),
+    refresh: ((/<meta[^>]*http-equiv=["']refresh["'][^>]*content=["']([^"']+)["']/i.exec(texto) || [, ''])[1] || ''),
+    carga: /document\.(?:forms\[0\]|getElementById\([^)]*\))\.submit\(|onload=|addEventListener\(["']load/i.test(texto),
+    decodifica: /atob\(|fromCharCode|decodeURIComponent|unescape\(/i.test(texto),
+    eval: /eval\(/i.test(texto)
+  };
+}
 
 function crearResolvedorPacked({ nombre, dominios, allowedHosts, fetchImpl, lookupImpl, timeoutMs, deadlineMs, maxBytes, pageReferer, onEvent } = {}) {
   const emitir = typeof onEvent === 'function' ? onEvent : () => {};
@@ -92,7 +116,8 @@ function crearResolvedorPacked({ nombre, dominios, allowedHosts, fetchImpl, look
         titulo: (/<title[^>]*>([^<]{0,80})<\/title>/i.exec(html) || [, ''])[1].trim(),
         // Páginas que solo funcionan con JS o que piden verificación.
         soloJs: /enable javascript|please enable js|noscript|recaptcha|turnstile|hcaptcha/i.test(html.slice(0, 4000)),
-        sinCuerpo: html.trim().length < 32
+        sinCuerpo: html.trim().length < 32,
+        forma: formaPagina(html)
       });
       return [];
     }

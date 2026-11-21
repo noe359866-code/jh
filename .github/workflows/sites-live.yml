@@ -68,7 +68,8 @@ jobs:
             const sinMedia = (r.events || []).filter(e => e.stage === 'sin-media')
               .map(e => e.host + ' capas=' + e.capasPacker + ' candidatos=' + e.candidatos + ' bytes=' + e.bytes
                 + ' packer=' + e.packer + ' jwplayer=' + e.jwplayer + ' bloqueado=' + e.bloqueado
-                + ' soloJs=' + e.soloJs + ' titulo=' + JSON.stringify(e.titulo)).join(' , ');
+                + ' soloJs=' + e.soloJs + ' titulo=' + JSON.stringify(e.titulo)
+                + ' [' + (e.forma || '') + ']').join(' , ');
             const fallos = (r.events || []).filter(e => e.stage === 'resolver-failed')
               .map(e => e.host + ':' + e.error).join(' , ');
             const etapas = {};

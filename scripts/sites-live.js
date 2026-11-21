@@ -43,6 +43,20 @@ function eventoSanitizado(evento) {
   for (const clave of ['estado', 'cookies', 'auth']) if (Number.isFinite(evento[clave]) || typeof evento[clave] === 'boolean') limpio[clave] = evento[clave];
   if (Number.isFinite(evento.candidatos)) limpio.candidatos = evento.candidatos;
   if (Number.isFinite(evento.capasPacker)) limpio.capasPacker = evento.capasPacker;
+  // Forma estructural de una página sin media (etiquetas, campos, hosts).
+  if (evento.forma && typeof evento.forma === 'object') {
+    const f = evento.forma;
+    limpio.forma = [
+      f.form ? `form:${f.metodo || 'get'}→${f.actions.join('|')}` : 'sin-form',
+      f.campos.length ? `campos:${f.campos.join('|')}` : '',
+      f.scripts.length ? `scripts:${f.scripts.join('|')}` : '',
+      f.saltos.length ? `salta:${f.saltos.join('|')}` : '',
+      f.refresh ? `refresh:${f.refresh}` : '',
+      f.carga ? 'autosubmit' : '',
+      f.decodifica ? 'decodifica' : '',
+      f.eval ? 'eval' : ''
+    ].filter(Boolean).join(' ');
+  }
   if (evento.algorithm) limpio.algorithm = String(evento.algorithm).slice(0, 20);
   return limpio;
 }
