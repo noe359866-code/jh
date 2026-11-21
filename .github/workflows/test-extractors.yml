@@ -20,17 +20,24 @@ jobs:
       - run: npm run check
       # La salida se guarda para poder publicar el fallo como anotación: los
       # logs del job no siempre son accesibles por API, las anotaciones sí.
+      # La salida va a un archivo porque los logs del job no siempre son
+      # accesibles por API; el fallo se publica como anotación legible.
       - name: npm test
+        id: pruebas
+        continue-on-error: true
         run: |
           set -o pipefail
           npm test 2>&1 | tee /tmp/test.log
-      - name: Publicar fallos como anotaciones
-        if: failure()
+      - name: Publicar resultado como anotación
+        if: always()
         run: |
-          grep -E "^not ok|^# (pass|fail)" /tmp/test.log | head -40 | while IFS= read -r linea; do
+          grep -E "^(not ok|# (pass|fail|tests))|^ℹ (pass|fail|tests)" /tmp/test.log | head -40 | while IFS= read -r linea; do
             echo "::error::${linea}"
           done
           exit 0
+      - name: Fallar si los tests fallaron
+        if: steps.pruebas.outcome == 'failure'
+        run: exit 1
       - run: npm audit --omit=dev
   docker:
     runs-on: ubuntu-latest
