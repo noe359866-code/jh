@@ -210,3 +210,21 @@ test('el fetcher reenvía las cookies del player y reintenta el interstitial', a
   await fetcher.getText('https://streamwish.to/e/a');
   assert.equal(fetcher.cookiesDe('streamwish.to'), 'player=1');
 });
+
+test('el player recibe el Referer del reproductor que lo incrusta', async () => {
+  // Los players comprueban el Referer: debe ser la página de Embed69, no la del
+  // sitio ni la del propio player.
+  const vistos = [];
+  const { crearRegistry } = require('../engines/resolvers');
+  const registro = crearRegistry({
+    allowedHosts: ['sw.example'],
+    lookupImpl: async () => [{ address: '93.184.216.34' }],
+    fetchImpl: async (url, opciones) => {
+      vistos.push([url.hostname, opciones.headers?.Referer]);
+      if (url.hostname === 'streamwish.to') return new Response('<script>sources:[{file:"https://sw.example/e/a/index.mp4"}]</script>');
+      return new Response(Buffer.from([0, 0, 0, 24, 102, 116, 121, 112, 105, 115, 111, 109]));
+    }
+  });
+  await registro.resolver('https://streamwish.to/e/a', { pageReferer: 'https://embed69.org/f/tt1/' });
+  assert.deepEqual(vistos.find(([host]) => host === 'streamwish.to'), ['streamwish.to', 'https://embed69.org/f/tt1/']);
+});

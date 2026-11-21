@@ -77,7 +77,7 @@ async function resolver(request, options = {}) {
   };
 
   const descubridor = crearProveedorFlixLatam(configuracion);
-  const { media, servidores } = await descubridor.descubrir(url.href);
+  const { media, servidores, reproductor } = await descubridor.descubrir(url.href);
 
   const registry = crearRegistry({
     ...configuracion,
@@ -117,12 +117,14 @@ async function resolver(request, options = {}) {
   //    rotan de dominio y el mismo motor (P.A.C.K.E.R.) sirve sin etiqueta.
   for (const servidor of servidores.slice(0, 12)) {
     try {
-      const resueltos = await registry.resolver(servidor.url);
+      // Los players comprueban el Referer de la página que los incrusta.
+      const contexto = { pageReferer: reproductor };
+      const resueltos = await registry.resolver(servidor.url, contexto);
+      for (const stream of resueltos) agregar(stream, servidor.etiqueta);
       if (!resueltos.length) {
-        const generico = await registry.resolver(servidor.url, { soloGenerico: true });
+        const generico = await registry.resolver(servidor.url, { ...contexto, soloGenerico: true });
         for (const stream of generico) agregar(stream, servidor.etiqueta);
       }
-      for (const stream of resueltos) agregar(stream, servidor.etiqueta);
     } catch (error) {
       if (options.onEvent) options.onEvent({ stage: 'resolver-failed', host: new URL(servidor.url).hostname, error: error.message });
     }

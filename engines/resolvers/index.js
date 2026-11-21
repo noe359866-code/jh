@@ -54,7 +54,11 @@ function crearRegistry({
     if (soloGenerico) return generico;
     let host = '';
     try { host = new URL(link).hostname; } catch { return generico; }
-    return resolvers.find(r => r.coincide(host)) || generico;
+    const encontrado = resolvers.find(r => r.coincide(host)) || generico;
+    // Cada petición puede venir de una página distinta (Embed69): el Referer
+    // original se conserva y, si el resolvedor dedicado ya tiene uno propio
+    // (Voe), no se pisa.
+    return encontrado;
   }
 
   // Resuelve una URL de embed/player a streams verificados. Un resolvedor puede

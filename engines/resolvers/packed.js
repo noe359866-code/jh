@@ -75,11 +75,14 @@ function formaPagina(html) {
   };
 }
 
-// Página mínima de espera: pocos bytes, título "Loading..." y sin player.
+// Página mínima de espera: pocos bytes, título "Loading..." y sin player. Solo
+// cuenta si NO hay ya un media o un bloque P.A.C.K.E.R. (una página real puede
+// pesar poco: no se debe pedir dos veces una página que ya sirve).
 function esInterstitial(html) {
   const texto = String(html);
   if (texto.length > 3000) return false;
   if (/eval\(function\s*\(p\s*,\s*a\s*,\s*c/i.test(texto)) return false;
+  if (/\.m3u8|\.mp4|\/embed\//i.test(texto)) return false;
   return /Loading|Cargando|Please wait|Espera/i.test(texto) || texto.length < 400;
 }
 
@@ -92,14 +95,17 @@ function crearResolvedorPacked({ nombre, dominios, allowedHosts, fetchImpl, look
     nombre,
     urlPrincipal: `https://${dominios[0]}`,
     urlsAlias: dominios.slice(1),
-    resuelve: async (link) => {
+    resuelve: async (link, ctx = {}) => {
+      // Referer de la página que incrusta el player (Embed69): varios players
+      // solo sirven el media si la petición viene de ahí.
+      const cabeceras = ctx.pageReferer ? { Referer: ctx.pageReferer } : {};
       // Los players rotan de dominio y responden 302 al dominio estable.
-      let html = await fetcher.getText(link, {}, { seguirMismoMotor: true });
+      let html = await fetcher.getText(link, cabeceras, { seguirMismoMotor: true });
       // Varios players sirven primero un interstitial mínimo ("Loading...")
       // con una cookie; con esa cookie llega la página con la fuente.
       if (esInterstitial(html)) {
         emitir({ stage: 'reintento-interstitial', host: new URL(link).hostname, bytes: html.length });
-        const segunda = await fetcher.getText(link, {}, { seguirMismoMotor: true });
+        const segunda = await fetcher.getText(link, cabeceras, { seguirMismoMotor: true });
         if (segunda.length > html.length) html = segunda;
       }
       // Todas las capas: HTML original + cada bloque P.A.C.K.E.R desempaquetado.
