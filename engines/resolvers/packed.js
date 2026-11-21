@@ -75,6 +75,14 @@ function formaPagina(html) {
   };
 }
 
+// Página mínima de espera: pocos bytes, título "Loading..." y sin player.
+function esInterstitial(html) {
+  const texto = String(html);
+  if (texto.length > 3000) return false;
+  if (/eval\(function\s*\(p\s*,\s*a\s*,\s*c/i.test(texto)) return false;
+  return /Loading|Cargando|Please wait|Espera/i.test(texto) || texto.length < 400;
+}
+
 function crearResolvedorPacked({ nombre, dominios, allowedHosts, fetchImpl, lookupImpl, timeoutMs, deadlineMs, maxBytes, pageReferer, onEvent } = {}) {
   const emitir = typeof onEvent === 'function' ? onEvent : () => {};
   const { createFetcher } = require('./fetcher');
@@ -86,7 +94,14 @@ function crearResolvedorPacked({ nombre, dominios, allowedHosts, fetchImpl, look
     urlsAlias: dominios.slice(1),
     resuelve: async (link) => {
       // Los players rotan de dominio y responden 302 al dominio estable.
-      const html = await fetcher.getText(link, {}, { seguirMismoMotor: true });
+      let html = await fetcher.getText(link, {}, { seguirMismoMotor: true });
+      // Varios players sirven primero un interstitial mínimo ("Loading...")
+      // con una cookie; con esa cookie llega la página con la fuente.
+      if (esInterstitial(html)) {
+        emitir({ stage: 'reintento-interstitial', host: new URL(link).hostname, bytes: html.length });
+        const segunda = await fetcher.getText(link, {}, { seguirMismoMotor: true });
+        if (segunda.length > html.length) html = segunda;
+      }
       // Todas las capas: HTML original + cada bloque P.A.C.K.E.R desempaquetado.
       const capas = unPackerTodo(html);
       emitir({ stage: 'packer', host: new URL(link).hostname, capas: capas.length });

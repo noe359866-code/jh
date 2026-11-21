@@ -175,3 +175,38 @@ test('las redirecciones controladas sobreviven al fetcher endurecido', async () 
   }
   assert.deepEqual(opcionesVistas, ['manual', 'error', 'follow']);
 });
+
+test('el fetcher reenvía las cookies del player y reintenta el interstitial', async () => {
+  // Streamwish (y otros) responden primero una página "Loading..." de pocos
+  // bytes con una cookie; solo con esa cookie llega la página con la fuente.
+  const { createFetcher } = require('../engines/sites/extractor');
+  const { crearRegistry } = require('../engines/resolvers');
+  let visitas = 0;
+  const fetchImpl = async (url, opciones) => {
+    if (url.hostname === 'streamwish.to') {
+      visitas++;
+      const traeCookie = String(opciones.headers?.Cookie || '').includes('player=1');
+      if (!traeCookie) {
+        return new Response('<html><title>Loading...</title></html>',
+          { headers: { 'Set-Cookie': 'player=1; Path=/' } });
+      }
+      return new Response('eval(function(p,a,c,k,e,d){e=function(c){return c.toString(36)};' +
+        "while(c--){if(k[c]){p=p.replace(new RegExp('\\\\b'+e(c)+'\\\\b','g'),k[c])}}return p}" +
+        "('sources:[{file:\"1://sw.example/e/a/index.mp4\"}];',36,2,'_|https'.split('|'),0,{}))");
+    }
+    // Caja ISO BMFF mínima: [tamaño:4]['ftyp'][marca] (firmaMedia exige ≥ 12 bytes).
+    if (url.hostname === 'sw.example') {
+      return new Response(Buffer.from([0, 0, 0, 24, 102, 116, 121, 112, 105, 115, 111, 109]));
+    }
+    return new Response('x');
+  };
+  const registro = crearRegistry({ allowedHosts: ['sw.example'], lookupImpl: async () => [{ address: '93.184.216.34' }], fetchImpl });
+  const streams = await registro.resolver('https://streamwish.to/e/a');
+  assert.deepEqual(streams.map(s => s.url), ['https://sw.example/e/a/index.mp4']);
+  assert.equal(visitas, 2, 'debe reintentar con la cookie del player');
+
+  // Y la cookie queda guardada por host en el fetcher.
+  const fetcher = createFetcher({ allowedHosts: ['streamwish.to'], lookupImpl: async () => [{ address: '93.184.216.34' }], fetchImpl });
+  await fetcher.getText('https://streamwish.to/e/a');
+  assert.equal(fetcher.cookiesDe('streamwish.to'), 'player=1');
+});

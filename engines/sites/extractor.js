@@ -216,6 +216,26 @@ function createFetcher({
     'Upgrade-Insecure-Requests': '1'
   };
 
+  // Tarro de cookies por host. Varios players (y el propio Embed69) emiten una
+  // cookie en la primera respuesta y solo sirven la página real si se devuelve;
+  // sin esto se recibe siempre el interstitial "Loading...".
+  const cookiesPorHost = new Map();
+  function cookiesDe(host) { return cookiesPorHost.get(host) || ''; }
+  function guardarCookies(host, respuesta) {
+    const lista = respuesta.headers.getSetCookie ? respuesta.headers.getSetCookie() : [];
+    if (!lista.length) return;
+    const actuales = new Map(cookiesDe(host).split('; ').filter(Boolean).map(par => {
+      const pos = par.indexOf('=');
+      return pos > 0 ? [par.slice(0, pos), par.slice(pos + 1)] : [par, ''];
+    }));
+    for (const linea of lista) {
+      const par = String(linea).split(';')[0].trim();
+      const pos = par.indexOf('=');
+      if (pos > 0) actuales.set(par.slice(0, pos), par.slice(pos + 1));
+    }
+    cookiesPorHost.set(host, [...actuales].map(([k, v]) => `${k}=${v}`).join('; '));
+  }
+
   function restante() { return limite - Date.now(); }
   function signalDePeticion() {
     const ms = Math.min(timeoutMs, restante());
@@ -254,7 +274,12 @@ function createFetcher({
       const modoRedirect = seguirMismoMotor && redirect === 'error' ? 'manual' : redirect;
       response = await fetchFn(url, {
         method, body, redirect: modoRedirect, signal: signalDePeticion(),
-        headers: { ...DEFAULT_HEADERS, ...(referer ? { Referer: referer } : {}), ...headers }
+        headers: {
+          ...DEFAULT_HEADERS,
+          ...(cookiesDe(url.hostname) ? { Cookie: cookiesDe(url.hostname) } : {}),
+          ...(referer ? { Referer: referer } : {}),
+          ...headers
+        }
       });
     } catch (error) {
       // "fetch failed" no dice nada: se añade el código real (ENOTFOUND,
@@ -264,6 +289,7 @@ function createFetcher({
       const causa = error?.cause?.code || error?.cause?.message || error?.code;
       throw new Error(`Fallo de red${causa ? ` (${causa})` : ''}: ${error?.message || error}`, { cause: error });
     }
+    guardarCookies(url.hostname, response);
     if (permitirRedireccion && response.status >= 300 && response.status < 400) return response;
     if (seguirMismoMotor && response.status >= 300 && response.status < 400) {
       const destino = response.headers.get('location');
@@ -331,7 +357,7 @@ function createFetcher({
     return firmaMedia(await leerPrefijo(response)) !== null;
   }
 
-  return { request, getText, getJson, verificar, verify: verificar, readLimited, leerPrefijo, parsePage, hosts };
+  return { request, getText, getJson, verificar, verify: verificar, readLimited, leerPrefijo, parsePage, hosts, cookiesDe };
 }
 
 // ---------------------------------------------------------------------------
