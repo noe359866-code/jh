@@ -75,17 +75,20 @@ function cuerpoRedactado(html, maximo = 1200) {
 // Devuelve las rutas candidatas (sin ejecutar) y marca las que parecen API.
 // Rutas citadas en el JS. Cubre las tres formas habituales: absolutas
 // ("/api/x"), relativas ("api/x") y plantillas (`/api/${id}`).
-const RUTA_EN_JS = /["'`]((?:https?:\/\/[^"'`\s]+|\/?[A-Za-z0-9_\-][A-Za-z0-9_\-./]{1,80}))(?:\?[^"'`\s]{0,120})?["'`]/g;
+// Grupo 1: camino; grupo 2: query (con valores, que es lo que hace la llamada).
+const RUTA_EN_JS = /["'`]((?:https?:\/\/[^"'`\s?#]+|\/?[A-Za-z0-9_\-][A-Za-z0-9_\-./]{1,80}))(\?[^"'`\s]{0,160})?["'`]/g;
 const API_SOSPECHOSA = /(?:\bapi\b|\bdl\b|embed|source|stream|video|\bget\b|\bplay\b|media|\bfile\b|link|url|\bop\b|download|mp4|m3u8|ajax|fetch)/i;
 
 function rutasDeLoader(js) {
   const rutas = new Set();
   for (const encontrado of String(js).matchAll(RUTA_EN_JS)) {
-    const ruta = encontrado[1];
+    const camino = encontrado[1];
+    const consulta = encontrado[2] || '';
     // Se descarta lo que es claramente un recurso estático del player.
-    if (/\.(?:css|png|jpe?g|svg|ico|woff2?|ttf|map|js)$/i.test(ruta)) continue;
-    if (/^[A-Za-z_$][\w$]*$/.test(ruta) && !API_SOSPECHOSA.test(ruta)) continue;
-    rutas.add(ruta.startsWith('/') || /^https?:/i.test(ruta) ? ruta : `/${ruta}`);
+    if (/\.(?:css|png|jpe?g|svg|ico|woff2?|ttf|map|js)$/i.test(camino)) continue;
+    if (/^[A-Za-z_$][\w$]*$/.test(camino) && !API_SOSPECHOSA.test(camino)) continue;
+    const ruta = camino.startsWith('/') || /^https?:/i.test(camino) ? camino : `/${camino}`;
+    rutas.add(`${ruta}${consulta}`);
     if (rutas.size >= 40) break;
   }
   return [...rutas];
