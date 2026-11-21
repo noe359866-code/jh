@@ -97,6 +97,25 @@ function parsePage(html, base) {
   return { media: [...media], frames: [...frames] };
 }
 
+// URLs de reproductores conocidos que aparecen en atributos o cadenas JS (no
+// solo en <iframe>): algunos sitios listan los servidores como enlaces o
+// valores de data-*, sin embeberlos. Solo se aceptan hosts de `playerHosts`.
+function parseEmbeds(texto, base, playerHosts = new Set()) {
+  const embeds = new Set();
+  if (!playerHosts.size) return [];
+  const cuerpo = decode(String(texto));
+  for (const match of cuerpo.matchAll(/(?:https?:\/\/|\/\/)[^"'<>\s\\)]+/g)) {
+    let url;
+    try { url = new URL(match[0].replace(/^\/\//, 'https://'), base); } catch { continue; }
+    const host = url.hostname.toLowerCase();
+    if (!playerHosts.has(host)) continue;
+    if (EXTENSION_MEDIA.test(url.pathname)) continue; // el media lo capta parsePage
+    url.hash = '';
+    embeds.add(url.href);
+  }
+  return [...embeds];
+}
+
 // ---------------------------------------------------------------------------
 // Firmas de media
 // ---------------------------------------------------------------------------
@@ -154,9 +173,11 @@ function createFetcher({
   deadlineMs = 20000,
   maxBytes = 2 * 1024 * 1024,
   pageReferer,
-  onEvent
+  onEvent,
+  playerHosts = []
 } = {}) {
   const emitir = typeof onEvent === 'function' ? onEvent : () => {};
+  const hostsPlayer = new Set(playerHosts.map(h => h.toLowerCase()));
   const hosts = new Set(allowedHosts.map(host => host.toLowerCase()));
   // Si se inyecta fetchImpl (pruebas) se respeta; si no, se usa el transporte
   // seguro con el lookup también inyectable: la dirección validada es la que se
@@ -285,9 +306,11 @@ function createExtractor({
   name = 'Sites',
   title = 'HLS / MP4',
   pageReferer,
-  onEvent
+  onEvent,
+  playerHosts = []
 } = {}) {
   const emitir = typeof onEvent === 'function' ? onEvent : () => {};
+  const hostsPlayer = new Set(playerHosts.map(h => h.toLowerCase()));
   const fetcher = createFetcher({ allowedHosts, fetchImpl, lookupImpl, timeoutMs, deadlineMs, maxBytes, pageReferer, onEvent: emitir });
   const hosts = fetcher.hosts;
 
@@ -318,6 +341,11 @@ function createExtractor({
         }
       }
       const { media, frames } = parsePage(html, pagina);
+      // Además de iframes, se aceptan URLs de reproductores conocidos en
+      // cualquier atributo o cadena de la página.
+      for (const embed of parseEmbeds(html, pagina, hostsPlayer)) {
+        if (!frames.includes(embed)) frames.push(embed);
+      }
       emitir({ stage: 'page', host: new URL(pagina).hostname, candidates: media.length, frames: frames.length });
       for (const url of media) candidatos.add(url);
       for (const frame of frames) {
@@ -360,6 +388,6 @@ function createExtractor({
 }
 
 module.exports = {
-  createFetcher, createExtractor, parsePage, decode, parseAttributes,
+  createFetcher, createExtractor, parsePage, parseEmbeds, decode, parseAttributes,
   firmaMedia, mapLimit, publicAddress
 };

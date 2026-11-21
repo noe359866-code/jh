@@ -147,3 +147,28 @@ test('resolver omite medios en hosts no confiables y bloquea destinos privados',
     /no público/
   );
 });
+
+test('resuelve un reproductor enlazado como enlace (uqload), no solo en iframe', async () => {
+  // Caso real observado en FlixLatam: el player está en uqload.vc y el sitio
+  // lo enlaza; sin este camino el servidor quedaba bloqueado por allowlist.
+  const pages = {
+    '/pelicula/patton': '<a class="server" href="https://uqload.vc/embed-abc.html">uqload</a>',
+    '/embed-abc.html': '<source src="https://uqload.vc/media/a.m3u8">'
+  };
+  const streams = await resolver({ url: 'https://flixlatam.com/pelicula/patton' }, {
+    lookupImpl,
+    fetchImpl: async url => new Response(pages[new URL(url).pathname] ?? '')
+  });
+  // Sin candidato .m3u8 verificado no hay stream, pero el player sí se visitó:
+  // se comprueba con los eventos de página.
+  assert.deepEqual(streams, []);
+  const eventos = [];
+  await resolver({ url: 'https://flixlatam.com/pelicula/patton' }, {
+    lookupImpl,
+    onEvent: evento => eventos.push(evento),
+    fetchImpl: async url => new Response(url.hostname === 'uqload.vc'
+      ? '<source src="https://uqload.vc/media/a.m3u8">' : pages[new URL(url).pathname] ?? '')
+  });
+  assert.ok(eventos.some(e => e.stage === 'page' && e.host === 'uqload.vc'), 'debe analizar el player enlazado');
+  assert.ok(!eventos.some(e => e.stage === 'blocked-frame' && e.host === 'uqload.vc'));
+});

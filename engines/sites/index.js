@@ -87,7 +87,14 @@ async function resolver(request, options = {}) {
 
   // El extractor recorre la página y sus iframes del mismo sitio (o de hosts
   // autorizados) y verifica los candidatos .m3u8/.mp4 por firma.
-  const extractor = createExtractor({ ...configuracion, maxPages: options.maxPages || 5, name: proveedor.nombre });
+  const extractor = createExtractor({
+    ...configuracion,
+    maxPages: options.maxPages || 5,
+    name: proveedor.nombre,
+    // Dominios de reproductor conocidos: se descubren aunque el sitio los
+    // enlace en vez de embeberlos en un iframe.
+    playerHosts: hostsPermitidos().filter(host => hostsReproductores().includes(host))
+  });
   const { media, embeds } = await extractor.descubrir(url.href);
 
   // Los reproductores se resuelven con su resolvedor dedicado; el registry no

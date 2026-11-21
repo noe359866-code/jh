@@ -19,7 +19,9 @@ const HOSTS_REPRODUCTORES = [
   'vidhide.com', 'vidhidepro.com', 'vidhidevip.com', 'streamwish.to', 'streamwish.com',
   'sfastwish.com', 'wishembed.pro', 'embedwish.com', 'awish.pro', 'strwish.com', 'swhoi.com',
   'vidoza.net', 'vidoza.org', 'ok.ru', 'mixdrop.co', 'mixdrop.to', 'mixdrop.sx', 'mixdrop.bz',
-  'upstream.to', 'vudeo.net', 'vudeo.io', 'embed69.org', 'netu.tv', 'waaw.to', 'pelisplus.lat'
+  'upstream.to', 'vudeo.net', 'vudeo.io', 'embed69.org', 'netu.tv', 'waaw.to', 'pelisplus.lat',
+  // Vistos en la extracción real: FlixLatam sirve su reproductor desde uqload.
+  'uqload.vc', 'uqload.com', 'uqload.co', 'uqload.to', 'uqload.su', 'uqload.io'
 ];
 
 // Registry de resolvedores de reproductores. Equivale al listado de extractors

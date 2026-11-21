@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { createExtractor, parsePage, publicAddress, decode, firmaMedia } = require('../engines/sites/extractor');
+const { createExtractor, parsePage, parseEmbeds, publicAddress, decode, firmaMedia } = require('../engines/sites/extractor');
 const { createPublicLookup } = require('../engines/sites/network');
 const { promisify } = require('node:util');
 
@@ -103,4 +103,17 @@ test('SSRF transport (undici) refuses a private address resolved at connect time
   const { createPublicFetch } = require('../engines/sites/network');
   const traer = createPublicFetch({ lookupImpl: async () => [{ address: '127.0.0.1', family: 4 }], timeoutMs: 200 });
   await assert.rejects(traer('https://public.example/a.m3u8'), /Non-public|fetch failed|ECONNREFUSED/);
+});
+
+test('descubre reproductores enlazados (no solo iframes) de hosts conocidos', () => {
+  // PoseidonHD2 lista sus servidores como enlaces/data-*, sin embeberlos:
+  // antes el crawl no los veía nunca.
+  const hosts = ['uqload.vc', 'voe.sx', 'streamwish.to'];
+  const encontrados = parseEmbeds(
+    '<a href="https://uqload.vc/embed-abc.html">1</a><div data-url="//voe.sx/e/xyz"></div>' +
+    '<a href="https://otro.example/x">2</a><a href="https://voe.sx/hls/master.m3u8">media</a>',
+    'https://flixlatam.com/pelicula/patton', new Set(hosts)
+  );
+  assert.deepEqual(encontrados, ['https://uqload.vc/embed-abc.html', 'https://voe.sx/e/xyz']);
+  assert.deepEqual(parseEmbeds('<a href="https://voe.sx/e/1">x</a>', 'https://s.example/', new Set()), []);
 });
