@@ -120,7 +120,8 @@ async function main(report) {
           const transitorio = /HTTP (403|429|503)/.test(error.message);
           if (!transitorio || intento >= 3) throw error;
           entry.stages.reintentos = [String(intento)];
-          await esperar(intento * 8000);
+          // La espera crece (0, 20 s, 40 s): ráfagas cortas se recuperan solas.
+          if (intento > 1) await esperar((intento - 1) * 20000);
         }
       }
       entry.success = streams.length > 0;
