@@ -35,7 +35,17 @@
       "stage": "page",
       "host": "flixlatam.com",
       "candidates": 0,
-      "frames": 0,
+      "frames": 2,
+      "site": "flixlatam"
+    },
+    {
+      "stage": "blocked-frame",
+      "host": "embed69.org",
+      "site": "flixlatam"
+    },
+    {
+      "stage": "blocked-frame",
+      "host": "",
       "site": "flixlatam"
     },
     {
