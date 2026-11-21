@@ -21,8 +21,9 @@ const SERVIDORES = {
     nombre: 'Vidhide',
     dominios: ['vidhide.com', 'vidhidepro.com', 'vidhidevip.com', 'morencius.com', 'minochinos.com',
       'mivalyo.com', 'dinisglows.com', 'dhtpre.com', 'vidhide.fun', 'vidhideplus.com',
-      // Mirror al que redirige vidhidepro.com en vivo.
-      'vidhidefast.com', 'vidhidepre.com', 'vidhidehub.com']
+      // Mirrors observados en redirecciones de vidhidepro.com (verificados por
+      // resolución DNS; vidhidefast.com se descartó por no existir).
+      'vidhidepre.com', 'vidhidehub.com']
   },
   filemoon: {
     nombre: 'Filemoon',
