@@ -9,9 +9,9 @@ const fs = require('node:fs');
 const { resolve, validateSiteUrl, findSite } = require('../engines/sites');
 
 const DEFAULT_URLS = [
-  'https://www.documaniatv.com/',
-  'https://flixlatam.com/',
-  'https://www.poseidonhd2.co/'
+  'https://www.documaniatv.com/naturaleza/oceanos-la-pelicula-video_f4f9d9467.html',
+  'https://flixlatam.com/pelicula/en-un-instante-zTSuLk',
+  'https://www.poseidonhd2.co/pelicula/933260/la-sustancia'
 ];
 
 function parseUrls() {
@@ -44,7 +44,7 @@ const report = {
       entry.success = streams.length > 0;
       entry.verifiedMedia = streams.length;
       if (streams.length) anyVerified = true;
-      console.log(`${site.key}: ${streams.length ? `${streams.length} verified HLS/MP4 response(s)` : 'no verified HLS/MP4 found'} (${pageUrl.length ? '' : ''}page tested)`);
+      console.log(`${site.key}: ${streams.length ? `${streams.length} verified HLS/MP4 response(s)` : 'no verified HLS/MP4 found'}`);
     } catch (error) {
       entry.error = error.message;
       console.error(`${pageUrl}: failed - ${error.message}`);

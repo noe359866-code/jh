@@ -20,7 +20,7 @@ function parsePage(html, base) {
 function createExtractor({ allowedHosts = ['documaniatv.com', 'flixlatam.com', 'poseidonhd2.co'],
   fetchImpl = publicFetch, lookupImpl = lookup,
   timeoutMs = 10000, maxPages = 5, maxBytes = 2 * 1024 * 1024,
-  name = 'Sites', title = 'HLS / MP4', onEvent = () => {} } = {}) {
+  name = 'Sites', title = 'HLS / MP4', pageReferer, onEvent = () => {} } = {}) {
   const hosts = new Set(allowedHosts.map(host => host.toLowerCase()));
   const DEFAULT_HEADERS = {
     // Public sites commonly reject requests without a browser User-Agent.
@@ -36,7 +36,11 @@ function createExtractor({ allowedHosts = ['documaniatv.com', 'flixlatam.com', '
     }
     const addresses = await lookupImpl(url.hostname, { all: true, family: 4 });
     if (!addresses.length || addresses.some(({ address }) => !publicAddress(address))) throw new Error('Non-public destination blocked');
-    const response = await fetchImpl(url, { redirect: 'error', signal: AbortSignal.timeout(timeoutMs), headers: { ...DEFAULT_HEADERS, ...headers } });
+    // Refer to the site's own origin when verifying media: some hosts reject
+    // cold Range requests without a same-site Referer.
+    const referer = typeof pageReferer === 'string' && pageReferer ? pageReferer : undefined;
+    const response = await fetchImpl(url, { redirect: 'error', signal: AbortSignal.timeout(timeoutMs),
+      headers: { ...DEFAULT_HEADERS, ...(referer ? { Referer: referer } : {}), ...headers } });
     if (!response.ok) throw new Error(`Media request failed: HTTP ${response.status}`);
     return response;
   }

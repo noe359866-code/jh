@@ -59,6 +59,7 @@ async function resolve(request, options = {}) {
     allowedHosts: allowedHosts(),
     name: site.name,
     title: site.title,
+    pageReferer: url.origin + '/',
     ...options
   });
   return extractor.extract(url.href);
