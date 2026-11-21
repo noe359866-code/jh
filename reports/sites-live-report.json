@@ -1,0 +1,24 @@
+{
+  "success": false,
+  "tested": [
+    {
+      "site": null,
+      "success": false,
+      "verifiedMedia": 0,
+      "error": "validateSiteUrl is not a function"
+    },
+    {
+      "site": null,
+      "success": false,
+      "verifiedMedia": 0,
+      "error": "validateSiteUrl is not a function"
+    },
+    {
+      "site": null,
+      "success": false,
+      "verifiedMedia": 0,
+      "error": "validateSiteUrl is not a function"
+    }
+  ],
+  "events": []
+}

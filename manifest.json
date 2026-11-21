@@ -1,8 +1,8 @@
 {
   "id": "com.latino.streamer",
-  "version": "1.0.1",
-  "name": "Latino Stream Addon",
-  "description": "Catálogos de ejemplo y streams configurados por el administrador. No incluye extractores de sitios externos.",
+  "version": "2.0.0",
+  "name": "Addon Latino Stream",
+  "description": "Proveedores y resolvedores de reproductores en español: extrae mp4/HLS verificados de documaniatv, flixlatam y poseidonhd2. Solo resolución de streams, sin catálogos ni demos.",
   "resources": ["catalog", "meta", "stream"],
   "types": ["movie", "series"],
   "idPrefixes": ["tt"],

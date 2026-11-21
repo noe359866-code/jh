@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { promisify } = require('node:util');
-const { createPublicLookup, publicFetch } = require('../engines/embed69/network');
+const { createPublicLookup, publicFetch } = require('../engines/sites/network');
 test('socket lookup returns only validated public IPv4 addresses', async () => {
   const lookup = promisify(createPublicLookup((host, options, cb) => {
     assert.equal(options.family, 4);

@@ -1,0 +1,63 @@
+name: Sites live extraction
+on:
+  push:
+  workflow_dispatch:
+    inputs:
+      page_urls:
+        description: Comma-separated page URLs to test (defaults to the three site homepages)
+        required: false
+        default: ''
+        type: string
+      allowed_hosts:
+        description: Comma-separated trusted hosts (add media/iframe hosts after checking them)
+        required: false
+        default: ''
+        type: string
+permissions:
+  contents: write
+jobs:
+  live:
+    # Skip when this push came from the report commit itself: that avoids a
+    # workflow loop (pushing the report retriggers the workflow).
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ github.token }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: node scripts/sites-live.js
+        env:
+          SITES_TEST_URLS: ${{ inputs.page_urls }}
+          # Default to the embed69.org iframe host used by FlixLatam; the
+          # workflow_dispatch input can override it explicitly.
+          SITES_ALLOWED_HOSTS: ${{ inputs.allowed_hosts || 'embed69.org' }}
+      - name: Commit sanitized report to branch
+        if: always()
+        run: |
+          mkdir -p reports
+          # Normalize the report (drop timestamps) so identical results produce
+          # no new commit, which keeps the push from retriggering this workflow.
+          node -e "const fs=require('fs');const r=JSON.parse(fs.readFileSync('reports/sites-live.json','utf8'));delete r.startedAt;delete r.finishedAt;fs.writeFileSync('reports/sites-live-report.json',JSON.stringify(r,null,2)+'\n')"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f reports/sites-live-report.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Add sanitized sites live test report"
+            git push
+          else
+            echo "Report unchanged; no commit needed"
+          fi
+      - name: Upload sanitized diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sites-live-report
+          path: reports/sites-live.json
+          if-no-files-found: warn
+          retention-days: 7
