@@ -1,5 +1,5 @@
 const { Resolvedor, crearResolvedorGenerico, normalizarDominio } = require('./base');
-const { crearResolvedorVoe } = require('./voe');
+const { crearResolvedorVoe, MIRRORS_VOE } = require('./voe');
 const { crearResolvedorStreamtape } = require('./streamtape');
 const { crearResolvedorVidsrc } = require('./vidsrc');
 const { crearResolvedoresPacked, SERVIDORES } = require('./packed');
@@ -13,6 +13,8 @@ const HOSTS_REPRODUCTORES = [
   'dianaavoidthey.com', 'jefferycontrolmodel.com', 'charlestoughrace.com', 'richardquestionbuilding.com',
   'jessicayeahcatch.com', 'juliewomanwish.com', 'rebeccapracticeloss.com', 'johnbeyondnation.com',
   'jamesbornmain.com', 'goofy-banana.com',
+  // Mirrors declarados de Voe (incluye los que aparecen en su redirector).
+  ...MIRRORS_VOE,
   'streamtape.com', 'streamta.site', 'streamtape.to', 'strtape.cloud',
   'vidsrc.to', 'vidsrc.net', 'vidsrc.icu', 'vidsrc.me', 'vidsrc.in', 'vidsrc.pm', 'vidsrc.xyz',
   'doodstream.com', 'dood.watch', 'dood.to', 'dood.so', 'dood.cx', 'dood.la', 'dood.pm', 'dood.ws',

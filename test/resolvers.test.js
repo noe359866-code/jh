@@ -207,3 +207,39 @@ test('Vidsrc delega en otro reproductor y no entra en recursión infinita', asyn
   const streams = await registry.resolver('https://vidsrc.to/embed/movie/tt1');
   assert.deepEqual(streams.map(s => s.url), ['https://voe.sx/hls/master.m3u8']);
 });
+
+test('sigue el redirector JS de Voe solo hacia sus mirrors declarados', async () => {
+  // En vivo Voe responde "Redirecting..." hacia un mirror. Se lee el destino
+  // (sin ejecutar JS) y se sigue una vez, pero solo si es un mirror del código.
+  const { destinoDeRedirector, seguirRedirector } = require('../engines/resolvers/redirector');
+  const redirector = '<title>Redirecting...</title><script>const currentUrl = new URL(window.location.href);' +
+    ' currentUrl.host = "caseyseemavoid.com"; location.href = currentUrl.toString();</script>';
+  assert.equal(destinoDeRedirector(redirector, 'https://voe.sx/e/abc'), 'https://caseyseemavoid.com/e/abc');
+  // Una página de player normal no es un redirector.
+  assert.equal(destinoDeRedirector('<title>Player</title><video src="a.mp4">', 'https://voe.sx/e/x'), null);
+
+  const pedidos = [];
+  const fetcher = {
+    getText: async (url) => {
+      pedidos.push(String(url));
+      return '<script>{"source":"https://voe.sx/hls/master.m3u8"}</script>';
+    }
+  };
+  const eventos = [];
+  const html = await seguirRedirector({
+    fetcher, html: redirector, link: 'https://voe.sx/e/abc',
+    alias: ['voe.sx', 'caseyseemavoid.com'], emitir: (e) => eventos.push(e)
+  });
+  assert.match(html, /master\.m3u8/);
+  assert.deepEqual(pedidos, ['https://caseyseemavoid.com/e/abc']);
+  assert.ok(eventos.some(e => e.stage === 'redirector'));
+
+  // Hacia un host ajeno no se sigue: ni petición ni contenido.
+  pedidos.length = 0;
+  const ajeno = await seguirRedirector({
+    fetcher, html: '<title>Redirecting...</title><script>location.href="https://atacante.example/x";</script>',
+    link: 'https://voe.sx/e/abc', alias: ['voe.sx'], emitir: () => {}
+  });
+  assert.equal(ajeno, null);
+  assert.deepEqual(pedidos, [], 'no debe pedir el host ajeno');
+});

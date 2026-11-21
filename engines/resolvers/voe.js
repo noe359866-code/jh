@@ -1,10 +1,22 @@
 const { Resolvedor, verificarCandidatos } = require('./base');
 const { esInterstitial, eventoSinMedia } = require('./packed');
+const { seguirRedirector } = require('./redirector');
 const { aesCbcDecryptRaw, quitarRelleno, encontrarCifrado } = require('./crypto');
 
 // Clave/IV por defecto del player VOE; se pueden sobreescribir con VOE_KEY y
 // VOE_IV (leídas en engines/resolvers/index.js).
 const VOE_KEY_POR_DEFECTO = 'z1x2c3v4b5n6m7k8';
+
+// Mirrors declarados de Voe. Un redirector JS solo se sigue hacia estos hosts:
+// la lista es código del resolvedor, nunca un host descubierto en el HTML.
+const MIRRORS_VOE = [
+  'jilliandescribecompany.com', 'mikaylaarealike.com', 'christopheruntilpoint.com',
+  'walterprettytheir.com', 'crystaltreatmenteast.com', 'lauradaydo.com',
+  'lancewhosedifficult.com', 'dianaavoidthey.com', 'jefferycontrolmodel.com',
+  'charlestoughrace.com', 'richardquestionbuilding.com', 'jessicayeahcatch.com',
+  'juliewomanwish.com', 'rebeccapracticeloss.com', 'johnbeyondnation.com',
+  'jamesbornmain.com', 'goofy-banana.com', 'caseyseemavoid.com'
+];
 const VOE_IV_POR_DEFECTO = 'q9w8e7r6t5y4u3i2';
 
 // Modelado en VoeExtractor.kt de Streamflix: fetchea la página del player,
@@ -61,6 +73,16 @@ function crearResolvedorVoe({ allowedHosts, fetchImpl, lookupImpl, timeoutMs, de
         emitir({ stage: 'resolver-failed', host: url.hostname, error: error.message });
         return [];
       }
+      // Voe sirve en algunos mirrors un redirector JS ("Redirecting...") hacia
+      // su dominio estable con la misma ruta. Se sigue una vez, solo hacia los
+      // mirrors ya declarados en este resolvedor.
+      const esRedirector = /Redirecting|Redirigiendo/i.test(html.slice(0, 2000));
+      if (esRedirector) {
+        const siguiente = await seguirRedirector({
+          fetcher, html, link, alias: [url.hostname, ...MIRRORS_VOE], emitir
+        });
+        if (siguiente) html = siguiente;
+      }
       // Un interstitial mínimo del player no se resuelve sin su JS: se informa
       // en vez de devolver vacío sin explicación.
       if (esInterstitial(html)) {
@@ -97,4 +119,4 @@ function crearResolvedorVoe({ allowedHosts, fetchImpl, lookupImpl, timeoutMs, de
   });
 }
 
-module.exports = { crearResolvedorVoe, VOE_KEY_POR_DEFECTO, VOE_IV_POR_DEFECTO };
+module.exports = { crearResolvedorVoe, VOE_KEY_POR_DEFECTO, VOE_IV_POR_DEFECTO, MIRRORS_VOE };
