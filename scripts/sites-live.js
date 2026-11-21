@@ -55,7 +55,7 @@ function eventoSanitizado(evento) {
   if (Number.isFinite(evento.scripts)) limpio.scripts = evento.scripts;
   // Forma del loader (mecanismos y literales redactados, sin valores).
   if (evento.stage === 'loader-forma') {
-    for (const clave of ['fetch', 'xhr', 'atob', 'b64', 'eval', 'sha']) {
+    for (const clave of ['fetch', 'xhr', 'atob', 'b64', 'eval', 'sha', 'ofuscado']) {
       if (typeof evento[clave] === 'boolean') limpio[clave] = evento[clave];
     }
     if (Number.isFinite(evento.bytes)) limpio.bytes = evento.bytes;

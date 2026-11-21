@@ -303,3 +303,30 @@ test('lee el loader del player (sin ejecutarlo) y prueba su API', async () => {
   assert.ok(pedidos.some(p => p.startsWith('/dl?')), 'debe probar la ruta de API del loader');
   assert.ok(!pedidos.some(p => p === '/style.css' || p === '/logo.png'), 'no pide estáticos');
 });
+
+test('un loader ofuscado se detecta y no se inventan rutas', async () => {
+  // Caso real de Streamwish: 71 KB ofuscados (array de cadenas rotado). Sin
+  // ejecutar su JS no hay rutas legibles; se informa y se corta.
+  const { crearRegistry } = require('../engines/resolvers');
+  const pedidos = [];
+  const spinner = '<!DOCTYPE html><title>Loading...</title><body>Page is loading' +
+    '<script src="/main.js?v=1.1.9"></script>';
+  const ofuscado = 'var _0x1a2b=["VfWE","4yDx","J13g","dkg9","riYZ","fbco"]'.padEnd(2600, 'x') +
+    ';(function(_0x3c,_0x4d){while(!![]){try{_0x3c.push(_0x3c.shift())}catch(_0x11){break}}}(_0x1a2b));';
+  const eventos = [];
+  const registro = crearRegistry({
+    allowedHosts: ['sw.example'],
+    lookupImpl: async () => [{ address: '93.184.216.34' }],
+    onEvent: (evento) => eventos.push(evento),
+    fetchImpl: async (url) => {
+      pedidos.push(url.pathname);
+      if (url.pathname === '/e/a') return new Response(spinner);
+      if (url.pathname === '/main.js') return new Response(ofuscado);
+      return new Response('x');
+    }
+  });
+  assert.deepEqual(await registro.resolver('https://streamwish.to/e/a'), []);
+  assert.ok(eventos.some(e => e.stage === 'loader-ofuscado'), 'debe informar que el loader está ofuscado');
+  // No se piden rutas al azar sacadas del array de cadenas.
+  assert.ok(!pedidos.some(p => /^\/[A-Za-z0-9]{4,6}$/.test(p)), `pedidos: ${pedidos.join(',')}`);
+});

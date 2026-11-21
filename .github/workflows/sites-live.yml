@@ -81,6 +81,7 @@ jobs:
             const formas = (r.events || []).filter(e => e.stage === 'loader-forma')
               .map(e => e.host + ' bytes=' + e.bytes + ' fetch=' + e.fetch + ' xhr=' + e.xhr
                 + ' atob=' + e.atob + ' b64=' + e.b64 + ' eval=' + e.eval + ' sha=' + e.sha
+                + ' ofuscado=' + e.ofuscado
                 + ' literales=' + JSON.stringify(e.literales)).join(' , ');
             const etapas = {};
             for (const e of r.events || []) etapas[e.stage] = (etapas[e.stage] || 0) + 1;

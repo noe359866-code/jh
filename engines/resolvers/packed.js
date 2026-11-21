@@ -94,6 +94,20 @@ function rutasDeLoader(js) {
   return [...rutas];
 }
 
+// Detecta un loader ofuscado (javascript-obfuscator y similares): cadenas en un
+// array rotado con `push`/`shift` y nombres tipo `_0x1a2b`. Ese código solo se
+// descifra ejecutándolo, cosa que este proyecto no hace por diseño: se informa
+// y no se pierde tiempo probando rutas inventadas.
+function loaderOfuscado(js) {
+  const texto = String(js);
+  if (texto.length < 2000) return false;
+  const arrayRotado = /\.push\(\s*(?:[\w$]+\s*,\s*)+\)|\[\s*'(?:[^'\\]|\\.){200,}'/.test(texto);
+  const nombresHex = (texto.match(/_0x[0-9a-f]{3,}/gi) || []).length;
+  const rotacion = /\bshift\(\)/.test(texto) && /\.push\(/.test(texto);
+  const sinMecanismosLegibles = !/\bfetch\s*\(|XMLHttpRequest/.test(texto);
+  return (arrayRotado && (rotacion || nombresHex > 20)) || nombresHex > 200 || (sinMecanismosLegibles && rotacion);
+}
+
 // Forma publicable del loader: qué mecanismos usa y literales sin valores. Es
 // lo que permite ajustar la lectura sin volcar el JS del sitio.
 function formaLoader(js) {
@@ -206,7 +220,14 @@ function crearResolvedorPacked({ nombre, dominios, allowedHosts, fetchImpl, look
             // El loader es del propio player: su Referer natural es su página.
             const js = await fetcher.getText(src, { Referer: link });
             const forma = formaLoader(js);
-            emitir({ stage: 'loader-forma', host: new URL(link).hostname, ...forma });
+            const ofuscado = loaderOfuscado(js);
+            emitir({ stage: 'loader-forma', host: new URL(link).hostname, ...forma, ofuscado });
+            // Ofuscado: no hay rutas legibles y descifrarlo exige ejecutar el
+            // JS del sitio. Se informa y se deja de probar rutas al azar.
+            if (ofuscado) {
+              emitir({ stage: 'loader-ofuscado', host: new URL(link).hostname, bytes: js.length });
+              return [];
+            }
             for (const ruta of rutasDeLoader(js)) rutas.add(ruta);
           } catch { /* loader inaccesible: se sigue con la página tal cual */ }
         }
@@ -295,5 +316,5 @@ function crearResolvedoresPacked(config = {}) {
 
 module.exports = {
   crearResolvedorPacked, crearResolvedoresPacked, SERVIDORES,
-  formaPagina, cuerpoRedactado, esInterstitial, rutasDeLoader, formaLoader, rutaRedactada
+  formaPagina, cuerpoRedactado, esInterstitial, rutasDeLoader, formaLoader, rutaRedactada, loaderOfuscado
 };
