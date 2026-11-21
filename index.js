@@ -115,9 +115,9 @@ function createApp({ streams = loadStreams(), sites = sitesProvider } = {}) {
     }
     // Validate before extraction so only request errors map to 400; network
     // or provider failures during extraction map to 502.
-    const validateSiteUrl = sites.validateSiteUrl || sitesProvider.validateSiteUrl;
+    const validarUrlSitio = sites.validarUrlSitio || sitesProvider.validarUrlSitio;
     try {
-      validateSiteUrl(url);
+      validarUrlSitio(url);
     } catch (error) {
       return res.status(400).json({ error: error.message });
     }
@@ -126,7 +126,7 @@ function createApp({ streams = loadStreams(), sites = sitesProvider } = {}) {
       return res.json({ streams });
     } catch (error) {
       if (error.code === 'EXTRACTOR_BUSY') return res.status(503).set('Retry-After', '10').json({ error: 'Extractor busy' });
-      return res.status(502).json({ error: 'Site stream extraction failed' });
+      return res.status(502).json({ error: 'Extracción de stream del sitio fallida' });
     }
   });
 
@@ -139,7 +139,7 @@ function createApp({ streams = loadStreams(), sites = sitesProvider } = {}) {
   });
 
   app.get(['/', '/config'], (req, res) => {
-    res.type('html').send('<!doctype html><html lang="es"><meta charset="utf-8"><title>Latino Stream Addon</title><h1>Latino Stream Addon</h1><p>Catálogos de ejemplo: películas, series y anime (tipo series).</p><p>Incluye resolución directa de streams (mp4/HLS verificados) para documaniatv.com, flixlatam.com y poseidonhd2.co: GET /stream/site?url=&lt;página del sitio&gt;. Solo devuelve streams, sin catálogos, metas ni demos.</p><p>El administrador puede configurar enlaces directos HLS/MP4 autorizados en streams.json o STREAMS_FILE. Consulta README.md.</p><a href="/manifest.json">Ver manifiesto para Stremio</a></html>');
+    res.type('html').send('<!doctype html><html lang="es"><meta charset="utf-8"><title>Addon Latino Stream</title><h1>Addon Latino Stream</h1><p>Catálogos de ejemplo: películas, series y anime (tipo series).</p><p>Incluye resolución de streams (mp4/HLS verificados) para documaniatv.com, flixlatam.com y poseidonhd2.co, con proveedores y resolvedores de reproductores: GET /stream/site?url=&lt;página del sitio&gt;. Solo devuelve streams, sin catálogos, metas ni demos.</p><p>El administrador puede configurar enlaces directos HLS/MP4 autorizados en streams.json o STREAMS_FILE. Consulta README.md.</p><a href="/manifest.json">Ver manifiesto para Stremio</a></html>');
   });
   app.use((req, res) => res.status(404).json({ error: 'Not found' }));
   return app;

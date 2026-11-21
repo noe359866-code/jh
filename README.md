@@ -1,6 +1,6 @@
-# Latino Stream Addon
+# Addon Latino Stream
 
-Addon HTTP para Stremio. Incluye catálogos **de ejemplo**, metadatos básicos y resolución de streams directos configurados por el administrador. **No incluye un catálogo actualizado.** Incluye además resolución directa de streams (mp4/HLS verificados) para **documaniatv.com**, **flixlatam.com** y **poseidonhd2.co**: `GET /stream/site?url=<página del sitio>`, que solo devuelve `{ streams }`.
+Addon HTTP para Stremio. Incluye catálogos **de ejemplo**, metadatos básicos y resolución de streams directos configurados por el administrador. **No incluye un catálogo actualizado.** Incluye además resolución de streams (mp4/HLS verificados) para **documaniatv.com**, **flixlatam.com** y **poseidonhd2.co** mediante una arquitectura de **proveedores** y **resolvedores de reproductores**: `GET /stream/site?url=<página del sitio>`, que solo devuelve `{ streams }`.
 
 ## Ejecutar
 
@@ -45,7 +45,7 @@ Solo se admiten URLs HTTP(S) cuya ruta termine en `.m3u8` o `.mp4` (con query st
 - `GET /meta/movie/tt0137523.json`: `{ "meta": {...} }`.
 - `GET /stream/movie/tt0137523.json`: `{ "streams": [...] }`.
 - `GET /stream/series/tt0944947:1:2.json`: streams del episodio exacto.
-- `GET /stream/site?url=<página del sitio>`: resolución directa para `documaniatv.com`, `flixlatam.com` y `poseidonhd2.co`. **Solo devuelve `{ "streams": [...] }`**; no entrega catálogos, metadatos ni entradas de demostración.
+- `GET /stream/site?url=<página del sitio>`: resolución de streams para `documaniatv.com`, `flixlatam.com` y `poseidonhd2.co`. **Solo devuelve `{ "streams": [...] }`**; no entrega catálogos, metadatos ni entradas de demostración.
 - `GET /config`: información del estado real del addon; no es un editor de configuración.
 
 Sin fuentes configuradas para un ID válido, se devuelve HTTP 200 con `{ "streams": [] }`. IDs mal formados dan 400; tipos, catálogos y rutas no reconocidos dan 404. No se conservan las rutas antiguas `/catalog/movies.json` porque no siguen el protocolo de Stremio.
@@ -64,6 +64,20 @@ docker run --rm -p 8080:8080 \
   -v "$PWD/mis-streams.json:/config/streams.json:ro" \
   -e STREAMS_FILE=/config/streams.json latino-addon
 ```
+
+## Arquitectura: proveedores y resolvedores de reproductores
+
+Modelado en el proyecto [Streamflix](https://git.gay/streamflix-reborn2/streamflix), todo en español:
+
+- **Proveedores** (`engines/sites/`): cada uno corresponde a un sitio (DocumaniaTV, FlixLatam, PoseidonHD2). Su función es descubrir las URLs de **servidores** (players/embeds) en una página de contenido, equivalente a los `*Provider.kt` de Streamflix. Solo resuelven streams: no catálogos, no metadatos, no demos.
+- **Resolvedores de reproductores** (`engines/resolvers/`): cada uno mapea un dominio de reproductor (o alias) a una función que, dada la URL del embed/player, devuelve streams verificados (HLS/MP4). Equivale a los `*Extractor.kt` de Streamflix. Incluye:
+  - **VOE** (`voe.js`): descifra el payload AES-128-CBC de la página del player y extrae la fuente `.m3u8`.
+  - **Streamtape** (`streamtape.js`): extrae los parámetros del script `botlink` y construye la URL `get_video`.
+  - **Vidsrc.to** (`vidsrc.js`): obtiene el media ID y descifra la URL del embed con RC4.
+  - **Genérico** (`base.js`): barrido literal de candidatos `.m3u8`/`.mp4` y verificación por firma; es el resolvedor por defecto para hosts no reconocidos.
+- **Registry** (`engines/resolvers/index.js`): dispatcher central que, dada una URL de embed, localiza el resolvedor cuyo dominio coincide y lo invoca. Equivale al dispatcher de `Extractor.kt` de Streamflix.
+
+**Flujo de resolución**: `GET /stream/site?url=` → el proveedor descubre los servidores en la página → cada servidor se pasa al registry → el resolvedor correspondiente resuelve la URL a HLS/MP4 verificado → se devuelven los streams con el nombre del sitio como contexto.
 
 ## Resolución directa de sitios (mp4/HLS)
 
@@ -88,7 +102,7 @@ SITES_TEST_URL=https://www.documaniatv.com/pelicula/xyz npm run test:sites-live
 
 `scripts/sites-live.js` valida cada URL antes de hacer peticiones, resuelve la página y **falla si ningún sitio de la lista devuelve al menos un medio con firma válida**. Por defecto prueba los tres sitios (`documaniatv.com`, `flixlatam.com`, `poseidonhd2.co`); puedes indicar URLs concretas con `SITES_TEST_URLS` (separadas por comas). Escribe un reporte sanitizado en `reports/sites-live.json` con el resultado por sitio (disponible, hosts encontrados/bloqueados y conteos; **no URLs, queries, HTML ni tokens**), y imprime por consola cuáles devolvieron HLS/MP4. Si aparecen eventos `blocked-frame`/`blocked-host`, revisa ese dominio antes de autorizarlo en `SITES_ALLOWED_HOSTS`; nunca habilites dominios automáticamente. Los reportes locales quedan en `reports/`, fuera de Git. Las pruebas de `npm test` son deterministas y mockadas, y no sustituyen esta comprobación.
 
-En GitHub Actions, el workflow **Sites live extraction** (`workflow_dispatch`) ejecuta la misma prueba con red real: deja el campo `page_urls` vacío para probar los tres sitios o pasa URLs concretas, y sube `sites-live-report` con el reporte sanitizado incluso si falla. GitHub puede exigir que `workflow_dispatch` exista primero en la rama predeterminada; no se afirma que haya pasado: el entorno de desarrollo solo permite salida a GitHub y registros de paquetes, no a estos dominios. Si falla, inspecciona el flujo real y ajusta los hosts; no conviertas un fallo en un skip.
+En GitHub Actions, el workflow **Sites live extraction** se ejecuta al hacer push: prueba los sitios con red real y sube `sites-live-report` con el reporte sanitizado incluso si falla. El reporte se commita en la misma rama (con normalización para evitar bucles). GitHub puede exigir que el workflow exista primero en la rama predeterminada; no se afirma que haya pasado: el entorno de desarrollo solo permite salida a GitHub y registros de paquetes, no a estos dominios. Si falla, inspecciona el flujo real y ajusta los hosts; no conviertas un fallo en un skip.
 
 ## Caché y diagnósticos
 

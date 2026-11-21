@@ -45,7 +45,7 @@ test('site stream route rejects missing URLs and unsupported hosts without fetch
   assert.equal((await fetch(base + '/stream/site?url=')).status, 400);
   const rejected = await fetch(base + '/stream/site?url=https://evil.example/watch');
   assert.equal(rejected.status, 400);
-  assert.match((await rejected.json()).error, /Unsupported site host/);
+  assert.match((await rejected.json()).error, /no soportado/);
   assert.equal(calls, 0);
 });
 

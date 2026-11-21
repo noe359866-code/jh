@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node index.js",
     "test": "node --test",
-    "check": "node --check index.js && node --check engines/sites/index.js && node --check engines/sites/extractor.js && node --check scripts/sites-live.js && node --check engines/sites/network.js && node --check engines/sites/cache.js",
+    "check": "node --check index.js && node --check engines/sites/index.js && node --check engines/sites/extractor.js && node --check scripts/sites-live.js && node --check engines/sites/network.js && node --check engines/sites/cache.js && node --check engines/resolvers/index.js && node --check engines/resolvers/base.js && node --check engines/resolvers/fetcher.js && node --check engines/resolvers/crypto.js && node --check engines/resolvers/voe.js && node --check engines/resolvers/streamtape.js && node --check engines/resolvers/vidsrc.js",
     "test:sites-live": "node scripts/sites-live.js"
   },
   "engines": {

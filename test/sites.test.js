@@ -1,44 +1,44 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { SITES, allowedHosts, findSite, validateSiteUrl, resolve } = require('../engines/sites');
+const { PROVEEDORES, hostsPermitidos, encontrarProveedor, validarUrlSitio, resolver } = require('../engines/sites');
 const lookupImpl = async () => [{ address: '93.184.216.34' }];
 
-test('supports exactly the three configured sites with www and bare hosts', () => {
-  assert.deepEqual(SITES.map(site => site.key), ['documaniatv', 'flixlatam', 'poseidonhd2']);
-  assert.equal(findSite('www.documaniatv.com').key, 'documaniatv');
-  assert.equal(findSite('documaniatv.com').key, 'documaniatv');
-  assert.equal(findSite('www.flixlatam.com').key, 'flixlatam');
-  assert.equal(findSite('www.poseidonhd2.co').key, 'poseidonhd2');
-  assert.equal(findSite('evil.example'), null);
+test('exactamente los tres sitios configurados con hosts www y sin www', () => {
+  assert.deepEqual(PROVEEDORES.map(site => site.clave), ['documaniatv', 'flixlatam', 'poseidonhd2']);
+  assert.equal(encontrarProveedor('www.documaniatv.com').clave, 'documaniatv');
+  assert.equal(encontrarProveedor('documaniatv.com').clave, 'documaniatv');
+  assert.equal(encontrarProveedor('www.flixlatam.com').clave, 'flixlatam');
+  assert.equal(encontrarProveedor('www.poseidonhd2.co').clave, 'poseidonhd2');
+  assert.equal(encontrarProveedor('evil.example'), null);
 });
 
-test('allowedHosts trusts only the site domains by default', () => {
-  const hosts = allowedHosts();
+test('hostsPermitidos confía solo en los dominios del sitio por defecto', () => {
+  const hosts = hostsPermitidos();
   assert.ok(hosts.includes('www.documaniatv.com'));
   assert.ok(hosts.includes('flixlatam.com'));
   assert.ok(hosts.includes('poseidonhd2.co'));
   assert.equal(hosts.includes('evil.example'), false);
 });
 
-test('validates https site URLs without credentials and rejects other hosts', () => {
-  const { url, site } = validateSiteUrl('https://www.documaniatv.com/pelicula/xyz');
+test('valida URLs HTTPS del sitio sin credenciales y rechaza otros hosts', () => {
+  const { url, proveedor } = validarUrlSitio('https://www.documaniatv.com/pelicula/xyz');
   assert.equal(url.hostname, 'www.documaniatv.com');
-  assert.equal(site.key, 'documaniatv');
-  assert.throws(() => validateSiteUrl('http://www.documaniatv.com/'), /HTTPS/);
-  assert.throws(() => validateSiteUrl('https://user:pass@www.documaniatv.com/'), /credentials/);
-  assert.throws(() => validateSiteUrl('https://evil.example/pelicula'), /Unsupported site host/);
-  assert.throws(() => validateSiteUrl('not a url'), /valid URL/);
-  assert.throws(() => validateSiteUrl(''), /required/);
+  assert.equal(proveedor.clave, 'documaniatv');
+  assert.throws(() => validarUrlSitio('http://www.documaniatv.com/'), /HTTPS/);
+  assert.throws(() => validarUrlSitio('https://user:pass@www.documaniatv.com/'), /credenciales/);
+  assert.throws(() => validarUrlSitio('https://evil.example/pelicula'), /no soportado/);
+  assert.throws(() => validarUrlSitio('not a url'), /URL válida/);
+  assert.throws(() => validarUrlSitio(''), /requiere/);
 });
 
-test('resolve extracts verified HLS and MP4 from a site page, stream-only', async () => {
+test('resolver extrae HLS y MP4 verificados de una página del sitio, solo stream', async () => {
   const pages = {
     '/pelicula/xyz': '<source src="https://www.documaniatv.com/cdn/a.m3u8?t=1">' +
       '<script>var v="https:\\/\\/www.documaniatv.com\\/files\\/b.mp4";</script>',
     '/cdn/a.m3u8': '#EXTM3U\n#EXT-X-VERSION:3\n',
     '/files/b.mp4': Buffer.from([0, 0, 0, 24, 102, 116, 121, 112, 105, 115, 111, 109])
   };
-  const streams = await resolve({ url: 'https://www.documaniatv.com/pelicula/xyz' }, {
+  const streams = await resolver({ url: 'https://www.documaniatv.com/pelicula/xyz' }, {
     lookupImpl,
     fetchImpl: async url => new Response(pages[new URL(url).pathname])
   });
@@ -48,43 +48,43 @@ test('resolve extracts verified HLS and MP4 from a site page, stream-only', asyn
     'https://www.documaniatv.com/files/b.mp4'
   ]);
   for (const stream of streams) {
-    assert.equal(stream.name, 'DocumaniaTV');
-    assert.equal(stream.title, 'HLS / MP4');
+    assert.equal(stream.nombre, 'DocumaniaTV');
+    assert.equal(stream.titulo, 'HLS / MP4');
   }
 });
 
-test('resolve returns an empty list when nothing verifiable is found', async () => {
-  const streams = await resolve({ url: 'https://flixlatam.com/watch/xyz' }, {
+test('resolver devuelve lista vacía cuando no hay nada verificable', async () => {
+  const streams = await resolver({ url: 'https://flixlatam.com/watch/xyz' }, {
     lookupImpl,
     fetchImpl: async () => new Response('<html>no media here</html>')
   });
   assert.deepEqual(streams, []);
 });
 
-test('resolve rejects unsupported hosts before fetching', async () => {
+test('resolver rechaza hosts no soportados antes de hacer fetch', async () => {
   let calls = 0;
   await assert.rejects(
-    resolve({ url: 'https://evil.example/watch' }, {
+    resolver({ url: 'https://evil.example/watch' }, {
       lookupImpl,
       fetchImpl: async () => { calls++; return new Response('x'); }
     }),
-    /Unsupported site host/
+    /no soportado/
   );
   assert.equal(calls, 0);
 });
 
-test('resolve skips media on untrusted hosts and blocks private destinations', async () => {
+test('resolver omite medios en hosts no confiables y bloquea destinos privados', async () => {
   const pages = { '/pelicula': '<source src="https://cdn.evil.example/a.m3u8">' };
-  const streams = await resolve({ url: 'https://www.poseidonhd2.co/pelicula' }, {
+  const streams = await resolver({ url: 'https://www.poseidonhd2.co/pelicula' }, {
     lookupImpl,
     fetchImpl: async url => new Response(pages[new URL(url).pathname])
   });
   assert.deepEqual(streams, []);
   await assert.rejects(
-    resolve({ url: 'https://www.flixlatam.com/pelicula' }, {
+    resolver({ url: 'https://www.flixlatam.com/pelicula' }, {
       lookupImpl: async () => [{ address: '127.0.0.1' }],
       fetchImpl: async () => new Response('<source src="https://www.flixlatam.com/a.m3u8">')
     }),
-    /Non-public/
+    /no público/
   );
 });
