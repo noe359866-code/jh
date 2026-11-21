@@ -97,9 +97,10 @@ test('FlixLatam resuelve Anubis antes de leer el dataLink', async () => {
       const host = url.hostname + url.pathname;
       if (host === 'flixlatam.com/pelicula/patton') return new Response(FICHA);
       if (url.pathname.startsWith('/.within.website/x/cmd/anubis/api/pass-challenge')) {
-        passChallenge = url;
+        // Anubis acepta GET con query y POST con formulario: se prueban ambos.
+        passChallenge = { url, metodo: opciones.method, cuerpo: opciones.body };
         assert.equal(opciones.redirect, 'manual');
-        // El site devuelve la cookie que da acceso.
+        // El sitio devuelve la cookie que da acceso.
         return new Response(null, { status: 302, headers: { 'Set-Cookie': 'anubis=ok; Path=/; HttpOnly' } });
       }
       if (host === 'embed69.org/f/tt0066206/') {
@@ -117,10 +118,13 @@ test('FlixLatam resuelve Anubis antes de leer el dataLink', async () => {
 
   assert.deepEqual(streams.map(s => s.url), ['https://voe.sx/hls/master.m3u8']);
   assert.ok(passChallenge, 'debe pedir pass-challenge');
-  assert.equal(passChallenge.searchParams.get('id'), 'reto-1');
-  assert.equal(passChallenge.searchParams.get('nonce'), String(solucion.nonce));
-  assert.equal(passChallenge.searchParams.get('response'), solucion.hash);
-  assert.equal(passChallenge.searchParams.get('redir'), '/f/tt0066206/');
+  // El primer intento es POST con formulario (el que usa Anubis hoy).
+  assert.equal(passChallenge.metodo, 'POST');
+  const campos = new URLSearchParams(passChallenge.cuerpo);
+  assert.equal(campos.get('id'), 'reto-1');
+  assert.equal(campos.get('nonce'), String(solucion.nonce));
+  assert.equal(campos.get('response'), solucion.hash);
+  assert.equal(campos.get('redir'), '/f/tt0066206/');
 });
 
 test('FlixLatam no inventa streams cuando el reproductor falla', async () => {

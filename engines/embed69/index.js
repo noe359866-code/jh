@@ -126,25 +126,41 @@ function encontrarReproductor(html, base) {
 // Resuelve el PoW y hace la petición de pass-challenge. Devuelve las cookies
 // resultantes o null si el sitio no lo pide o el reto es irresoluble.
 async function pasarAnubis(fetcher, url, reto, { referer, cookies = {}, maxIntentos = 2_000_000 } = {}) {
+  const inicio = Date.now();
   const solucion = resolverAnubis(reto.randomData, reto.difficulty, { maxIntentos });
   if (!solucion) return null;
+  const transcurrido = Date.now() - inicio;
   const origen = new URL(url).origin;
   const destino = new URL(url);
   const redir = destino.pathname + (destino.search || '');
-  const consulta = new URLSearchParams({
-    id: reto.id,
-    response: solucion.hash,
-    nonce: String(solucion.nonce),
-    redir,
-    elapsedTime: '1200'
-  });
+  const campos = {
+    id: reto.id, response: solucion.hash, nonce: String(solucion.nonce),
+    redir, elapsedTime: String(transcurrido)
+  };
   const cookieHeader = Object.entries(cookies).map(([k, v]) => `${k}=${v}`).join('; ');
-  const respuesta = await fetcher.request(`${origen}/.within.website/x/cmd/anubis/api/pass-challenge?${consulta}`,
-    { ...(cookieHeader ? { Cookie: cookieHeader } : {}), ...(referer ? { Referer: referer } : {}) },
-    { redirect: 'manual', permitirRedireccion: true });
-  const nuevas = leerCookies(respuesta.headers.getSetCookie ? respuesta.headers.getSetCookie() : []);
-  if (!Object.keys(nuevas).length) return null;
-  return { ...cookies, ...nuevas };
+  const cabeceras = {
+    ...(cookieHeader ? { Cookie: cookieHeader } : {}),
+    ...(referer ? { Referer: referer } : {}),
+    'Content-Type': 'application/x-www-form-urlencoded'
+  };
+  // Anubis acepta GET con query y POST con formulario. Se prueban ambos y se
+  // acepta también un 302 que traiga la cookie en lugar de una respuesta 200.
+  const intentos = [
+    { method: 'POST', body: new URLSearchParams(campos).toString(), url: `${origen}/.within.website/x/cmd/anubis/api/pass-challenge` },
+    { method: 'GET', url: `${origen}/.within.website/x/cmd/anubis/api/pass-challenge?${new URLSearchParams(campos)}` }
+  ];
+  const recibidas = { ...cookies };
+  for (const intento of intentos) {
+    try {
+      const respuesta = await fetcher.request(intento.url, cabeceras, {
+        method: intento.method, body: intento.body, redirect: 'manual', permitirRedireccion: true
+      });
+      const nuevas = leerCookies(respuesta.headers.getSetCookie ? respuesta.headers.getSetCookie() : []);
+      Object.assign(recibidas, nuevas);
+      if (Object.keys(nuevas).length) return recibidas;
+    } catch { /* siguiente método */ }
+  }
+  return null;
 }
 
 function leerCookies(cabeceras) {
