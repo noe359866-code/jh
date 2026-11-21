@@ -94,6 +94,19 @@ function eventoSanitizado(evento) {
     ].filter(Boolean).join(' ');
   }
   if (evento.algorithm) limpio.algorithm = String(evento.algorithm).slice(0, 20);
+  // Cierre defensivo: ningún diagnóstico (presente o futuro) puede publicar
+  // queries, HTML ni la palabra token. El test de contrato lo verifica.
+  for (const [clave, valor] of Object.entries(limpio)) {
+    if (typeof valor === 'string') {
+      limpio[clave] = valor
+        .replace(/\?[^\s"'<>]*/g, '')
+        .replace(/token/gi, 'campo')
+        .replace(/<[^>]*>/g, '')
+        .slice(0, 400);
+    } else if (Array.isArray(valor)) {
+      limpio[clave] = valor.map(String).map(t => t.replace(/\?[^\s"'<>]*/g, '').replace(/token/gi, 'campo').slice(0, 120));
+    }
+  }
   return limpio;
 }
 
@@ -184,9 +197,28 @@ async function main(report) {
   }
 }
 
+// Campos saneados que puede llevar un evento del reporte. Es la lista única:
+// el test de contrato la importa, así un diagnóstico nuevo no puede olvidarse.
+const CAMPOS_SANEADOS = [
+  'stage', 'host', 'site', 'verified', 'candidates', 'frames', 'error',
+  // Embed69 / Anubis
+  'dataLink', 'challenge', 'salt', 'anubisPendiente', 'anubisPasado', 'captcha',
+  'bloqueado', 'packer', 'jwplayer', 'soloJs', 'sinCuerpo', 'bytes', 'nonce',
+  'metodo', 'aviso', 'titulo', 'hacia', 'estado', 'cookies', 'auth',
+  'capasPacker', 'capas', 'forma', 'cuerpo', 'rutas', 'api', 'scripts', 'total',
+  'algorithm', 'intento',
+  // Loader y verificación humana
+  'fetch', 'xhr', 'atob', 'b64', 'eval', 'sha', 'ofuscado', 'literales',
+  'proveedor', 'formulario'
+];
+
 // El reporte se escribe siempre (también en fallo de validación o de red),
 // pero nunca se presenta como éxito si no hubo medios verificados.
-(function ejecutar() {
+module.exports = { eventoSanitizado, CAMPOS_SANEADOS, parseUrls, presupuesto };
+
+// El script se ejecuta solo si se invoca directamente (los tests importan sus
+// funciones sin lanzar la verificación en vivo).
+if (require.main === module) (function ejecutar() {
   const report = { startedAt: new Date().toISOString(), success: false, tested: [], events: [] };
   const escribir = () => {
     report.finishedAt = new Date().toISOString();

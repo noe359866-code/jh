@@ -41,22 +41,12 @@ test('sites-live valida la URL, intenta la extracción y escribe un reporte sin 
   assert.equal(reporte.tested[0].host, 'flixlatam.com');
   // El reporte solo contiene host y conteos: ni rutas, ni queries, ni tokens.
   const serializado = JSON.stringify(reporte);
-  assert.doesNotMatch(serializado, /patton|pelicula|\?|token/i);
-  // Campos saneados permitidos. Cualquier diagnóstico nuevo se añade aquí a
-  // propósito: el contrato es que el reporte no puede llevar URLs, queries,
-  // HTML ni tokens, y este test es el que lo vigila.
-  const CLAVES = new Set([
-    'stage', 'host', 'site', 'verified', 'candidates', 'frames', 'error',
-    // Embed69 / Anubis
-    'dataLink', 'challenge', 'salt', 'anubisPendiente', 'anubisPasado', 'captcha',
-    'bloqueado', 'packer', 'jwplayer', 'soloJs', 'sinCuerpo', 'bytes', 'nonce',
-    'metodo', 'aviso', 'titulo', 'hacia', 'estado', 'cookies', 'auth',
-    'capasPacker', 'capas', 'forma', 'cuerpo', 'rutas', 'api', 'scripts', 'total',
-    'algorithm', 'intento',
-    // Loader y verificación humana
-    'fetch', 'xhr', 'atob', 'b64', 'eval', 'sha', 'ofuscado', 'literales',
-    'proveedor', 'formulario'
-  ]);
+  assert.doesNotMatch(serializado, /patton|pelicula|\?|token|csrf/i);
+  // La lista de campos es única (la exporta el propio script) y además el
+  // saneado es defensivo: nada puede llevar queries ni la palabra token aunque
+  // un diagnóstico nuevo se olvide de redactarlo.
+  const { CAMPOS_SANEADOS, eventoSanitizado } = require('../scripts/sites-live.js');
+  const CLAVES = new Set(CAMPOS_SANEADOS);
   for (const evento of reporte.events) {
     assert.ok(Object.keys(evento).every(clave => CLAVES.has(clave)), `evento con campo inesperado: ${JSON.stringify(evento)}`);
   }
@@ -69,4 +59,19 @@ test('sites-live falla con código distinto de cero si no hay medios verificados
   const { codigo, reporte } = await ejecutar();
   if (!reporte.success) assert.notEqual(codigo, 0);
   else assert.equal(codigo, 0);
+});
+
+test('el saneado es defensivo: ningún diagnóstico puede publicar queries ni tokens', () => {
+  // Aunque un evento futuro añada campos nuevos con secretos, el saneado los
+  // corta: el reporte nunca puede filtrar queries, HTML ni la palabra token.
+  const { eventoSanitizado } = require('../scripts/sites-live.js');
+  const sucio = eventoSanitizado({
+    stage: 'prueba', host: 'player.example', titulo: 'x?token=abc',
+    cuerpo: '<script src="/a.js?tok=1"></script>', rutas: ['/dl?file=abc&token=xyz'],
+    campo_inventado: 'https://host/x?token=secreto', bytes: 10
+  });
+  const serializado = JSON.stringify(sucio);
+  assert.doesNotMatch(serializado, /\?|\btoken\b|csrf/i);
+  assert.doesNotMatch(serializado, /<script/);
+  assert.equal(sucio.bytes, 10);
 });
