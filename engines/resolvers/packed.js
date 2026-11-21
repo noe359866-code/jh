@@ -87,7 +87,12 @@ function crearResolvedorPacked({ nombre, dominios, allowedHosts, fetchImpl, look
         candidatos: candidatos.length, bytes: html.length,
         packer: /eval\(function\s*\(p\s*,\s*a\s*,\s*c\s*,\s*k\s*,\s*e/.test(html),
         bloqueado: /403 forbidden|access denied|not found|deleted|removed/i.test(html.slice(0, 4000)),
-        jwplayer: /jwplayer|jwp-config|sources\s*:\s*\[/i.test(html)
+        jwplayer: /jwplayer|jwp-config|sources\s*:\s*\[/i.test(html),
+        // Título de la página (texto suyo, no enlaces) para saber qué sirvió.
+        titulo: (/<title[^>]*>([^<]{0,80})<\/title>/i.exec(html) || [, ''])[1].trim(),
+        // Páginas que solo funcionan con JS o que piden verificación.
+        soloJs: /enable javascript|please enable js|noscript|recaptcha|turnstile|hcaptcha/i.test(html.slice(0, 4000)),
+        sinCuerpo: html.trim().length < 32
       });
       return [];
     }

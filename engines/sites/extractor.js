@@ -243,8 +243,11 @@ function createFetcher({
     const referer = esEntidadHtmlSegura(pageReferer) ? pageReferer : undefined;
     let response;
     try {
+      // Con seguirMismoMotor hay que recibir el 3xx para decidir el destino:
+      // redirect:'error' hace que undici lance antes de devolver la respuesta.
+      const modoRedirect = seguirMismoMotor && redirect === 'error' ? 'manual' : redirect;
       response = await fetchFn(url, {
-        method, body, redirect, signal: signalDePeticion(),
+        method, body, redirect: modoRedirect, signal: signalDePeticion(),
         headers: { ...DEFAULT_HEADERS, ...(referer ? { Referer: referer } : {}), ...headers }
       });
     } catch (error) {
