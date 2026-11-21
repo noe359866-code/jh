@@ -80,6 +80,14 @@ function crearResolvedorPacked({ nombre, dominios, allowedHosts, fetchImpl, look
       if (streams.length) return streams;
 
       // Sin candidato verificado no se entrega el embed: no es reproducible.
+      // Se informa qué se encontró (sin volcar el HTML: lleva enlaces firmados).
+      emitir({
+        stage: 'sin-media', host: new URL(link).hostname, capas: capas.length,
+        candidatos: candidatos.length, bytes: html.length,
+        packer: /eval\(function\s*\(p\s*,\s*a\s*,\s*c\s*,\s*k\s*,\s*e/.test(html),
+        bloqueado: /403 forbidden|access denied|not found|deleted|removed/i.test(html.slice(0, 4000)),
+        jwplayer: /jwplayer|jwp-config|sources\s*:\s*\[/i.test(html)
+      });
       return [];
     }
   });
