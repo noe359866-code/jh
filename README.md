@@ -103,7 +103,17 @@ SITES_TEST_URLS=https://www.documaniatv.com/pelicula/xyz npm run test:sites-live
 
 `scripts/sites-live.js` valida cada URL antes de hacer peticiones, resuelve la página y **falla si ningún sitio de la lista devuelve al menos un medio con firma válida**. Por defecto prueba los tres sitios (`documaniatv.com`, `flixlatam.com`, `poseidonhd2.co`); puedes indicar URLs concretas con `SITES_TEST_URLS` (separadas por comas). Escribe un reporte sanitizado en `reports/sites-live.json` con el resultado por sitio (disponible, hosts encontrados/bloqueados y conteos; **no URLs, queries, HTML ni tokens**), y imprime por consola cuáles devolvieron HLS/MP4. Si aparecen eventos `blocked-frame`/`blocked-host`, revisa ese dominio antes de autorizarlo en `SITES_ALLOWED_HOSTS`; nunca habilites dominios automáticamente. Los reportes locales quedan en `reports/`, fuera de Git. Las pruebas de `npm test` son deterministas y mockadas, y no sustituyen esta comprobación.
 
-En GitHub Actions, el workflow **Sites live extraction** se ejecuta al hacer push: prueba los sitios con red real y sube `sites-live-report` con el reporte sanitizado incluso si falla. El reporte **no se commitea**: solo se publica como artefacto y se resume en el log. (Antes se versionaba con `git add -f`, saltándose el `.gitignore`, y quedó en el repositorio un reporte de error presentado como verificación real.) GitHub puede exigir que el workflow exista primero en la rama predeterminada; no se afirma que haya pasado: el entorno de desarrollo solo permite salida a GitHub y registros de paquetes, no a estos dominios. Si falla, inspecciona el flujo real y ajusta los hosts; no conviertas un fallo en un skip.
+**Resultado medido** (GitHub Actions, IP de datacenter, 2026-11-21, páginas de detalle reales):
+
+| Sitio | Páginas analizadas | Candidatos `.m3u8`/`.mp4` | Resultado |
+| --- | --- | --- | --- |
+| documaniatv.com | 0 | 0 | HTTP 403 (protección anti-bot: bloquea IPs de datacenter) |
+| flixlatam.com | 3 (`flixlatam.com`, `embed69.org`, `uqload.vc`) | 0 | los players no exponen la URL en el HTML estático |
+| poseidonhd2.co | 1 | 0 | los servidores no están en iframes ni en enlaces conocidos |
+
+Conclusión honesta: **hoy ninguna de las tres devuelve HLS/MP4 por extracción estática**. Sobrevivir a Cloudflare (documaniatv) o a players que generan la fuente por JavaScript (embed69/uqload) exige ejecutar JS o usar una API que solo responde a sesiones de navegador; ambas cosas están fuera del alcance de este extractor por diseño. Desde una IP residencial documaniatv podría responder; el 403 es de su firewall, no del código.
+
+En GitHub Actions, el workflow **Sites live extraction** se ejecuta al hacer push: prueba los sitios con red real y publica un resumen saneado como **comentario del commit** (los logs y artefactos del job pueden no ser accesibles), además de subir `sites-live-report` como artefacto. El reporte **no se commitea**: solo se publica como artefacto y se resume en el log. (Antes se versionaba con `git add -f`, saltándose el `.gitignore`, y quedó en el repositorio un reporte de error presentado como verificación real.) GitHub puede exigir que el workflow exista primero en la rama predeterminada; no se afirma que haya pasado: el entorno de desarrollo solo permite salida a GitHub y registros de paquetes, no a estos dominios. Si falla, inspecciona el flujo real y ajusta los hosts; no conviertas un fallo en un skip.
 
 ## Variables de entorno
 
