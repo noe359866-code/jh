@@ -57,7 +57,9 @@ function eventoSanitizado(evento) {
       f.refresh ? `refresh:${f.refresh}` : '',
       f.carga ? 'autosubmit' : '',
       f.decodifica ? 'decodifica' : '',
-      f.eval ? 'eval' : ''
+      f.eval ? 'eval' : '',
+      f.etiquetas?.length ? `tags:${f.etiquetas.join(',')}` : '',
+      f.claves?.length ? `claves:${f.claves.join(',')}` : ''
     ].filter(Boolean).join(' ');
   }
   if (evento.algorithm) limpio.algorithm = String(evento.algorithm).slice(0, 20);
@@ -87,7 +89,11 @@ async function main(report) {
       for (;;) {
         intento++;
         try {
+          // Presupuesto holgado: el flujo real es ficha + Anubis (PoW y espera
+          // mínima) + varios players externos, cada uno con su propia página.
           streams = await resolver({ url: pageUrl }, {
+            timeoutMs: 20000,
+            deadlineMs: 90000,
             onEvent: evento => {
               const limpio = eventoSanitizado(evento);
               if (limpio.host) hostsVistos.add(limpio.host);

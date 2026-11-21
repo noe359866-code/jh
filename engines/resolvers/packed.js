@@ -65,7 +65,13 @@ function formaPagina(html) {
     refresh: ((/<meta[^>]*http-equiv=["']refresh["'][^>]*content=["']([^"']+)["']/i.exec(texto) || [, ''])[1] || ''),
     carga: /document\.(?:forms\[0\]|getElementById\([^)]*\))\.submit\(|onload=|addEventListener\(["']load/i.test(texto),
     decodifica: /atob\(|fromCharCode|decodeURIComponent|unescape\(/i.test(texto),
-    eval: /eval\(/i.test(texto)
+    eval: /eval\(/i.test(texto),
+    // Etiquetas presentes y textos de arranque típicos ("Loading..." + script
+    // que navega). Sirve para distinguir un loader de una página vacía.
+    etiquetas: [...new Set([...texto.matchAll(/<([a-z][a-z0-9]*)\b/gi)].map(m => m[1].toLowerCase()))].slice(0, 10),
+    claves: [...new Set([...texto.matchAll(/(?:^|[\s;,{])([a-zA-Z_$][\w$]*)\s*[=:(]/g)].map(m => m[1]))]
+      .filter(k => !['var', 'let', 'const', 'function', 'if', 'for', 'window', 'document', 'return'].includes(k))
+      .slice(0, 8)
   };
 }
 
