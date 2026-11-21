@@ -2,70 +2,23 @@
   "success": false,
   "tested": [
     {
-      "site": "documaniatv",
+      "site": null,
       "success": false,
       "verifiedMedia": 0,
-      "error": "Media request failed: HTTP 403"
+      "error": "validateSiteUrl is not a function"
     },
     {
-      "site": "flixlatam",
+      "site": null,
       "success": false,
       "verifiedMedia": 0,
-      "error": null
+      "error": "validateSiteUrl is not a function"
     },
     {
-      "site": "poseidonhd2",
+      "site": null,
       "success": false,
       "verifiedMedia": 0,
-      "error": null
+      "error": "validateSiteUrl is not a function"
     }
   ],
-  "events": [
-    {
-      "stage": "request",
-      "host": "www.documaniatv.com",
-      "site": "documaniatv"
-    },
-    {
-      "stage": "request",
-      "host": "flixlatam.com",
-      "site": "flixlatam"
-    },
-    {
-      "stage": "page",
-      "host": "flixlatam.com",
-      "candidates": 0,
-      "frames": 2,
-      "site": "flixlatam"
-    },
-    {
-      "stage": "blocked-frame",
-      "host": "",
-      "site": "flixlatam"
-    },
-    {
-      "stage": "request",
-      "host": "embed69.org",
-      "site": "flixlatam"
-    },
-    {
-      "stage": "page",
-      "host": "embed69.org",
-      "candidates": 0,
-      "frames": 0,
-      "site": "flixlatam"
-    },
-    {
-      "stage": "request",
-      "host": "www.poseidonhd2.co",
-      "site": "poseidonhd2"
-    },
-    {
-      "stage": "page",
-      "host": "www.poseidonhd2.co",
-      "candidates": 0,
-      "frames": 0,
-      "site": "poseidonhd2"
-    }
-  ]
+  "events": []
 }
