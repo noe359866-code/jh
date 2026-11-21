@@ -74,10 +74,11 @@ Modelado en el proyecto [Streamflix](https://git.gay/streamflix-reborn2/streamfl
   - **VOE** (`voe.js`): descifra el payload AES-128-CBC de la página del player (claves por defecto del player, sobreescribibles con `VOE_KEY`/`VOE_IV`; también acepta JSON en claro) y extrae la fuente `.m3u8`. Tolera las variantes `/hls/master.txt` y similares.
   - **Streamtape** (`streamtape.js`): extrae los parámetros del script `botlink`, construye la URL `get_video` y **sigue el 302** con `redirect: 'manual'` para obtener la URI real del media. La URL `get_video` nunca se entrega como stream: no es reproducible en el cliente.
   - **Vidsrc.to** (`vidsrc.js`): obtiene el media ID de la página, pide las fuentes a su API y descifra la URL con **RC4 usando la clave completa** de `decrypt`. Si la fuente es un embed de otro reproductor, delega en el registry (un nivel, sin bucles). La clave se configura con `VIDSRC_KEYS=encrypt:decrypt`; sin ella solo puede verificar medios ya visibles en la página.
-  - **Genérico** (`base.js`): barrido literal de candidatos `.m3u8`/`.mp4` y verificación por firma; es el resolvedor por defecto para hosts no reconocidos.
+  - **Players de Embed69** (`packed.js`): Streamwish, Vidhide, Filemoon, Uqload, Doodstream, Lulustream y WatchSB. Desempaquetan el bloque **P.A.C.K.E.R.** por texto (nunca `eval`) y verifican los candidatos. Incluyen los dominios "rotados" que devuelve Embed69 (`hglink.to`, `morencius.com`, `do7go.com`...) y siguen el 302 al dominio estable **solo si el destino está en la allowlist**.
+  - **Genérico** (`base.js`): último recurso para hosts no reconocidos; también desempaqueta P.A.C.K.E.R., sigue el 302 interno y verifica por firma.
 - **Registry** (`engines/resolvers/index.js`): dispatcher central que, dada una URL de embed, localiza el resolvedor cuyo dominio coincide y lo invoca. Equivale al dispatcher de `Extractor.kt` de Streamflix. Los hosts de reproductor conocidos (`HOSTS_REPRODUCTORES`) están autorizados explícitamente; el HTML de una página nunca amplía la allowlist.
 
-**Flujo de resolución**: `GET /stream/site?url=` → el extractor recorre la página y sus iframes autorizados → los candidatos `.m3u8`/`.mp4` se verifican por firma → los reproductores se pasan al registry → el resolvedor correspondiente devuelve HLS/MP4 verificado → se publican con las claves de Stremio (`name`/`title`) y el nombre del sitio como contexto.
+**Flujo de resolución**: `GET /stream/site?url=` → el proveedor del sitio descubre el reproductor y sus servidores → los candidatos `.m3u8`/`.mp4` se verifican por firma → cada servidor se pasa al registry → el resolvedor correspondiente devuelve HLS/MP4 verificado → se publican con las claves de Stremio (`name`/`title`); el `title` indica idioma y servidor (`"Latino · Voe"`).
 
 ## Resolución directa de sitios (mp4/HLS)
 
@@ -85,16 +86,35 @@ Modelado en el proyecto [Streamflix](https://git.gay/streamflix-reborn2/streamfl
 
 > **Alcance actual:** solo FlixLatam. DocumaniaTV y PoseidonHD2 se retiraron por decisión del administrador (el primero responde HTTP 403 a IPs de datacenter y el segundo no expone los servidores en el HTML estático). Cualquier URL de esos hosts devuelve 400 "Host de sitio no soportado" sin hacer peticiones.
 
+La cadena real del sitio (no un barrido del HTML de la ficha) es:
+
+```
+flixlatam.com/pelicula|serie|anime/<slug>
+  → iframe del reproductor: embed69.org/f/<id>   (o el antiguo /vidurl/<id>/)
+  → Embed69 publica `let dataLink = [...]` con los servidores por idioma
+  → cada enlace va en AES-256-CBC: clave = SHA-256(LINK_CHALLENGE + LINK_SALT),
+    IV = los 16 primeros bytes del base64, relleno PKCS#7
+  → el dominio se normaliza a su nombre estable (hglink.to → streamwish.to,
+    morencius.com → vidhidepro.com, do7go.com → dood.la...)
+  → el player externo esconde la fuente con P.A.C.K.E.R. o tras un interstitial
+  → HLS/MP4 verificado por firma
+```
+
+Si el reproductor está detrás de **Anubis** (`<script id="anubis_challenge">`), se resuelve su prueba de trabajo SHA-256 (`rules.difficulty` en nibbles, prefijo `anubis_base_prefix`, espera mínima de `dificultad × 80 ms`) y se obtiene la cookie `*-anubis-auth`; sin ella el sitio devuelve siempre el reto. Los algoritmos `metarefresh` se esperan y los no soportados (`argon2id`/`preact`) se informan como tales, sin inventar medios.
+
 ```
 GET /stream/site?url=https://flixlatam.com/pelicula/patton
-→ { "streams": [ { "name": "FlixLatam", "title": "HLS / MP4", "url": "https://flixlatam.com/cdn/a.m3u8?t=1" } ] }
+→ { "streams": [
+      { "name": "FlixLatam", "title": "Latino · Voe",       "url": "https://…/master.m3u8" },
+      { "name": "FlixLatam", "title": "Latino · Streamwish", "url": "https://…/index.m3u8" },
+      { "name": "FlixLatam", "title": "Subtitulado · Filemoon", "url": "https://…/master.m3u8" } ] }
 ```
 
 - Solo se aceptan URLs HTTPS sin credenciales y con hostname de FlixLatam (con o sin `www`). Otros hosts, HTTP claro, credenciales y URLs malformadas devuelven 400 sin hacer peticiones.
-- La página se analiza como HTML estático y **se recorren sus iframes** (hasta cinco páginas por extracción): URLs literales `.m3u8`/`.mp4` en atributos, `src` sin comillas, fragmentos `#t=`, `data-embed`/`data-src`, cadenas JS y entidades escapadas (`\/`, `\u002F`, `&#x2F;`, `&quot;`). Cada candidato se solicita con `Range` y se verifica por firma: una playlist HLS con `#EXT-X-STREAM-INF` o `#EXTINF`/`#EXT-X-TARGETDURATION`, o una caja `ftyp` para MP4. Una cabecera `#EXTM3U` suelta no se acepta. **Esto no prueba reproducción completa**, codecs, audio latino ni CORS.
-- **No se ejecuta JavaScript**, no se usan cookies, no se resuelven CAPTCHAs ni se evade DRM. Reproductores que dependan de APIs dinámicas o de un Referer no están soportados.
+- Cada ficha se resuelve por el camino real del sitio (arriba). Además se recogen los medios literales que aparezcan en la ficha o en el reproductor y se verifican por firma: una playlist HLS con `#EXT-X-STREAM-INF` o `#EXTINF`/`#EXT-X-TARGETDURATION`, o una caja `ftyp` para MP4. Una cabecera `#EXTM3U` suelta no se acepta. **Esto no prueba reproducción completa**, codecs, audio latino ni CORS.
+- **No se ejecuta JavaScript del sitio**: el cifrado de Embed69 se descifra con AES y P.A.C.K.E.R. se desempaqueta por texto. Sí se usan cookies (las del propio reproductor y la cookie de Anubis) y el `Referer` del reproductor que incrusta al player, porque los players los exigen. No se resuelven CAPTCHAs de terceros ni se evade DRM.
 - Los hosts confiables son los tres dominios del sitio más los dominios de reproductor conocidos del registry (VOE, Streamtape, Vidsrc, Doodstream, Filemoon, Vidhide, Streamwish...). Si un medio se sirve desde un CDN, añade sus hosts explícitamente con `SITES_ALLOWED_HOSTS=cdn.example.com,...` **después de comprobar que son confiables**; el HTML de la página nunca autoriza un host por sí solo. Los hosts no permitidos se omiten (la lista resultante puede quedar vacía) y se registra un evento `blocked-host`/`blocked-frame`.
-- Transporte seguro: IPv4 público validado en el socket, sin redirecciones (salvo la petición `get_video` de Streamtape, que se inspecciona explícitamente), sin IPv6 ni direcciones privadas. El `lookup` inyectable se aplica también al transporte, así que la dirección validada es la que se conecta. Los mismos límites del extractor HLS/MP4 se aplican (tamaño de página, tiempo por petición, diez candidatos, dos verificaciones concurrentes) y hay caché por URL (30 s con medios, 5 s sin ellos).
+- Transporte seguro: IPv4 público validado en el socket, sin redirecciones automáticas (solo se siguen 302 hacia hosts de la allowlist, y la petición `get_video` de Streamtape se inspecciona explícitamente), sin IPv6 ni direcciones privadas. El `lookup` inyectable se aplica también al transporte, así que la dirección validada es la que se conecta. Los mismos límites del extractor HLS/MP4 se aplican (tamaño de página, tiempo por petición, diez candidatos, dos verificaciones concurrentes) y hay caché por URL (30 s con medios, 5 s sin ellos).
 - **Presupuesto de tiempo total**: además del tiempo por petición, cada extracción tiene un `deadlineMs` (20 s por defecto). Antes, diez candidatos en serie con un tiempo por petición de 10 s podían dejar la respuesta colgada durante minutos.
 - Fallos del extractor: 400 para solicitudes inválidas, 502 si la extracción falla, 503 (`Retry-After: 10`) si hay saturación.
 - **Verificación real**: el entorno de desarrollo solo permite salida a GitHub y registros de paquetes, no a estos dominios, así que no se afirma que funcione contra los sitios reales. Para comprobarlo, usa un URL de prueba con acceso real:
@@ -107,11 +127,11 @@ SITES_TEST_URLS=https://flixlatam.com/pelicula/patton npm run test:sites-live
 
 **Resultado medido** (GitHub Actions, IP de datacenter, 2026-11-21, página de detalle real):
 
-| Sitio | Páginas analizadas | Candidatos `.m3u8`/`.mp4` | Resultado |
+| Sitio | Cadena recorrida | Medios verificados | Resultado |
 | --- | --- | --- | --- |
-| flixlatam.com | 3 (`flixlatam.com`, `embed69.org`, `uqload.vc`) | 0 | los players no exponen la URL en el HTML estático |
+| flixlatam.com | ficha → `embed69.org/f/<id>` → 6 servidores descifrados (LAT/SUB) | — | la extracción pasa Anubis y descifra los servidores; los players externos devuelven un interstitial que exige ejecutar su JavaScript |
 
-Conclusión honesta: **hoy FlixLatam no devuelve HLS/MP4 por extracción estática**. El crawl sí llega a sus reproductores (`embed69.org` → `uqload.vc`), pero esos players generan la fuente por JavaScript, que este extractor no ejecuta por diseño. Para obtener medios habría que añadir un navegador headless o una API que responda con sesión de navegador.
+Estado medido honesto: la cadena propia de FlixLatam **ya se recorre completa** — ficha, reproductor de Embed69, prueba de trabajo de Anubis, descifrado AES de los seis servidores y su normalización de dominios. Lo que queda fuera de alcance por diseño es ejecutar el JavaScript de los players externos (Streamwish, Vidhide, Voe): responden una página `Loading...` de ~800 B que solo se resuelve en un navegador. Hasta que un player sirva el media sin ejecutar su JS, la lista puede venir vacía; el resumen en vivo lo indica etapa por etapa (`anubis`, `servidores`, `packer`, `sin-media`) en vez de fingir éxito.
 
 Histórico: con los otros dos sitios, DocumaniaTV respondía HTTP 403 a la IP del runner y PoseidonHD2 no exponía ningún servidor en el HTML estático. Ambos fueron retirados.
 
@@ -138,4 +158,4 @@ El workflow en vivo permite probar páginas y sube `sites-live-report` incluso c
 
 `npm run check`, `npm test` y `npm audit --omit=dev` comprueban sintaxis, contrato HTTP, resolución de configuración y dependencias respectivamente. Las pruebas de los resolvedores usan páginas y respuestas simuladas: cubren el descifrado AES/RC4, el script `botlink` y el 302 de Streamtape, el `mediaId` de Vidsrc, la decodificación de URLs escapadas, el crawl de iframes, la allowlist y el presupuesto de tiempo, pero **no descargan videos reales ni validan reproducción**. CI está configurada para Node 22 y 24; la ejecución local se verificó en Node 22. La imagen Docker necesita una comprobación adicional en un entorno con Docker.
 
-El extractor de sitios es estático: no se ejecuta JavaScript, no se usan cookies, no se resuelven CAPTCHAs ni se evade DRM. Reproductores que dependan de APIs dinámicas o de un Referer no están soportados; los de FlixLatam (`embed69.org`, `uqload.vc`) pertenecen a ese grupo, así que hoy la lista de streams devuelta puede venir vacía. Una lista vacía puede significar formato no soportado o que los medios estén en hosts no autorizados, no necesariamente ausencia de contenido en la página.
+El extractor no ejecuta JavaScript del sitio: descifra (AES), desempaqueta (P.A.C.K.E.R.), usa cookies y `Referer` cuando el reproductor los exige, y resuelve la prueba de trabajo de Anubis. Los players externos que generan la fuente con su propio JS siguen fuera de alcance: si devuelven un interstitial, la lista puede venir vacía. Una lista vacía puede significar eso, un formato no soportado o medios en hosts no autorizados; no implica por sí sola que la página no tenga contenido.

@@ -68,13 +68,15 @@ async function verificarCandidatos(fetcher, nombre, urls) {
 // verifica la URL del propio servidor (si es .m3u8/.mp4) y, como respaldo,
 // fetchea la página y extrae candidatos literales .m3u8/.mp4 verificados.
 // Es el resolvedor por defecto para hosts no reconocidos.
+const { unPackerTodo } = require('./packer');
+
 function crearResolvedorGenerico({ allowedHosts, fetchImpl, lookupImpl, timeoutMs, deadlineMs, maxBytes, pageReferer, onEvent } = {}) {
   const emitir = typeof onEvent === 'function' ? onEvent : () => {};
   const fetcher = createFetcher({ allowedHosts, fetchImpl, lookupImpl, timeoutMs, deadlineMs, maxBytes, pageReferer, onEvent: emitir });
   return new Resolvedor({
     nombre: 'Genérico',
     urlPrincipal: 'resolvedor://generico',
-    resuelve: async (link) => {
+    resuelve: async (link, ctx = {}) => {
       const url = new URL(link);
       // Si el propio enlace es un media directo, verificarlo primero.
       if (/\.(?:m3u8|mp4)$/i.test(url.pathname)) {
@@ -82,15 +84,23 @@ function crearResolvedorGenerico({ allowedHosts, fetchImpl, lookupImpl, timeoutM
         if (streams.length) return streams;
       }
       // Respaldo: barrido literal de candidatos en la página del servidor.
+      // Los players de Embed69 rotan de dominio y usan P.A.C.K.E.R.; si su
+      // resolvedor dedicado no los reconoce, este es el último recurso, así
+      // que también desempaqueta y sigue el 302 al dominio estable.
+      const cabeceras = ctx.pageReferer ? { Referer: ctx.pageReferer } : {};
       let html;
       try {
-        html = await fetcher.getText(link);
+        html = await fetcher.getText(link, cabeceras, { seguirMismoMotor: true });
       } catch (error) {
         emitir({ stage: 'resolver-failed', host: url.hostname, error: error.message });
         return [];
       }
-      const { media } = parsePageSeguro(fetcher, html, link);
-      return verificarCandidatos(fetcher, 'Genérico', media.slice(0, 10));
+      const candidatos = [];
+      for (const capa of unPackerTodo(html)) {
+        const { media } = parsePageSeguro(fetcher, capa, link);
+        for (const candidato of media) if (!candidatos.includes(candidato)) candidatos.push(candidato);
+      }
+      return verificarCandidatos(fetcher, 'Genérico', candidatos.slice(0, 10));
     }
   });
 }
