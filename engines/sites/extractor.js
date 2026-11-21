@@ -221,7 +221,10 @@ function createFetcher({
     return AbortSignal.timeout(ms);
   }
 
-  async function request(raw, headers = {}, { method = 'GET', body, redirect = 'error', permitirRedireccion = false } = {}) {
+  // `seguirMismoMotor`: un player rota de dominio (hglink.to -> streamwish.to)
+  // y responde 302. Se siguen esas redirecciones, pero solo si el destino
+  // pertenece al mismo conjunto de dominios: nunca se sale de la allowlist.
+  async function request(raw, headers = {}, { method = 'GET', body, redirect = 'error', permitirRedireccion = false, seguirMismoMotor = false } = {}) {
     const url = new URL(raw);
     emitir({ stage: 'request', host: url.hostname });
     if (url.protocol !== 'https:' || (url.port && url.port !== '443') || url.username || url.password
@@ -253,6 +256,21 @@ function createFetcher({
       throw new Error(`Fallo de red${causa ? ` (${causa})` : ''}: ${error?.message || error}`, { cause: error });
     }
     if (permitirRedireccion && response.status >= 300 && response.status < 400) return response;
+    if (seguirMismoMotor && response.status >= 300 && response.status < 400) {
+      const destino = response.headers.get('location');
+      let absoluto = null;
+      try { absoluto = destino ? new URL(destino, url).href : null; } catch { absoluto = null; }
+      if (absoluto) {
+        const host = new URL(absoluto).hostname;
+        if (hosts.has(host)) {
+          emitir({ stage: 'redirect', host: url.hostname, hacia: host });
+          return request(absoluto, headers, { method, body, redirect: 'error', permitirRedireccion, seguirMismoMotor });
+        }
+        emitir({ stage: 'redirect-bloqueado', host: url.hostname, hacia: host });
+        throw new Error(`Redirección fuera de los hosts permitidos: ${host}`);
+      }
+      throw new Error('Redirección sin destino válido');
+    }
     if (!response.ok) throw new Error(`Solicitud fallida: HTTP ${response.status}`);
     return response;
   }

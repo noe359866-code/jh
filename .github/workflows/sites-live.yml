@@ -66,7 +66,7 @@ jobs:
             const anubisIntentos = (r.events || []).filter(e => e.stage === 'anubis-intento')
               .map(e => e.metodo + ':' + e.estado + '/' + (e.aviso || e.error || '-') + '/cookies=' + e.cookies + '/auth=' + e.auth).join(' , ');
             const sinMedia = (r.events || []).filter(e => e.stage === 'sin-media')
-              .map(e => e.host + ' capas=' + e.capas + ' candidatos=' + e.candidatos + ' bytes=' + e.bytes
+              .map(e => e.host + ' capas=' + e.capasPacker + ' candidatos=' + e.candidatos + ' bytes=' + e.bytes
                 + ' packer=' + e.packer + ' jwplayer=' + e.jwplayer + ' bloqueado=' + e.bloqueado).join(' , ');
             const fallos = (r.events || []).filter(e => e.stage === 'resolver-failed')
               .map(e => e.host + ':' + e.error).join(' , ');

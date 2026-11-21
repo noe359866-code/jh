@@ -55,7 +55,8 @@ function crearResolvedorPacked({ nombre, dominios, allowedHosts, fetchImpl, look
     urlPrincipal: `https://${dominios[0]}`,
     urlsAlias: dominios.slice(1),
     resuelve: async (link) => {
-      const html = await fetcher.getText(link);
+      // Los players rotan de dominio y responden 302 al dominio estable.
+      const html = await fetcher.getText(link, {}, { seguirMismoMotor: true });
       // Todas las capas: HTML original + cada bloque P.A.C.K.E.R desempaquetado.
       const capas = unPackerTodo(html);
       emitir({ stage: 'packer', host: new URL(link).hostname, capas: capas.length });
@@ -82,7 +83,7 @@ function crearResolvedorPacked({ nombre, dominios, allowedHosts, fetchImpl, look
       // Sin candidato verificado no se entrega el embed: no es reproducible.
       // Se informa qué se encontró (sin volcar el HTML: lleva enlaces firmados).
       emitir({
-        stage: 'sin-media', host: new URL(link).hostname, capas: capas.length,
+        stage: 'sin-media', host: new URL(link).hostname, capasPacker: capas.length,
         candidatos: candidatos.length, bytes: html.length,
         packer: /eval\(function\s*\(p\s*,\s*a\s*,\s*c\s*,\s*k\s*,\s*e/.test(html),
         bloqueado: /403 forbidden|access denied|not found|deleted|removed/i.test(html.slice(0, 4000)),

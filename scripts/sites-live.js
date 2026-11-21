@@ -42,6 +42,7 @@ function eventoSanitizado(evento) {
   for (const clave of ['metodo', 'aviso', 'error']) if (evento[clave]) limpio[clave] = String(evento[clave]).slice(0, 120);
   for (const clave of ['estado', 'cookies', 'auth']) if (Number.isFinite(evento[clave]) || typeof evento[clave] === 'boolean') limpio[clave] = evento[clave];
   if (Number.isFinite(evento.candidatos)) limpio.candidatos = evento.candidatos;
+  if (Number.isFinite(evento.capasPacker)) limpio.capasPacker = evento.capasPacker;
   if (evento.algorithm) limpio.algorithm = String(evento.algorithm).slice(0, 20);
   return limpio;
 }

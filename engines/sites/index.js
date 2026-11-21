@@ -113,9 +113,15 @@ async function resolver(request, options = {}) {
 
   // 2) Servidores descifrados de Embed69: cada uno es un embed externo que el
   //    registry resuelve a HLS/MP4. La etiqueta indica idioma y servidor.
+  //    Si el resolvedor dedicado falla, se intenta el genérico: los players
+  //    rotan de dominio y el mismo motor (P.A.C.K.E.R.) sirve sin etiqueta.
   for (const servidor of servidores.slice(0, 12)) {
     try {
       const resueltos = await registry.resolver(servidor.url);
+      if (!resueltos.length) {
+        const generico = await registry.resolver(servidor.url, { soloGenerico: true });
+        for (const stream of generico) agregar(stream, servidor.etiqueta);
+      }
       for (const stream of resueltos) agregar(stream, servidor.etiqueta);
     } catch (error) {
       if (options.onEvent) options.onEvent({ stage: 'resolver-failed', host: new URL(servidor.url).hostname, error: error.message });

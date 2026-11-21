@@ -181,3 +181,49 @@ test('resuelve un servidor uqload descifrado de Embed69', async () => {
   assert.deepEqual(streams.map(s => s.url), ['https://uq.example/e/abc/index.m3u8']);
   assert.equal(streams[0].title, 'LAT · Uqload');
 });
+test('sigue la redirección de un player a otro dominio del mismo motor', async () => {
+  // Caso real: Embed69 devuelve hglink.to y el player responde 302 a
+  // streamwish.to. Antes esto era "unexpected redirect" y se perdía el stream.
+  // El destino debe seguir dentro de la allowlist; si no, se bloquea.
+  const pedidos = [];
+  const fetchImpl = async (url) => {
+    pedidos.push(url.hostname + url.pathname);
+    if (url.hostname === 'hglink.to') {
+      return new Response(null, { status: 302, headers: { Location: 'https://streamwish.to/e/abc' } });
+    }
+    if (url.hostname === 'streamwish.to') {
+      return new Response('<script>sources:[{file:"https://sw.example/e/abc/index.mp4"}]</script>');
+    }
+    if (url.hostname === 'sw.example') return new Response(MP4, { headers: { 'Content-Type': 'video/mp4' } });
+    return new Response('x');
+  };
+  const { crearRegistry } = require('../engines/resolvers');
+  // Los dominios de reproductor (hglink.to, streamwish.to) los autoriza el
+  // propio registry; aquí solo hay que añadir el CDN del fixture.
+  const registro = crearRegistry({
+    allowedHosts: ['sw.example'], lookupImpl, fetchImpl
+  });
+  const streams = await registro.resolver('https://hglink.to/e/abc');
+  assert.deepEqual(streams.map(s => s.url), ['https://sw.example/e/abc/index.mp4']);
+  assert.ok(pedidos.includes('streamwish.to/e/abc'), 'debe seguir el 302 al dominio estable');
+
+  // Un 302 hacia un host ajeno se bloquea y no se visita nunca.
+  const visitados = [];
+  const eventos = [];
+  const registroBloqueado = crearRegistry({
+    allowedHosts: [],
+    lookupImpl,
+    onEvent: (evento) => eventos.push(evento),
+    fetchImpl: async (url) => {
+      visitados.push(url.hostname);
+      if (url.hostname === 'streamwish.to') {
+        return new Response(null, { status: 302, headers: { Location: 'https://cdn-atacante.example/x.m3u8' } });
+      }
+      return new Response(HLS);
+    }
+  });
+  await assert.rejects(() => registroBloqueado.resolver('https://streamwish.to/e/x'),
+    /fuera de los hosts permitidos/);
+  assert.ok(!visitados.includes('cdn-atacante.example'), 'nunca debe abrir el host ajeno');
+  assert.ok(eventos.some(e => e.stage === 'redirect-bloqueado' && e.hacia === 'cdn-atacante.example'));
+});

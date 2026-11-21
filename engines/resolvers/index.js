@@ -49,17 +49,19 @@ function crearRegistry({
     crearResolvedorGenerico(configuración)
   ];
 
-  function encontrarResolvedor(link) {
+  function encontrarResolvedor(link, { soloGenerico = false } = {}) {
+    const generico = resolvers[resolvers.length - 1];
+    if (soloGenerico) return generico;
     let host = '';
-    try { host = new URL(link).hostname; } catch { return resolvers[resolvers.length - 1]; }
-    return resolvers.find(r => r.coincide(host)) || resolvers[resolvers.length - 1];
+    try { host = new URL(link).hostname; } catch { return generico; }
+    return resolvers.find(r => r.coincide(host)) || generico;
   }
 
   // Resuelve una URL de embed/player a streams verificados. Un resolvedor puede
   // delegar en este mismo registry (Vidsrc devuelve embeds de VOE/Streamtape),
   // pero solo un nivel: la profundidad evita bucles entre reproductores.
   async function resolver(link, ctx = {}) {
-    const resolvedor = encontrarResolvedor(link);
+    const resolvedor = encontrarResolvedor(link, ctx);
     const profundidad = (ctx.profundidad || 0) + 1;
     const contexto = { ...ctx, profundidad };
     if (profundidad < 2) contexto.delegar = (url) => resolver(url, contexto);
