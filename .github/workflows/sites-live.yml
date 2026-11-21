@@ -52,7 +52,10 @@ jobs:
           node -e "
             const fs = require('fs');
             const r = JSON.parse(fs.readFileSync('reports/sites-live.json', 'utf8'));
-            const porSitio = r.tested.map(t => t.site + '=' + (t.success ? t.verifiedMedia + ' medios' : 'sin medios') + (t.error ? ' (' + t.error + ')' : '')).join(' | ');
+            const porSitio = r.tested.map(t => t.site + '=' + (t.success ? t.verifiedMedia + ' medios' : 'sin medios')
+              + ' [paginas=' + (t.pages ?? 0) + ' candidatos=' + (t.candidates ?? 0) + ' frames=' + (t.frames ?? 0) + ' verificados=' + (t.verified ?? 0) + ']'
+              + (t.blockedHosts?.length ? ' bloqueados=' + t.blockedHosts.join(',') : '')
+              + (t.error ? ' ERROR=' + t.error : '')).join(' | ');
             const etapas = {};
             for (const e of r.events || []) etapas[e.stage] = (etapas[e.stage] || 0) + 1;
             const resumen = 'success=' + r.success + ' :: ' + porSitio + ' :: etapas=' + JSON.stringify(etapas);

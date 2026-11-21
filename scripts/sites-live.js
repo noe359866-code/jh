@@ -45,7 +45,10 @@ async function main(report) {
   let anyVerified = false;
 
   for (const pageUrl of urls) {
-    const entry = { site: null, host: null, success: false, verifiedMedia: 0, error: null };
+    const entry = {
+      site: null, host: null, success: false, verifiedMedia: 0, error: null,
+      pages: 0, candidates: 0, frames: 0, verified: 0, blockedHosts: []
+    };
     try {
       // Validar antes de cualquier petición de red para fallar rápido.
       const { url, proveedor } = validarUrlSitio(pageUrl);
@@ -55,6 +58,16 @@ async function main(report) {
         onEvent: evento => {
           const limpio = eventoSanitizado(evento);
           if (limpio.host) hostsVistos.add(limpio.host);
+          // Conteos por sitio: explican si falló el acceso, el análisis del
+          // HTML o la verificación de los candidatos.
+          if (limpio.stage === 'page') {
+            entry.pages++;
+            entry.candidates += limpio.candidates || 0;
+            entry.frames += limpio.frames || 0;
+          }
+          if (limpio.stage === 'candidate' && limpio.verified) entry.verified++;
+          if ((limpio.stage === 'blocked-frame' || limpio.stage === 'blocked-host') && limpio.host
+            && !entry.blockedHosts.includes(limpio.host)) entry.blockedHosts.push(limpio.host);
           if (report.events.length < 200) report.events.push({ ...limpio, site: proveedor.clave });
         }
       });
