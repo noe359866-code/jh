@@ -1,8 +1,6 @@
 name: Sites live extraction
 on:
   push:
-    branches:
-      - arena/ccf87f6e-jh
   workflow_dispatch:
     inputs:
       page_urls:
@@ -19,6 +17,9 @@ permissions:
   contents: write
 jobs:
   live:
+    # Skip when this push came from the report commit itself: that avoids a
+    # workflow loop (pushing the report retriggers the workflow).
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -34,16 +35,22 @@ jobs:
         env:
           SITES_TEST_URLS: ${{ inputs.page_urls }}
           SITES_ALLOWED_HOSTS: ${{ inputs.allowed_hosts }}
-      - name: Commit sanitized report to report branch
+      - name: Commit sanitized report to branch
         if: always()
         run: |
           mkdir -p reports
-          cp reports/sites-live.json reports/sites-live-report.json
+          # Normalize the report (drop timestamps) so identical results produce
+          # no new commit, which keeps the push from retriggering this workflow.
+          node -e "const fs=require('fs');const r=JSON.parse(fs.readFileSync('reports/sites-live.json','utf8'));delete r.startedAt;delete r.finishedAt;fs.writeFileSync('reports/sites-live-report.json',JSON.stringify(r,null,2)+'\n')"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add -f reports/sites-live-report.json
-          git commit -m "Add sanitized sites live test report" || exit 0
-          git push origin HEAD:sites-live-report
+          if ! git diff --cached --quiet; then
+            git commit -m "Add sanitized sites live test report"
+            git push
+          else
+            echo "Report unchanged; no commit needed"
+          fi
       - name: Upload sanitized diagnostics
         if: always()
         uses: actions/upload-artifact@v4
