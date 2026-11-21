@@ -34,7 +34,9 @@ jobs:
       - run: node scripts/sites-live.js
         env:
           SITES_TEST_URLS: ${{ inputs.page_urls }}
-          SITES_ALLOWED_HOSTS: ${{ inputs.allowed_hosts }}
+          # Default to the embed69.org iframe host used by FlixLatam; the
+          # workflow_dispatch input can override it explicitly.
+          SITES_ALLOWED_HOSTS: ${{ inputs.allowed_hosts || 'embed69.org' }}
       - name: Commit sanitized report to branch
         if: always()
         run: |
