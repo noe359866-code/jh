@@ -1,6 +1,6 @@
 {
   "name": "latino-stremio-addon",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Stremio addon for Latino streaming sites",
   "main": "index.js",
   "scripts": {

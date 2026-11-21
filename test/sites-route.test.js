@@ -8,9 +8,11 @@ test('site stream route resolves a page URL to streams only, without demos', asy
   const app = createApp({
     streams: {},
     sites: {
+      // El resolvedor devuelve el formato interno (nombre/titulo); la ruta HTTP
+      // debe publicarlo con las claves de Stremio (name/title).
       resolve: async request => {
         received = request;
-        return [{ name: 'FlixLatam', title: 'HLS / MP4', url: 'https://flixlatam.com/a.m3u8' }];
+        return [{ nombre: 'FlixLatam', titulo: 'HLS / MP4', url: 'https://flixlatam.com/a.m3u8' }];
       }
     }
   });

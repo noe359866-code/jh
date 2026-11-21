@@ -5,6 +5,19 @@ const manifest = require('./manifest.json');
 const sitesProvider = require('./engines/sites');
 const { createResolverCache } = require('./engines/sites/cache');
 
+// Credenciales opcionales de los resolvedores. Sin ellas, VOE usa sus claves
+// públicas por defecto y Vidsrc solo puede verificar medios ya visibles en la
+// página (su API exige una clave); nunca se inventan URL.
+function credencialesResolvedores(entorno = process.env) {
+  const vidsrc = (entorno.VIDSRC_KEYS || '').trim();
+  const [encrypt, decrypt] = vidsrc.split(':').map(s => s.trim());
+  const credenciales = {};
+  if (entorno.VOE_KEY) credenciales.voeKey = entorno.VOE_KEY;
+  if (entorno.VOE_IV) credenciales.voeIv = entorno.VOE_IV;
+  if (encrypt && decrypt) credenciales.vidsrcKeys = { encrypt, decrypt };
+  return credenciales;
+}
+
 // Sample metadata only; these entries do not imply that a stream is available.
 const catalogs = {
   movies: [
@@ -122,7 +135,15 @@ function createApp({ streams = loadStreams(), sites = sitesProvider } = {}) {
       return res.status(400).json({ error: error.message });
     }
     try {
-      const streams = await resolveSites({ url });
+      const resueltos = await resolveSites({ url, ...credencialesResolvedores() });
+      // Objeto Stream de Stremio: la etiqueta visible es `name`/`title`.
+      // El formato interno en español no se publica tal cual porque el cliente
+      // ignora las claves desconocidas.
+      const streams = (Array.isArray(resueltos) ? resueltos : []).map(stream => ({
+        name: stream.name ?? stream.nombre ?? 'Sites',
+        title: stream.title ?? stream.titulo ?? 'HLS / MP4',
+        url: stream.url
+      })).filter(stream => typeof stream.url === 'string' && /^https?:\/\//i.test(stream.url));
       return res.json({ streams });
     } catch (error) {
       if (error.code === 'EXTRACTOR_BUSY') return res.status(503).set('Retry-After', '10').json({ error: 'Extractor busy' });
@@ -134,7 +155,12 @@ function createApp({ streams = loadStreams(), sites = sitesProvider } = {}) {
     const { type, id } = req.params;
     if (!manifest.types.includes(type)) return res.status(404).json({ error: 'Unsupported type' });
     if (!validId(type, id)) return res.status(400).json({ error: 'Expected IMDb ID; series require :season:episode' });
-    const configured = (streams[`${type}:${id}`] || []).map(({ url, name, title }) => ({ url, name, title }));
+    const configured = (streams[`${type}:${id}`] || []).map(({ url, name, title }) => {
+      const stream = { url };
+      if (name !== undefined) stream.name = name;
+      if (title !== undefined) stream.title = title;
+      return stream;
+    });
     return res.json({ streams: configured });
   });
 
@@ -153,4 +179,4 @@ if (require.main === module) {
 }
 
 // Importing the app must not bind a port (tests and embedding).
-module.exports = { createApp, validateStreams };
+module.exports = { createApp, validateStreams, credencialesResolvedores };

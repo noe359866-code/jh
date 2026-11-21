@@ -71,13 +71,13 @@ Modelado en el proyecto [Streamflix](https://git.gay/streamflix-reborn2/streamfl
 
 - **Proveedores** (`engines/sites/`): cada uno corresponde a un sitio (DocumaniaTV, FlixLatam, PoseidonHD2). Su función es descubrir las URLs de **servidores** (players/embeds) en una página de contenido, equivalente a los `*Provider.kt` de Streamflix. Solo resuelven streams: no catálogos, no metadatos, no demos.
 - **Resolvedores de reproductores** (`engines/resolvers/`): cada uno mapea un dominio de reproductor (o alias) a una función que, dada la URL del embed/player, devuelve streams verificados (HLS/MP4). Equivale a los `*Extractor.kt` de Streamflix. Incluye:
-  - **VOE** (`voe.js`): descifra el payload AES-128-CBC de la página del player y extrae la fuente `.m3u8`.
-  - **Streamtape** (`streamtape.js`): extrae los parámetros del script `botlink` y construye la URL `get_video`.
-  - **Vidsrc.to** (`vidsrc.js`): obtiene el media ID y descifra la URL del embed con RC4.
+  - **VOE** (`voe.js`): descifra el payload AES-128-CBC de la página del player (claves por defecto del player, sobreescribibles con `VOE_KEY`/`VOE_IV`; también acepta JSON en claro) y extrae la fuente `.m3u8`. Tolera las variantes `/hls/master.txt` y similares.
+  - **Streamtape** (`streamtape.js`): extrae los parámetros del script `botlink`, construye la URL `get_video` y **sigue el 302** con `redirect: 'manual'` para obtener la URI real del media. La URL `get_video` nunca se entrega como stream: no es reproducible en el cliente.
+  - **Vidsrc.to** (`vidsrc.js`): obtiene el media ID de la página, pide las fuentes a su API y descifra la URL con **RC4 usando la clave completa** de `decrypt`. Si la fuente es un embed de otro reproductor, delega en el registry (un nivel, sin bucles). La clave se configura con `VIDSRC_KEYS=encrypt:decrypt`; sin ella solo puede verificar medios ya visibles en la página.
   - **Genérico** (`base.js`): barrido literal de candidatos `.m3u8`/`.mp4` y verificación por firma; es el resolvedor por defecto para hosts no reconocidos.
-- **Registry** (`engines/resolvers/index.js`): dispatcher central que, dada una URL de embed, localiza el resolvedor cuyo dominio coincide y lo invoca. Equivale al dispatcher de `Extractor.kt` de Streamflix.
+- **Registry** (`engines/resolvers/index.js`): dispatcher central que, dada una URL de embed, localiza el resolvedor cuyo dominio coincide y lo invoca. Equivale al dispatcher de `Extractor.kt` de Streamflix. Los hosts de reproductor conocidos (`HOSTS_REPRODUCTORES`) están autorizados explícitamente; el HTML de una página nunca amplía la allowlist.
 
-**Flujo de resolución**: `GET /stream/site?url=` → el proveedor descubre los servidores en la página → cada servidor se pasa al registry → el resolvedor correspondiente resuelve la URL a HLS/MP4 verificado → se devuelven los streams con el nombre del sitio como contexto.
+**Flujo de resolución**: `GET /stream/site?url=` → el extractor recorre la página y sus iframes autorizados → los candidatos `.m3u8`/`.mp4` se verifican por firma → los reproductores se pasan al registry → el resolvedor correspondiente devuelve HLS/MP4 verificado → se publican con las claves de Stremio (`name`/`title`) y el nombre del sitio como contexto.
 
 ## Resolución directa de sitios (mp4/HLS)
 
@@ -89,20 +89,32 @@ GET /stream/site?url=https://www.documaniatv.com/pelicula/xyz
 ```
 
 - Solo se aceptan URLs HTTPS sin credenciales y con hostname de uno de los tres sitios (con o sin `www`). Otros hosts, HTTP claro, credenciales y URLs malformadas devuelven 400 sin hacer peticiones.
-- La página se analiza como HTML estático: URLs literales `.m3u8`/`.mp4` en atributos, cadenas JS y iframes. Cada candidato se solicita con `Range` y se verifica por firma: `#EXTM3U` para HLS o caja `ftyp` para MP4. **Esto no prueba reproducción completa**, codecs, audio latino ni CORS.
+- La página se analiza como HTML estático y **se recorren sus iframes** (hasta cinco páginas por extracción): URLs literales `.m3u8`/`.mp4` en atributos, `src` sin comillas, fragmentos `#t=`, `data-embed`/`data-src`, cadenas JS y entidades escapadas (`\/`, `\u002F`, `&#x2F;`, `&quot;`). Cada candidato se solicita con `Range` y se verifica por firma: una playlist HLS con `#EXT-X-STREAM-INF` o `#EXTINF`/`#EXT-X-TARGETDURATION`, o una caja `ftyp` para MP4. Una cabecera `#EXTM3U` suelta no se acepta. **Esto no prueba reproducción completa**, codecs, audio latino ni CORS.
 - **No se ejecuta JavaScript**, no se usan cookies, no se resuelven CAPTCHAs ni se evade DRM. Reproductores que dependan de APIs dinámicas o de un Referer no están soportados.
-- Los hosts confiables son solo los dominios de los tres sitios. Si un medio se sirve desde un CDN, añade sus hosts explícitamente con `SITES_ALLOWED_HOSTS=cdn.example.com,...` **después de comprobar que son confiables**; nunca se autorizan automáticamente. Los hosts no permitidos se omiten (la lista resultante puede quedar vacía).
-- Transporte seguro: IPv4 público validado en el socket, sin redirecciones, sin IPv6 ni direcciones privadas. Los mismos límites del extractor HLS/MP4 se aplican (tamaño de página, tiempo por petición, diez candidatos, dos extracciones concurrentes) y hay caché por URL (30 s con medios, 5 s sin ellos).
+- Los hosts confiables son los tres dominios del sitio más los dominios de reproductor conocidos del registry (VOE, Streamtape, Vidsrc, Doodstream, Filemoon, Vidhide, Streamwish...). Si un medio se sirve desde un CDN, añade sus hosts explícitamente con `SITES_ALLOWED_HOSTS=cdn.example.com,...` **después de comprobar que son confiables**; el HTML de la página nunca autoriza un host por sí solo. Los hosts no permitidos se omiten (la lista resultante puede quedar vacía) y se registra un evento `blocked-host`/`blocked-frame`.
+- Transporte seguro: IPv4 público validado en el socket, sin redirecciones (salvo la petición `get_video` de Streamtape, que se inspecciona explícitamente), sin IPv6 ni direcciones privadas. El `lookup` inyectable se aplica también al transporte, así que la dirección validada es la que se conecta. Los mismos límites del extractor HLS/MP4 se aplican (tamaño de página, tiempo por petición, diez candidatos, dos verificaciones concurrentes) y hay caché por URL (30 s con medios, 5 s sin ellos).
+- **Presupuesto de tiempo total**: además del tiempo por petición, cada extracción tiene un `deadlineMs` (20 s por defecto). Antes, diez candidatos en serie con un tiempo por petición de 10 s podían dejar la respuesta colgada durante minutos.
 - Fallos del extractor: 400 para solicitudes inválidas, 502 si la extracción falla, 503 (`Retry-After: 10`) si hay saturación.
 - **Verificación real**: el entorno de desarrollo solo permite salida a GitHub y registros de paquetes, no a estos dominios, así que no se afirma que funcione contra los sitios reales. Para comprobarlo, usa un URL de prueba con acceso real:
 
 ```sh
-SITES_TEST_URL=https://www.documaniatv.com/pelicula/xyz npm run test:sites-live
+SITES_TEST_URLS=https://www.documaniatv.com/pelicula/xyz npm run test:sites-live
 ```
 
 `scripts/sites-live.js` valida cada URL antes de hacer peticiones, resuelve la página y **falla si ningún sitio de la lista devuelve al menos un medio con firma válida**. Por defecto prueba los tres sitios (`documaniatv.com`, `flixlatam.com`, `poseidonhd2.co`); puedes indicar URLs concretas con `SITES_TEST_URLS` (separadas por comas). Escribe un reporte sanitizado en `reports/sites-live.json` con el resultado por sitio (disponible, hosts encontrados/bloqueados y conteos; **no URLs, queries, HTML ni tokens**), y imprime por consola cuáles devolvieron HLS/MP4. Si aparecen eventos `blocked-frame`/`blocked-host`, revisa ese dominio antes de autorizarlo en `SITES_ALLOWED_HOSTS`; nunca habilites dominios automáticamente. Los reportes locales quedan en `reports/`, fuera de Git. Las pruebas de `npm test` son deterministas y mockadas, y no sustituyen esta comprobación.
 
-En GitHub Actions, el workflow **Sites live extraction** se ejecuta al hacer push: prueba los sitios con red real y sube `sites-live-report` con el reporte sanitizado incluso si falla. El reporte se commita en la misma rama (con normalización para evitar bucles). GitHub puede exigir que el workflow exista primero en la rama predeterminada; no se afirma que haya pasado: el entorno de desarrollo solo permite salida a GitHub y registros de paquetes, no a estos dominios. Si falla, inspecciona el flujo real y ajusta los hosts; no conviertas un fallo en un skip.
+En GitHub Actions, el workflow **Sites live extraction** se ejecuta al hacer push: prueba los sitios con red real y sube `sites-live-report` con el reporte sanitizado incluso si falla. El reporte **no se commitea**: solo se publica como artefacto y se resume en el log. (Antes se versionaba con `git add -f`, saltándose el `.gitignore`, y quedó en el repositorio un reporte de error presentado como verificación real.) GitHub puede exigir que el workflow exista primero en la rama predeterminada; no se afirma que haya pasado: el entorno de desarrollo solo permite salida a GitHub y registros de paquetes, no a estos dominios. Si falla, inspecciona el flujo real y ajusta los hosts; no conviertas un fallo en un skip.
+
+## Variables de entorno
+
+| Variable | Uso |
+| --- | --- |
+| `PORT` | Puerto HTTP (8080 por defecto). |
+| `STREAMS_FILE` | Ruta a un `streams.json` externo. |
+| `SITES_ALLOWED_HOSTS` | Hosts de CDN adicionales, separados por comas. Se autorizan solo los indicados. |
+| `VOE_KEY` / `VOE_IV` | Sobreescriben las claves AES-128-CBC del player VOE. |
+| `VIDSRC_KEYS` | Clave RC4 de Vidsrc con formato `encrypt:decrypt`. |
+| `SITES_TEST_URLS` | URLs de página para `npm run test:sites-live`. |
 
 ## Caché y diagnósticos
 
@@ -112,6 +124,6 @@ El workflow en vivo permite probar páginas y sube `sites-live-report` incluso c
 
 ## Verificación y límites
 
-`npm run check`, `npm test` y `npm audit --omit=dev` comprueban sintaxis, contrato HTTP, resolución de configuración y dependencias respectivamente. Las pruebas usan dominios de ejemplo y no descargan videos: **no validan reproducción real ni extractores externos**. CI está configurada para Node 22 y 24; la ejecución local se verificó en Node 22. La imagen Docker necesita una comprobación adicional en un entorno con Docker.
+`npm run check`, `npm test` y `npm audit --omit=dev` comprueban sintaxis, contrato HTTP, resolución de configuración y dependencias respectivamente. Las pruebas de los resolvedores usan páginas y respuestas simuladas: cubren el descifrado AES/RC4, el script `botlink` y el 302 de Streamtape, el `mediaId` de Vidsrc, la decodificación de URLs escapadas, el crawl de iframes, la allowlist y el presupuesto de tiempo, pero **no descargan videos reales ni validan reproducción**. CI está configurada para Node 22 y 24; la ejecución local se verificó en Node 22. La imagen Docker necesita una comprobación adicional en un entorno con Docker.
 
 El extractor de sitios es estático: no se ejecuta JavaScript, no se usan cookies, no se resuelven CAPTCHAs ni se evade DRM. Reproductores que dependan de APIs dinámicas o de un Referer no están soportados. Una lista vacía puede significar formato no soportado o que los medios estén en hosts no autorizados, no necesariamente ausencia de contenido en la página.

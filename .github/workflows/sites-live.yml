@@ -37,22 +37,27 @@ jobs:
           # Default to the embed69.org iframe host used by FlixLatam; the
           # workflow_dispatch input can override it explicitly.
           SITES_ALLOWED_HOSTS: ${{ inputs.allowed_hosts || 'embed69.org' }}
-      - name: Commit sanitized report to branch
+      # El reporte se conserva solo como artefacto. Un reporte de fallo NO se
+      # commitea: antes se versionaba con `git add -f` saltando el .gitignore y
+      # quedó en el repo un reporte de error presentado como verificación real.
+      - name: Resumen del resultado
+        id: resumen
         if: always()
         run: |
-          mkdir -p reports
-          # Normalize the report (drop timestamps) so identical results produce
-          # no new commit, which keeps the push from retriggering this workflow.
-          node -e "const fs=require('fs');const r=JSON.parse(fs.readFileSync('reports/sites-live.json','utf8'));delete r.startedAt;delete r.finishedAt;fs.writeFileSync('reports/sites-live-report.json',JSON.stringify(r,null,2)+'\n')"
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -f reports/sites-live-report.json
-          if ! git diff --cached --quiet; then
-            git commit -m "Add sanitized sites live test report"
-            git push
-          else
-            echo "Report unchanged; no commit needed"
-          fi
+          # El log de Actions no siempre es accesible: el resumen se publica
+          # también como salida del step para poder leerlo por la API.
+          node -e "
+            const fs = require('fs');
+            const r = JSON.parse(fs.readFileSync('reports/sites-live.json', 'utf8'));
+            const porSitio = r.tested.map(t => t.site + '=' + (t.success ? t.verifiedMedia + ' medios' : 'sin medios') + (t.error ? ' (' + t.error + ')' : '')).join(' | ');
+            const etapas = {};
+            for (const e of r.events || []) etapas[e.stage] = (etapas[e.stage] || 0) + 1;
+            const resumen = 'success=' + r.success + ' :: ' + porSitio + ' :: etapas=' + JSON.stringify(etapas);
+            fs.appendFileSync(process.env.GITHUB_OUTPUT || '/dev/null', 'resumen=' + resumen + '\n');
+            console.log(resumen);
+            if (r.hosts) console.log('hosts:', r.hosts.join(', '));
+          "
+
       - name: Upload sanitized diagnostics
         if: always()
         uses: actions/upload-artifact@v4
@@ -61,3 +66,23 @@ jobs:
           path: reports/sites-live.json
           if-no-files-found: warn
           retention-days: 7
+
+      # La conclusión se publica como anotación del check: se puede consultar
+      # con la API aunque los logs del job no sean accesibles.
+      - name: Publicar resumen en el check
+        if: always()
+        uses: actions/github-script@v7
+        env:
+          RESUMEN: ${{ steps.resumen.outputs.resumen }}
+        with:
+          script: |
+            const resumen = process.env.RESUMEN || 'sin resumen';
+            await github.rest.checks.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: 'sites-live-resultado',
+              head_sha: context.sha,
+              status: 'completed',
+              conclusion: /success=true/.test(resumen) ? 'success' : 'neutral',
+              output: { title: 'Resultado de la extracción en vivo', summary: resumen }
+            });

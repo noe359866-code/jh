@@ -1,72 +1,78 @@
-const { Resolvedor } = require('./base');
+const { Resolvedor, verificarCandidatos } = require('./base');
 
-// Resolvedor Streamtape. Modelado en StreamtapeExtractor.kt de Streamflix:
-// fetchea la página del player, extrae los parámetros (id, expires, ip,
-// token) del script `botlink`, construye la URL `get_video?...&stream=1` y
-// sigue el redirect final hasta la URL real del media.
-function crearResolvedorStreamtape({ allowedHosts, fetchImpl, lookupImpl, timeoutMs, maxBytes, pageReferer, onEvent } = {}) {
+// Modelado en StreamtapeExtractor.kt de Streamflix: fetchea la página del
+// player, extrae los parámetros (id, expires, ip, token) del script `botlink`
+// y construye la URL `get_video`. Esa URL responde con un 302 hacia el archivo
+// real, así que la petición se hace con redirect='manual' y se valida el
+// `Location`. Un 302 nunca se devuelve como stream: Stremio no puede reproducir
+// una redirección con Referer obligatorio.
+//
+// Sin la URI final verificada, el resolvedor devuelve lista vacía en vez de
+// prometer una URL que el reproductor rechazará.
+
+function extraerBotlink(html) {
+  // Formato clásico:
+  //   document.getElementById('botlink').innerHTML = '/streamtape...' + ('&id=...').substring(N)
+  const re = /getElementById\(['"]botlink['"]\)\s*\.\s*innerHTML\s*=\s*'([^']*)'\s*\+\s*\('([^']*)'\)\s*\.\s*substring\((\d+)\)/;
+  const match = re.exec(html);
+  if (!match) return null;
+  const base = match[1];
+  const parametros = match[2].substring(Number(match[3]));
+  const leer = (nombre) => new RegExp(`(?:^|&)${nombre}=([^&]+)`).exec(parametros)?.[1];
+  const id = leer('id');
+  const expires = leer('expires');
+  const ip = leer('ip');
+  const token = leer('token');
+  if (!id || !expires || !ip || !token) return null;
+  return { base, id, expires, ip, token };
+}
+
+function construirGetVideo(link, partes) {
+  // El script concatena la base con los parámetros ('BASE' + '?...'; la base
+  // puede ser una ruta relativa, un host o una URL absoluta). Reconstruir con
+  // URL + search evita duplicar barras y conserva la ruta que trae la base.
+  const url = new URL(partes.base, link);
+  url.search = new URLSearchParams({
+    id: partes.id, expires: partes.expires, ip: partes.ip, token: partes.token, stream: '1'
+  }).toString();
+  return url.href;
+}
+
+function crearResolvedorStreamtape({ allowedHosts, fetchImpl, lookupImpl, timeoutMs, deadlineMs, maxBytes, pageReferer, onEvent } = {}) {
   const { createFetcher } = require('./fetcher');
-  const fetcher = createFetcher({ allowedHosts, fetchImpl, lookupImpl, timeoutMs, maxBytes, pageReferer, onEvent });
+  const emitir = typeof onEvent === 'function' ? onEvent : () => {};
+  const fetcher = createFetcher({ allowedHosts, fetchImpl, lookupImpl, timeoutMs, deadlineMs, maxBytes, pageReferer, onEvent: emitir });
   return new Resolvedor({
     nombre: 'Streamtape',
     urlPrincipal: 'https://streamtape.com',
-    urlsAlias: ['https://streamta.site'],
+    urlsAlias: ['streamta.site', 'streamtape.to', 'strtape.cloud'],
     resuelve: async (link) => {
       const html = await fetcher.getText(link);
-      // document.getElementById('botlink').innerHTML = 'BASE' + ('PARAM').substring(N)
-      const re = /getElementById\('botlink'\)\.innerHTML\s*=\s*'([^']+)'\s*\+\s*\('([^']+)'\)\.substring\(([0-9]+)\)/;
-      const match = html.match(re);
-      if (!match) {
-        // Respaldo: barrido literal de candidatos.
-        const { media } = fetcher.parsePage(html, link);
-        const streams = [];
-        for (const url of media.slice(0, 10)) {
-          try { if (await fetcher.verify(url)) streams.push({ nombre: 'Streamtape', titulo: 'HLS / MP4', url }); } catch { /* fallido */ }
+      const partes = extraerBotlink(html);
+      if (partes) {
+        const getVideo = construirGetVideo(link, partes);
+        emitir({ stage: 'streamtape', host: new URL(link).hostname });
+        try {
+          const respuesta = await fetcher.request(getVideo, {}, { redirect: 'manual', permitirRedireccion: true });
+          const ubicacion = respuesta.status >= 300 && respuesta.status < 400
+            ? respuesta.headers.get('location')
+            : null;
+          if (ubicacion) {
+            const destino = new URL(ubicacion, getVideo).href;
+            // Solo se entrega si el destino (host autorizado y público) confirma
+            // la firma del media.
+            const verificado = await verificarCandidatos(fetcher, 'Streamtape', [destino]);
+            if (verificado.length) return verificado;
+          }
+        } catch (error) {
+          emitir({ stage: 'streamtape-failed', host: new URL(link).hostname, error: error.message });
         }
-        return streams;
       }
-      const base = match[1];
-      const cleanParams = match[2].substring(Number(match[3]));
-      const id = /(?:^|&)id=([^&]+)/.exec(cleanParams)?.[1];
-      const expires = /(?:^|&)expires=([^&]+)/.exec(cleanParams)?.[1];
-      const ip = /(?:^|&)ip=([^&]+)/.exec(cleanParams)?.[1];
-      const token = /(?:^|&)token=([^&]+)/.exec(cleanParams)?.[1];
-      if (!id || !expires || !ip || !token) {
-        const { media } = fetcher.parsePage(html, link);
-        const streams = [];
-        for (const url of media.slice(0, 10)) {
-          try { if (await fetcher.verify(url)) streams.push({ nombre: 'Streamtape', titulo: 'HLS / MP4', url }); } catch { /* fallido */ }
-        }
-        return streams;
-      }
-      const finalUrl = `${base}/get_video?id=${id}&expires=${expires}&ip=${ip}&token=${token}&stream=1`;
-      // La URL final se obtiene siguiendo la petición; fetch con redirect='manual'
-      // para capturar la ubicación real y luego verificarla.
-      try {
-        const response = await fetcher.request(finalUrl);
-        // El media real suele estar en la redirección final; si responde OK,
-        // verificar la firma del cuerpo.
-        const prefix = (await fetcher.readLimited(response)).subarray(0, 512);
-        const hls = prefix.toString('utf8').replace(/^/, '').trimStart().startsWith('#EXTM3U');
-        const mp4 = prefix.length >= 12 && prefix.toString('ascii', 4, 8) === 'ftyp';
-        if (hls || mp4) {
-          // Reconstruir la URL verificada (el fetch resolvió redirects internos).
-          const streams = [];
-          try {
-            // Verificar la URL final directamente para capturar la ubicación canónica.
-            if (await fetcher.verify(finalUrl)) streams.push({ nombre: 'Streamtape', titulo: 'HLS / MP4', url: finalUrl });
-          } catch { /* si verify falla, dejamos el stream vacío */ }
-          return streams;
-        }
-      } catch { /* get_video no resolvió: cae al barrido literal */ }
+      // Respaldo: barrido literal de candidatos en la página del player.
       const { media } = fetcher.parsePage(html, link);
-      const streams = [];
-      for (const url of media.slice(0, 10)) {
-        try { if (await fetcher.verify(url)) streams.push({ nombre: 'Streamtape', titulo: 'HLS / MP4', url }); } catch { /* fallido */ }
-      }
-      return streams;
+      return verificarCandidatos(fetcher, 'Streamtape', media.slice(0, 10));
     }
   });
 }
 
-module.exports = { crearResolvedorStreamtape };
+module.exports = { crearResolvedorStreamtape, extraerBotlink, construirGetVideo };

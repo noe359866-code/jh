@@ -1,11 +1,11 @@
-const { createFetcher } = require('./extractor');
-const { crearRegistry } = require('../resolvers');
+const { createFetcher, createExtractor } = require('./extractor');
+const { crearRegistry, hostsReproductores } = require('../resolvers');
 
-// Proveedores de sitios: cada proveedor descubre las URLs de servidores
-// (players/embeds) en una página de contenido. Equivale a los *Provider.kt
-// de Streamflix (FlixLatamProvider, PoseidonHD2Provider, ...). La diferencia
-// es que aquí solo nos interesa la resolución de stream: no catálogos, no
-// metadatos, no demos.
+// Proveedores de sitios: cada proveedor descubre las páginas de reproductor
+// (players/embeds) de una página de contenido y las resuelve con el registry.
+// Equivale a los *Provider.kt de Streamflix (FlixLatamProvider,
+// PoseidonHD2Provider, ...). La diferencia es que aquí solo nos interesa la
+// resolución de stream: no catálogos, no metadatos, no demos.
 const PROVEEDORES = [
   {
     clave: 'documaniatv',
@@ -27,12 +27,18 @@ const PROVEEDORES = [
   }
 ];
 
-// Solo los tres dominios de sitio son confiables por defecto. Los hosts de
-// medios/CDN adicionales deben añadirse explícitamente via SITES_ALLOWED_HOSTS.
-function hostsPermitidos() {
-  const extras = (process.env.SITES_ALLOWED_HOSTS || '')
+// Hosts confiables por defecto: los dominios del sitio y los dominios de
+// reproductor conocidos del registry. Son destinos legítimos de embed, no se
+// descubren desde el HTML. Los medios servidos desde CDN deben añadirse
+// explícitamente con SITES_ALLOWED_HOSTS y nunca se autorizan automáticamente.
+function hostsPermitidos(entorno = process.env) {
+  const extras = (entorno.SITES_ALLOWED_HOSTS || '')
     .split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
-  return [...new Set([...PROVEEDORES.flatMap(p => p.hosts.map(h => h.toLowerCase())), ...extras])];
+  return [...new Set([
+    ...PROVEEDORES.flatMap(p => p.hosts.map(h => h.toLowerCase())),
+    ...hostsReproductores(),
+    ...extras
+  ])];
 }
 
 function encontrarProveedor(host) {
@@ -52,64 +58,46 @@ function validarUrlSitio(raw) {
   return { url, proveedor };
 }
 
-// Proveedor base: fetchea la página del sitio, extrae las URLs de servidor
-// (iframes, enlaces a player, candidatos .m3u8/.mp4) y las deja listas para
-// que el registry de resolvedores las resuelva.
-function crearProveedorBase({ allowedHosts, fetchImpl, lookupImpl, timeoutMs, maxBytes, pageReferer, onEvent }) {
-  const fetcher = createFetcher({ allowedHosts, fetchImpl, lookupImpl, timeoutMs, maxBytes, pageReferer, onEvent });
-  return {
-    // Devuelve una lista de URLs de servidor (players/embeds) a resolver.
-    async descubrirServidores(pageUrl) {
-      const html = await fetcher.getText(pageUrl);
-      const { media, frames } = fetcher.parsePage(html, pageUrl);
-      const servidores = new Set();
-      // Los candidatos literales .m3u8/.mp4 ya son streams directos.
-      for (const url of media) servidores.add(url);
-      // Los iframes son potentiales jugadores a resolver.
-      for (const frame of frames) {
-        if (allowedHosts.includes(new URL(frame).hostname.toLowerCase())) servidores.add(frame);
-      }
-      return [...servidores];
-    }
-  };
+// Limpieza mínima para no publicar tokens de sesión ni fragmentos.
+function sanitizarUrl(raw, quitarQuery = false) {
+  try {
+    const url = new URL(raw);
+    if (quitarQuery) url.search = '';
+    return url.href;
+  } catch { return null; }
 }
 
-// Resolución de stream: valida la URL del sitio, descubre los servidores
-// con el proveedor y resuelve cada uno mediante el registry de resolvedores.
-// Devuelve [{ nombre, titulo, url }] verificados; lista vacía = nada verificable.
+// Resolución de stream: valida la URL del sitio, descubre los reproductores y
+// los medios directos, y resuelve cada reproductor con el registry. Devuelve
+// [{ name, title, url }] verificados (formato de objeto Stream de Stremio);
+// lista vacía = nada verificable.
 async function resolver(request, options = {}) {
   const { url, proveedor } = validarUrlSitio(request && request.url);
-  const allowed = hostsPermitidos();
-  const fetcher = createFetcher({
+  const allowed = options.allowedHosts || hostsPermitidos();
+  const configuracion = {
     allowedHosts: allowed,
     fetchImpl: options.fetchImpl,
     lookupImpl: options.lookupImpl,
     timeoutMs: options.timeoutMs,
+    deadlineMs: options.deadlineMs,
     maxBytes: options.maxBytes,
     pageReferer: url.origin + '/',
     onEvent: options.onEvent
-  });
-  const proveedorBase = crearProveedorBase({
-    allowedHosts: allowed,
-    fetchImpl: options.fetchImpl,
-    lookupImpl: options.lookupImpl,
-    timeoutMs: options.timeoutMs,
-    maxBytes: options.maxBytes,
-    pageReferer: url.origin + '/',
-    onEvent: options.onEvent
-  });
-  const servidores = await proveedorBase.descubrirServidores(url.href);
+  };
 
-  // El registry de resolvedores necesita los hosts de reproductor permitidos.
-  // Como los servidores pueden estar en dominios de reproductor distintos
-  // (voe.sx, streamtape.com, ...), se autorizan los hosts de los servidores
-  // descubrios, siempre que sean públicos (el fetch ya valida eso).
-  const resolverHosts = [...allowed, ...servidores.map(s => new URL(s).hostname.toLowerCase())];
+  // El extractor recorre la página y sus iframes del mismo sitio (o de hosts
+  // autorizados) y verifica los candidatos .m3u8/.mp4 por firma.
+  const extractor = createExtractor({ ...configuracion, maxPages: options.maxPages || 5, name: proveedor.nombre });
+  const { media, embeds } = await extractor.descubrir(url.href);
+
+  // Los reproductores se resuelven con su resolvedor dedicado; el registry no
+  // amplía la lista de hosts con lo que aparezca en el HTML.
   const registry = crearRegistry({
-    allowedHosts: resolverHosts,
+    allowedHosts: allowed,
     fetchImpl: options.fetchImpl,
     lookupImpl: options.lookupImpl,
     timeoutMs: options.timeoutMs,
+    deadlineMs: options.deadlineMs,
     maxBytes: options.maxBytes,
     pageReferer: url.origin + '/',
     onEvent: options.onEvent,
@@ -120,17 +108,34 @@ async function resolver(request, options = {}) {
 
   const streams = [];
   const yaVistos = new Set();
-  for (const servidor of servidores.slice(0, 10)) {
+  const agregar = (stream) => {
+    const limpia = sanitizarUrl(stream.url);
+    if (!limpia || yaVistos.has(limpia)) return false;
+    yaVistos.add(limpia);
+    streams.push({
+      name: proveedor.nombre,
+      title: stream.titulo || proveedor.titulo || 'HLS / MP4',
+      url: limpia
+    });
+    return true;
+  };
+
+  // 1) Medios literales de la página del sitio, verificados por firma (con
+  //    concurrencia acotada y el mismo presupuesto de tiempo total).
+  const fetcherMedios = createFetcher(configuracion);
+  for (const candidato of media.slice(0, 10)) {
+    try {
+      if (await fetcherMedios.verificar(candidato)) agregar({ url: candidato });
+    } catch (error) {
+      if (options.onEvent) options.onEvent({ stage: 'candidate-failed', host: new URL(candidato).hostname, error: error.message });
+    }
+  }
+
+  // 2) Reproductores descubiertos (iframes/embeds autorizados).
+  for (const servidor of embeds.slice(0, 10)) {
     try {
       const resueltos = await registry.resolver(servidor);
-      for (const stream of resueltos) {
-        if (!yaVistos.has(stream.url)) {
-          yaVistos.add(stream.url);
-          // Etiquetas en español: el nombre del sitio (proveedor) como
-          // contexto principal; el resolvedor que lo encontró como detalle.
-          streams.push({ nombre: proveedor.nombre, titulo: stream.titulo || 'HLS / MP4', url: stream.url });
-        }
-      }
+      for (const stream of resueltos) agregar(stream);
     } catch (error) {
       if (options.onEvent) options.onEvent({ stage: 'resolver-failed', host: new URL(servidor).hostname, error: error.message });
     }
@@ -138,4 +143,6 @@ async function resolver(request, options = {}) {
   return streams;
 }
 
-module.exports = { PROVEEDORES, hostsPermitidos, encontrarProveedor, validarUrlSitio, resolver };
+module.exports = {
+  PROVEEDORES, hostsPermitidos, encontrarProveedor, validarUrlSitio, resolver, sanitizarUrl
+};
