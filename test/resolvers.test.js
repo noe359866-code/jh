@@ -243,3 +243,25 @@ test('sigue el redirector JS de Voe solo hacia sus mirrors declarados', async ()
   assert.equal(ajeno, null);
   assert.deepEqual(pedidos, [], 'no debe pedir el host ajeno');
 });
+
+test('un captcha del player se informa como verificación humana, no como "sin medios"', async () => {
+  // Caso real de Voe tras su redirector: "Confirme que es humano" con un
+  // formulario POST y token CSRF. No se resuelve por diseño, pero tampoco se
+  // oculta: se informa como captcha.
+  const { crearRegistry } = require('../engines/resolvers');
+  const captcha = '<html><head><title>Confirme que es humano para iniciar el vídeo.</title></head>' +
+    '<body><form method="post" action="/v"><input type="hidden" name="_token" value="abc">' +
+    '<input type="hidden" name="access" value="1"><button>Continuar</button></form></body></html>';
+  const eventos = [];
+  const registro = crearRegistry({
+    allowedHosts: [],
+    lookupImpl: async () => [{ address: '93.184.216.34' }],
+    onEvent: (evento) => eventos.push(evento),
+    fetchImpl: async () => new Response(captcha)
+  });
+  assert.deepEqual(await registro.resolver('https://voe.sx/e/abc'), []);
+  const captchaEvento = eventos.find(e => e.stage === 'verificacion-humana');
+  assert.ok(captchaEvento, 'debe informar la verificación humana');
+  assert.equal(captchaEvento.formulario, true);
+  assert.ok(!eventos.some(e => e.stage === 'sin-media'), 'no debe reportarse como simple "sin medios"');
+});

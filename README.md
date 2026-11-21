@@ -131,7 +131,15 @@ SITES_TEST_URLS=https://flixlatam.com/pelicula/patton npm run test:sites-live
 | --- | --- | --- | --- |
 | flixlatam.com | ficha → `embed69.org/f/<id>` → 6 servidores descifrados (LAT/SUB) | — | la extracción pasa Anubis y descifra los servidores; los players externos devuelven un interstitial que exige ejecutar su JavaScript |
 
-Estado medido honesto: la cadena propia de FlixLatam **ya se recorre completa** — ficha, reproductor de Embed69, prueba de trabajo de Anubis, descifrado AES de los seis servidores y su normalización de dominios. Lo que queda fuera de alcance por diseño es ejecutar el JavaScript de los players externos (Streamwish, Vidhide, Voe): responden una página `Loading...` de ~800 B que solo se resuelve en un navegador. Hasta que un player sirva el media sin ejecutar su JS, la lista puede venir vacía; el resumen en vivo lo indica etapa por etapa (`anubis`, `servidores`, `packer`, `sin-media`) en vez de fingir éxito.
+Estado medido honesto (última ejecución en vivo): la cadena propia de FlixLatam **se recorre completa** — ficha, reproductor de Embed69, prueba de trabajo de Anubis, descifrado de los servidores (LAT/SUB) y normalización de dominios. Pero los players externos cierran con barreras que **este extractor no cruza por diseño**:
+
+| Player | Qué responde en vivo | Qué haría falta |
+| --- | --- | --- |
+| Streamwish | spinner de 819 B que carga `main.js?v=1.1.9`, un JS **ofuscado de 71 KB** (array de cadenas rotado) | ejecutar su JavaScript (o un navegador) |
+| Voe | redirector JS a su mirror y, tras seguirlo, un **formulario POST con CSRF**: "Confirme que es humano para iniciar el vídeo" | resolver un captcha |
+| Vidhide | 302 a `vidhidefast.com`, un mirror que **no resuelve por DNS** | nada: el servidor está roto |
+
+Las tres barreras se detectan y se informan con su nombre (`loader-ofuscado`, `verificacion-humana`, `redirect-bloqueado`) en el reporte en vivo, etapa por etapa. **No hay medios verificados** mientras esto siga así, y el resumen nunca lo presenta como éxito. Lo que sí queda resuelto: toda la parte del sitio, que es donde el extractor anterior no llegaba ni a empezar.
 
 Histórico: con los otros dos sitios, DocumaniaTV respondía HTTP 403 a la IP del runner y PoseidonHD2 no exponía ningún servidor en el HTML estático. Ambos fueron retirados.
 

@@ -183,10 +183,41 @@ function esInterstitial(html) {
   return /Loading|Cargando|Please wait|Espera/i.test(texto) || texto.length < 600;
 }
 
+// Detecta una verificación humana (captcha) servida como página del player:
+// formulario POST con token CSRF, textos de "confirme que es humano", o los
+// proveedores habituales (Turnstile/hCaptcha/reCAPTCHA). No se resuelve por
+// diseño; se informa con precisión en vez de decir "sin medios".
+function verificacionHumana(html) {
+  const texto = String(html);
+  const textoHumano = /confirme? que es humano|confirm you are human|verify (?:that )?you(?:'re| are) (?:a )?human|soy humano|no soy un robot|i'?m not a robot|verificaci[oó]n humana/i.test(texto);
+  const proveedor = /turnstile|hcaptcha|recaptcha|cf-challenge|challenges\.cloudflare\.com/i.test(texto);
+  const formulario = /<form[^>]+method=["']post["']/i.test(texto)
+    && /name=["'](?:csrf|_token|token|access)["']/i.test(texto);
+  if (!textoHumano && !proveedor && !formulario) return null;
+  return {
+    humano: true,
+    proveedor: proveedor ? ((/turnstile/i.test(texto) && 'turnstile') || (/hcaptcha/i.test(texto) && 'hcaptcha')
+      || (/recaptcha/i.test(texto) && 'recaptcha') || (/cf-challenge|challenges\.cloudflare/i.test(texto) && 'cloudflare')) : null,
+    formulario: formulario,
+    texto: textoHumano
+  };
+}
+
 // Evento común de "esta página no dio media", con el contexto suficiente para
 // diagnosticar sin volcar contenido (título, tamaño, P.A.C.K.E.R., bloqueo...).
 function eventoSinMedia({ link, html, capas, candidatos, emitir }) {
   const texto = String(html || '');
+  const humano = verificacionHumana(texto);
+  if (humano) {
+    // Verificación humana: se informa como tal. Este extractor no resuelve
+    // captchas, así que el player se cierra aquí (no es un fallo oculto).
+    emitir({
+      stage: 'verificacion-humana', host: new URL(link).hostname,
+      proveedor: humano.proveedor || undefined, formulario: humano.formulario,
+      bytes: texto.length, titulo: (/<title[^>]*>([^<]{0,120})<\/title>/i.exec(texto) || [, ''])[1].trim()
+    });
+    return;
+  }
   emitir({
     stage: 'sin-media', host: new URL(link).hostname,
     capasPacker: capas, candidatos: candidatos, bytes: texto.length,
@@ -326,5 +357,5 @@ function crearResolvedoresPacked(config = {}) {
 module.exports = {
   crearResolvedorPacked, crearResolvedoresPacked, SERVIDORES,
   formaPagina, cuerpoRedactado, esInterstitial, rutasDeLoader, formaLoader, rutaRedactada,
-  loaderOfuscado, eventoSinMedia
+  loaderOfuscado, eventoSinMedia, verificacionHumana
 };

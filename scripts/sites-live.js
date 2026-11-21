@@ -54,6 +54,12 @@ function eventoSanitizado(evento) {
   }
   if (Number.isFinite(evento.scripts)) limpio.scripts = evento.scripts;
   // Forma del loader (mecanismos y literales redactados, sin valores).
+  // Verificación humana (captcha del player): se informa, no se resuelve.
+  if (evento.stage === 'verificacion-humana') {
+    for (const clave of ['proveedor', 'titulo']) if (evento[clave]) limpio[clave] = String(evento[clave]).slice(0, 120);
+    if (typeof evento.formulario === 'boolean') limpio.formulario = evento.formulario;
+    if (Number.isFinite(evento.bytes)) limpio.bytes = evento.bytes;
+  }
   if (evento.stage === 'loader-forma') {
     for (const clave of ['fetch', 'xhr', 'atob', 'b64', 'eval', 'sha', 'ofuscado']) {
       if (typeof evento[clave] === 'boolean') limpio[clave] = evento[clave];
