@@ -63,9 +63,11 @@ jobs:
               .map(e => 'dataLink=' + e.dataLink + ' challenge=' + e.challenge + ' salt=' + e.salt
                 + ' anubisPendiente=' + e.anubisPendiente + ' anubisPasado=' + e.anubisPasado
                 + ' bytes=' + e.bytes + ' captcha=' + e.captcha + ' bloqueado=' + e.bloqueado).join(' ');
+            const anubisIntentos = (r.events || []).filter(e => e.stage === 'anubis-intento')
+              .map(e => e.metodo + ':' + e.estado + '/' + (e.aviso || e.error || '-') + '/cookies=' + e.cookies + '/auth=' + e.auth).join(' , ');
             const etapas = {};
             for (const e of r.events || []) etapas[e.stage] = (etapas[e.stage] || 0) + 1;
-            const resumen = 'success=' + r.success + ' :: ' + porSitio + (diag ? ' :: ' + diag : '') + ' :: etapas=' + JSON.stringify(etapas);
+            const resumen = 'success=' + r.success + ' :: ' + porSitio + (diag ? ' :: ' + diag : '') + (anubisIntentos ? ' :: anubis=' + anubisIntentos : '') + ' :: etapas=' + JSON.stringify(etapas);
             fs.appendFileSync(process.env.GITHUB_OUTPUT || '/dev/null', 'resumen=' + resumen + '\n');
             console.log(resumen);
             if (r.hosts) console.log('hosts:', r.hosts.join(', '));

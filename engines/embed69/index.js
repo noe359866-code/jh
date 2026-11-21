@@ -94,6 +94,16 @@ function leerRetoAnubis(html) {
   };
 }
 
+// Motivo de rechazo que devuelve Anubis, si lo hay. Es texto fijo suyo, nunca
+// contenido del sitio protegido.
+function mensajeAnubis(cuerpo, estado) {
+  const texto = String(cuerpo);
+  const conocido = /(invalid proof of work|challenge not found|invalid challenge|too fast|already solved|invalid response|invalid nonce|cookie (?:could not be|failed to be) verified|challenge (?:has )?expired)/i.exec(texto);
+  if (conocido) return conocido[1].toLowerCase();
+  if (ANUBIS.test(texto)) return 'sigue sirviendo el reto';
+  return `http ${estado}`;
+}
+
 function leerCookies(cabeceras) {
   const cookies = {};
   for (const linea of cabeceras || []) {
@@ -171,11 +181,18 @@ async function pasarAnubis(fetcher, url, reto, { referer, cookies = {}, onEvent 
       Object.assign(recibidas, nuevas);
       // Algunas versiones devuelven la página real en vez de una cookie.
       const cuerpo = (await fetcher.readLimited(respuesta)).toString('utf8');
+      const auth = Object.keys(nuevas).some(k => k.includes('anubis-auth'));
+      onEvent({
+        stage: 'anubis-intento', host: new URL(url).hostname, metodo: intento.metodo,
+        estado: respuesta.status, cookies: Object.keys(nuevas).length, auth,
+        // Mensaje de rechazo de Anubis (texto corto, sin datos de la página).
+        aviso: mensajeAnubis(cuerpo, respuesta.status)
+      });
       if (DATA_LINK.test(cuerpo)) return { cookies: recibidas, html: cuerpo };
-      if (nuevas['within.website-x-cmd-anubis-auth'] || Object.keys(nuevas).some(k => k.includes('anubis-auth'))) {
-        return { cookies: recibidas };
-      }
-    } catch { /* siguiente variante */ }
+      if (auth) return { cookies: recibidas };
+    } catch (error) {
+      onEvent({ stage: 'anubis-intento', host: new URL(url).hostname, metodo: intento.metodo, error: String(error.message || error).slice(0, 120) });
+    }
   }
   return null;
 }

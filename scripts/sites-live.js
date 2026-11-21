@@ -39,6 +39,8 @@ function eventoSanitizado(evento) {
   }
   if (Number.isFinite(evento.bytes)) limpio.bytes = evento.bytes;
   if (Number.isFinite(evento.nonce)) limpio.nonce = evento.nonce;
+  for (const clave of ['metodo', 'aviso', 'error']) if (evento[clave]) limpio[clave] = String(evento[clave]).slice(0, 120);
+  for (const clave of ['estado', 'cookies', 'auth']) if (Number.isFinite(evento[clave]) || typeof evento[clave] === 'boolean') limpio[clave] = evento[clave];
   if (evento.algorithm) limpio.algorithm = String(evento.algorithm).slice(0, 20);
   return limpio;
 }
