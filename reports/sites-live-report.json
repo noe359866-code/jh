@@ -1,0 +1,56 @@
+{
+  "startedAt": "2026-11-21T03:18:42.585Z",
+  "success": false,
+  "tested": [
+    {
+      "site": "documaniatv",
+      "success": false,
+      "verifiedMedia": 0,
+      "error": "Media request failed: HTTP 403"
+    },
+    {
+      "site": "flixlatam",
+      "success": false,
+      "verifiedMedia": 0,
+      "error": null
+    },
+    {
+      "site": "poseidonhd2",
+      "success": false,
+      "verifiedMedia": 0,
+      "error": null
+    }
+  ],
+  "events": [
+    {
+      "stage": "request",
+      "host": "www.documaniatv.com",
+      "site": "documaniatv"
+    },
+    {
+      "stage": "request",
+      "host": "flixlatam.com",
+      "site": "flixlatam"
+    },
+    {
+      "stage": "page",
+      "host": "flixlatam.com",
+      "candidates": 0,
+      "frames": 0,
+      "site": "flixlatam"
+    },
+    {
+      "stage": "request",
+      "host": "www.poseidonhd2.co",
+      "site": "poseidonhd2"
+    },
+    {
+      "stage": "page",
+      "host": "www.poseidonhd2.co",
+      "candidates": 0,
+      "frames": 0,
+      "site": "poseidonhd2"
+    }
+  ],
+  "finishedAt": "2026-11-21T03:18:43.223Z"
+}
