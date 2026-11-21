@@ -75,6 +75,22 @@ function descifrarEnlace(cifrado, clave) {
   } catch { return null; }
 }
 
+// Diagnóstico: qué piezas del protocolo aparecen en la página. Solo booleanos,
+// sin contenido (los payloads llevan enlaces firmados).
+function diagnosticar(html) {
+  const texto = String(html);
+  return {
+    dataLink: DATA_LINK.test(texto),
+    challenge: CHALLENGE.test(texto),
+    salt: SALT.test(texto),
+    anubis: ANUBIS.test(texto),
+    longitud: texto.length,
+    // Pistas de bloqueo (sin volcar el HTML).
+    captcha: /cf-challenge|just a moment|attention required/i.test(texto),
+    bloqueado: /403 forbidden|access denied|blocked/i.test(texto)
+  };
+}
+
 // Convierte el dataLink en claro en servidores descifrados.
 function leerServidores(html) {
   const datos = DATA_LINK.exec(String(html));
@@ -192,5 +208,5 @@ async function abrirReproductor(fetcher, url, { referer, onEvent = () => {} } = 
 
 module.exports = {
   leerServidores, encontrarReproductor, leerRetoAnubis, descifrarEnlace,
-  normalizarDestino, abrirReproductor, leerCookies, NOMBRES, ALIAS_DOMINIOS
+  normalizarDestino, abrirReproductor, leerCookies, diagnosticar, NOMBRES, ALIAS_DOMINIOS
 };

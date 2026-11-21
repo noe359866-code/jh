@@ -33,6 +33,11 @@ function eventoSanitizado(evento) {
   if (Number.isFinite(evento.candidates)) limpio.candidates = evento.candidates;
   if (Number.isFinite(evento.frames)) limpio.frames = evento.frames;
   if (evento.error) limpio.error = String(evento.error).slice(0, 200);
+  // Diagnóstico booleano de Embed69 (nunca contenido de la página).
+  for (const clave of ['dataLink', 'challenge', 'salt', 'anubisPendiente', 'captcha', 'bloqueado']) {
+    if (typeof evento[clave] === 'boolean') limpio[clave] = evento[clave];
+  }
+  if (Number.isFinite(evento.bytes)) limpio.bytes = evento.bytes;
   return limpio;
 }
 

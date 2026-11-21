@@ -1,5 +1,5 @@
 const { createFetcher } = require('./extractor');
-const { encontrarReproductor, abrirReproductor, leerServidores } = require('../embed69');
+const { encontrarReproductor, abrirReproductor, leerServidores, diagnosticar } = require('../embed69');
 
 // ---------------------------------------------------------------------------
 // Proveedor FlixLatam (tema Dooplay)
@@ -46,7 +46,13 @@ const crearProveedorFlixLatam = ({ allowedHosts, fetchImpl, lookupImpl, timeoutM
 
       const htmlReproductor = await abrirReproductor(fetcher, reproductor, { referer: pageUrl, onEvent: emitir });
       const servidores = leerServidores(htmlReproductor);
-      emitir({ stage: 'servidores', host: new URL(reproductor).hostname, total: servidores.length });
+      const diagnostico = diagnosticar(htmlReproductor);
+      emitir({
+        stage: 'servidores', host: new URL(reproductor).hostname, total: servidores.length,
+        dataLink: diagnostico.dataLink, challenge: diagnostico.challenge, salt: diagnostico.salt,
+        anubisPendiente: diagnostico.anubis, bytes: diagnostico.longitud,
+        captcha: diagnostico.captcha, bloqueado: diagnostico.bloqueado
+      });
       const mediosReproductor = fetcher.parsePage(htmlReproductor, reproductor).media;
 
       return {
