@@ -165,7 +165,7 @@ function createApp({ streams = loadStreams(), sites = sitesProvider } = {}) {
   });
 
   app.get(['/', '/config'], (req, res) => {
-    res.type('html').send('<!doctype html><html lang="es"><meta charset="utf-8"><title>Addon Latino Stream</title><h1>Addon Latino Stream</h1><p>Catálogos de ejemplo: películas, series y anime (tipo series).</p><p>Incluye resolución de streams (mp4/HLS verificados) para documaniatv.com, flixlatam.com y poseidonhd2.co, con proveedores y resolvedores de reproductores: GET /stream/site?url=&lt;página del sitio&gt;. Solo devuelve streams, sin catálogos, metas ni demos.</p><p>El administrador puede configurar enlaces directos HLS/MP4 autorizados en streams.json o STREAMS_FILE. Consulta README.md.</p><a href="/manifest.json">Ver manifiesto para Stremio</a></html>');
+    res.type('html').send('<!doctype html><html lang="es"><meta charset="utf-8"><title>Addon Latino Stream</title><h1>Addon Latino Stream</h1><p>Catálogos de ejemplo: películas, series y anime (tipo series).</p><p>Incluye resolución de streams (mp4/HLS verificados) para flixlatam.com, con proveedores y resolvedores de reproductores: GET /stream/site?url=&lt;página del sitio&gt;. Solo devuelve streams, sin catálogos, metas ni demos.</p><p>El administrador puede configurar enlaces directos HLS/MP4 autorizados en streams.json o STREAMS_FILE. Consulta README.md.</p><a href="/manifest.json">Ver manifiesto para Stremio</a></html>');
   });
   app.use((req, res) => res.status(404).json({ error: 'Not found' }));
   return app;

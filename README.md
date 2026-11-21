@@ -1,6 +1,6 @@
 # Addon Latino Stream
 
-Addon HTTP para Stremio. Incluye catálogos **de ejemplo**, metadatos básicos y resolución de streams directos configurados por el administrador. **No incluye un catálogo actualizado.** Incluye además resolución de streams (mp4/HLS verificados) para **documaniatv.com**, **flixlatam.com** y **poseidonhd2.co** mediante una arquitectura de **proveedores** y **resolvedores de reproductores**: `GET /stream/site?url=<página del sitio>`, que solo devuelve `{ streams }`.
+Addon HTTP para Stremio. Incluye catálogos **de ejemplo**, metadatos básicos y resolución de streams directos configurados por el administrador. **No incluye un catálogo actualizado.** Incluye además resolución de streams (mp4/HLS verificados) para **flixlatam.com** mediante una arquitectura de **proveedores** y **resolvedores de reproductores**: `GET /stream/site?url=<página del sitio>`, que solo devuelve `{ streams }`.
 
 ## Ejecutar
 
@@ -45,7 +45,7 @@ Solo se admiten URLs HTTP(S) cuya ruta termine en `.m3u8` o `.mp4` (con query st
 - `GET /meta/movie/tt0137523.json`: `{ "meta": {...} }`.
 - `GET /stream/movie/tt0137523.json`: `{ "streams": [...] }`.
 - `GET /stream/series/tt0944947:1:2.json`: streams del episodio exacto.
-- `GET /stream/site?url=<página del sitio>`: resolución de streams para `documaniatv.com`, `flixlatam.com` y `poseidonhd2.co`. **Solo devuelve `{ "streams": [...] }`**; no entrega catálogos, metadatos ni entradas de demostración.
+- `GET /stream/site?url=<página del sitio>`: resolución de streams para `flixlatam.com`. **Solo devuelve `{ "streams": [...] }`**; no entrega catálogos, metadatos ni entradas de demostración.
 - `GET /config`: información del estado real del addon; no es un editor de configuración.
 
 Sin fuentes configuradas para un ID válido, se devuelve HTTP 200 con `{ "streams": [] }`. IDs mal formados dan 400; tipos, catálogos y rutas no reconocidos dan 404. No se conservan las rutas antiguas `/catalog/movies.json` porque no siguen el protocolo de Stremio.
@@ -69,7 +69,7 @@ docker run --rm -p 8080:8080 \
 
 Modelado en el proyecto [Streamflix](https://git.gay/streamflix-reborn2/streamflix), todo en español:
 
-- **Proveedores** (`engines/sites/`): cada uno corresponde a un sitio (DocumaniaTV, FlixLatam, PoseidonHD2). Su función es descubrir las URLs de **servidores** (players/embeds) en una página de contenido, equivalente a los `*Provider.kt` de Streamflix. Solo resuelven streams: no catálogos, no metadatos, no demos.
+- **Proveedores** (`engines/sites/`): cada uno corresponde a un sitio (hoy solo FlixLatam). Su función es descubrir las URLs de **servidores** (players/embeds) en una página de contenido, equivalente a los `*Provider.kt` de Streamflix. Solo resuelven streams: no catálogos, no metadatos, no demos.
 - **Resolvedores de reproductores** (`engines/resolvers/`): cada uno mapea un dominio de reproductor (o alias) a una función que, dada la URL del embed/player, devuelve streams verificados (HLS/MP4). Equivale a los `*Extractor.kt` de Streamflix. Incluye:
   - **VOE** (`voe.js`): descifra el payload AES-128-CBC de la página del player (claves por defecto del player, sobreescribibles con `VOE_KEY`/`VOE_IV`; también acepta JSON en claro) y extrae la fuente `.m3u8`. Tolera las variantes `/hls/master.txt` y similares.
   - **Streamtape** (`streamtape.js`): extrae los parámetros del script `botlink`, construye la URL `get_video` y **sigue el 302** con `redirect: 'manual'` para obtener la URI real del media. La URL `get_video` nunca se entrega como stream: no es reproducible en el cliente.
@@ -81,14 +81,16 @@ Modelado en el proyecto [Streamflix](https://git.gay/streamflix-reborn2/streamfl
 
 ## Resolución directa de sitios (mp4/HLS)
 
-`GET /stream/site?url=<página del sitio>` resuelve una página de **documaniatv.com**, **flixlatam.com** o **poseidonhd2.co** y devuelve **solo** `{ "streams": [...] }`: sin catálogos, sin metadatos, sin demos y sin entradas inventadas. El endpoint está siempre activo; no requiere configuración de administrador.
+`GET /stream/site?url=<página del sitio>` resuelve una página de **flixlatam.com** y devuelve **solo** `{ "streams": [...] }`: sin catálogos, sin metadatos, sin demos y sin entradas inventadas. El endpoint está siempre activo; no requiere configuración de administrador.
+
+> **Alcance actual:** solo FlixLatam. DocumaniaTV y PoseidonHD2 se retiraron por decisión del administrador (el primero responde HTTP 403 a IPs de datacenter y el segundo no expone los servidores en el HTML estático). Cualquier URL de esos hosts devuelve 400 "Host de sitio no soportado" sin hacer peticiones.
 
 ```
-GET /stream/site?url=https://www.documaniatv.com/pelicula/xyz
-→ { "streams": [ { "name": "DocumaniaTV", "title": "HLS / MP4", "url": "https://www.documaniatv.com/cdn/a.m3u8?t=1" } ] }
+GET /stream/site?url=https://flixlatam.com/pelicula/patton
+→ { "streams": [ { "name": "FlixLatam", "title": "HLS / MP4", "url": "https://flixlatam.com/cdn/a.m3u8?t=1" } ] }
 ```
 
-- Solo se aceptan URLs HTTPS sin credenciales y con hostname de uno de los tres sitios (con o sin `www`). Otros hosts, HTTP claro, credenciales y URLs malformadas devuelven 400 sin hacer peticiones.
+- Solo se aceptan URLs HTTPS sin credenciales y con hostname de FlixLatam (con o sin `www`). Otros hosts, HTTP claro, credenciales y URLs malformadas devuelven 400 sin hacer peticiones.
 - La página se analiza como HTML estático y **se recorren sus iframes** (hasta cinco páginas por extracción): URLs literales `.m3u8`/`.mp4` en atributos, `src` sin comillas, fragmentos `#t=`, `data-embed`/`data-src`, cadenas JS y entidades escapadas (`\/`, `\u002F`, `&#x2F;`, `&quot;`). Cada candidato se solicita con `Range` y se verifica por firma: una playlist HLS con `#EXT-X-STREAM-INF` o `#EXTINF`/`#EXT-X-TARGETDURATION`, o una caja `ftyp` para MP4. Una cabecera `#EXTM3U` suelta no se acepta. **Esto no prueba reproducción completa**, codecs, audio latino ni CORS.
 - **No se ejecuta JavaScript**, no se usan cookies, no se resuelven CAPTCHAs ni se evade DRM. Reproductores que dependan de APIs dinámicas o de un Referer no están soportados.
 - Los hosts confiables son los tres dominios del sitio más los dominios de reproductor conocidos del registry (VOE, Streamtape, Vidsrc, Doodstream, Filemoon, Vidhide, Streamwish...). Si un medio se sirve desde un CDN, añade sus hosts explícitamente con `SITES_ALLOWED_HOSTS=cdn.example.com,...` **después de comprobar que son confiables**; el HTML de la página nunca autoriza un host por sí solo. Los hosts no permitidos se omiten (la lista resultante puede quedar vacía) y se registra un evento `blocked-host`/`blocked-frame`.
@@ -98,20 +100,20 @@ GET /stream/site?url=https://www.documaniatv.com/pelicula/xyz
 - **Verificación real**: el entorno de desarrollo solo permite salida a GitHub y registros de paquetes, no a estos dominios, así que no se afirma que funcione contra los sitios reales. Para comprobarlo, usa un URL de prueba con acceso real:
 
 ```sh
-SITES_TEST_URLS=https://www.documaniatv.com/pelicula/xyz npm run test:sites-live
+SITES_TEST_URLS=https://flixlatam.com/pelicula/patton npm run test:sites-live
 ```
 
-`scripts/sites-live.js` valida cada URL antes de hacer peticiones, resuelve la página y **falla si ningún sitio de la lista devuelve al menos un medio con firma válida**. Por defecto prueba los tres sitios (`documaniatv.com`, `flixlatam.com`, `poseidonhd2.co`); puedes indicar URLs concretas con `SITES_TEST_URLS` (separadas por comas). Escribe un reporte sanitizado en `reports/sites-live.json` con el resultado por sitio (disponible, hosts encontrados/bloqueados y conteos; **no URLs, queries, HTML ni tokens**), y imprime por consola cuáles devolvieron HLS/MP4. Si aparecen eventos `blocked-frame`/`blocked-host`, revisa ese dominio antes de autorizarlo en `SITES_ALLOWED_HOSTS`; nunca habilites dominios automáticamente. Los reportes locales quedan en `reports/`, fuera de Git. Las pruebas de `npm test` son deterministas y mockadas, y no sustituyen esta comprobación.
+`scripts/sites-live.js` valida cada URL antes de hacer peticiones, resuelve la página y **falla si ningún sitio de la lista devuelve al menos un medio con firma válida**. Por defecto prueba FlixLatam; puedes indicar URLs concretas con `SITES_TEST_URLS` (separadas por comas). Escribe un reporte sanitizado en `reports/sites-live.json` con el resultado por sitio (disponible, hosts encontrados/bloqueados y conteos; **no URLs, queries, HTML ni tokens**), y imprime por consola cuáles devolvieron HLS/MP4. Si aparecen eventos `blocked-frame`/`blocked-host`, revisa ese dominio antes de autorizarlo en `SITES_ALLOWED_HOSTS`; nunca habilites dominios automáticamente. Los reportes locales quedan en `reports/`, fuera de Git. Las pruebas de `npm test` son deterministas y mockadas, y no sustituyen esta comprobación.
 
-**Resultado medido** (GitHub Actions, IP de datacenter, 2026-11-21, páginas de detalle reales):
+**Resultado medido** (GitHub Actions, IP de datacenter, 2026-11-21, página de detalle real):
 
 | Sitio | Páginas analizadas | Candidatos `.m3u8`/`.mp4` | Resultado |
 | --- | --- | --- | --- |
-| documaniatv.com | 0 | 0 | HTTP 403 (protección anti-bot: bloquea IPs de datacenter) |
 | flixlatam.com | 3 (`flixlatam.com`, `embed69.org`, `uqload.vc`) | 0 | los players no exponen la URL en el HTML estático |
-| poseidonhd2.co | 1 | 0 | los servidores no están en iframes ni en enlaces conocidos |
 
-Conclusión honesta: **hoy ninguna de las tres devuelve HLS/MP4 por extracción estática**. Sobrevivir a Cloudflare (documaniatv) o a players que generan la fuente por JavaScript (embed69/uqload) exige ejecutar JS o usar una API que solo responde a sesiones de navegador; ambas cosas están fuera del alcance de este extractor por diseño. Desde una IP residencial documaniatv podría responder; el 403 es de su firewall, no del código.
+Conclusión honesta: **hoy FlixLatam no devuelve HLS/MP4 por extracción estática**. El crawl sí llega a sus reproductores (`embed69.org` → `uqload.vc`), pero esos players generan la fuente por JavaScript, que este extractor no ejecuta por diseño. Para obtener medios habría que añadir un navegador headless o una API que responda con sesión de navegador.
+
+Histórico: con los otros dos sitios, DocumaniaTV respondía HTTP 403 a la IP del runner y PoseidonHD2 no exponía ningún servidor en el HTML estático. Ambos fueron retirados.
 
 En GitHub Actions, el workflow **Sites live extraction** se ejecuta al hacer push: prueba los sitios con red real y publica un resumen saneado como **comentario del commit** (los logs y artefactos del job pueden no ser accesibles), además de subir `sites-live-report` como artefacto. El reporte **no se commitea**: solo se publica como artefacto y se resume en el log. (Antes se versionaba con `git add -f`, saltándose el `.gitignore`, y quedó en el repositorio un reporte de error presentado como verificación real.) GitHub puede exigir que el workflow exista primero en la rama predeterminada; no se afirma que haya pasado: el entorno de desarrollo solo permite salida a GitHub y registros de paquetes, no a estos dominios. Si falla, inspecciona el flujo real y ajusta los hosts; no conviertas un fallo en un skip.
 
@@ -136,4 +138,4 @@ El workflow en vivo permite probar páginas y sube `sites-live-report` incluso c
 
 `npm run check`, `npm test` y `npm audit --omit=dev` comprueban sintaxis, contrato HTTP, resolución de configuración y dependencias respectivamente. Las pruebas de los resolvedores usan páginas y respuestas simuladas: cubren el descifrado AES/RC4, el script `botlink` y el 302 de Streamtape, el `mediaId` de Vidsrc, la decodificación de URLs escapadas, el crawl de iframes, la allowlist y el presupuesto de tiempo, pero **no descargan videos reales ni validan reproducción**. CI está configurada para Node 22 y 24; la ejecución local se verificó en Node 22. La imagen Docker necesita una comprobación adicional en un entorno con Docker.
 
-El extractor de sitios es estático: no se ejecuta JavaScript, no se usan cookies, no se resuelven CAPTCHAs ni se evade DRM. Reproductores que dependan de APIs dinámicas o de un Referer no están soportados. Una lista vacía puede significar formato no soportado o que los medios estén en hosts no autorizados, no necesariamente ausencia de contenido en la página.
+El extractor de sitios es estático: no se ejecuta JavaScript, no se usan cookies, no se resuelven CAPTCHAs ni se evade DRM. Reproductores que dependan de APIs dinámicas o de un Referer no están soportados; los de FlixLatam (`embed69.org`, `uqload.vc`) pertenecen a ese grupo, así que hoy la lista de streams devuelta puede venir vacía. Una lista vacía puede significar formato no soportado o que los medios estén en hosts no autorizados, no necesariamente ausencia de contenido en la página.

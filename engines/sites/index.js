@@ -3,27 +3,19 @@ const { crearRegistry, hostsReproductores } = require('../resolvers');
 
 // Proveedores de sitios: cada proveedor descubre las páginas de reproductor
 // (players/embeds) de una página de contenido y las resuelve con el registry.
-// Equivale a los *Provider.kt de Streamflix (FlixLatamProvider,
-// PoseidonHD2Provider, ...). La diferencia es que aquí solo nos interesa la
-// resolución de stream: no catálogos, no metadatos, no demos.
+// Equivale a los *Provider.kt de Streamflix (FlixLatamProvider). La diferencia
+// es que aquí solo nos interesa la resolución de stream: no catálogos, no
+// metadatos, no demos.
+//
+// Solo FlixLatam: DocumaniaTV y PoseidonHD2 se retiraron por decisión del
+// administrador (el primero bloquea IPs de datacenter con HTTP 403 y el
+// segundo no expone los servidores en el HTML estático).
 const PROVEEDORES = [
-  {
-    clave: 'documaniatv',
-    nombre: 'DocumaniaTV',
-    titulo: 'HLS / MP4',
-    hosts: ['www.documaniatv.com', 'documaniatv.com']
-  },
   {
     clave: 'flixlatam',
     nombre: 'FlixLatam',
     titulo: 'HLS / MP4',
     hosts: ['www.flixlatam.com', 'flixlatam.com']
-  },
-  {
-    clave: 'poseidonhd2',
-    nombre: 'PoseidonHD2',
-    titulo: 'HLS / MP4',
-    hosts: ['www.poseidonhd2.co', 'poseidonhd2.co']
   }
 ];
 

@@ -12,7 +12,7 @@ const { execFile } = require('node:child_process');
 // saneado, sin URLs ni queries.
 const RAIZ = path.join(__dirname, '..');
 const SCRIPT = path.join(RAIZ, 'scripts', 'sites-live.js');
-const ENTORNO_BASE = { ...process.env, SITES_TEST_URLS: 'https://www.documaniatv.com/pelicula/xyz' };
+const ENTORNO_BASE = { ...process.env, SITES_TEST_URLS: 'https://flixlatam.com/pelicula/patton' };
 delete ENTORNO_BASE.SITES_ALLOWED_HOSTS;
 
 function ejecutar() {
@@ -30,11 +30,11 @@ test('sites-live valida la URL, intenta la extracción y escribe un reporte sin 
   // Ya no hay error de importación: el fallo, si existe, es de red real.
   assert.doesNotMatch(stderr, /is not a function/);
   assert.equal(reporte.tested.length, 1);
-  assert.equal(reporte.tested[0].site, 'documaniatv');
-  assert.equal(reporte.tested[0].host, 'www.documaniatv.com');
+  assert.equal(reporte.tested[0].site, 'flixlatam');
+  assert.equal(reporte.tested[0].host, 'flixlatam.com');
   // El reporte solo contiene host y conteos: ni rutas, ni queries, ni tokens.
   const serializado = JSON.stringify(reporte);
-  assert.doesNotMatch(serializado, /pelicula|xyz|\?|token/i);
+  assert.doesNotMatch(serializado, /patton|pelicula|\?|token/i);
   const CLAVES = new Set(['stage', 'host', 'site', 'verified', 'candidates', 'frames', 'error']);
   for (const evento of reporte.events) {
     assert.ok(Object.keys(evento).every(clave => CLAVES.has(clave)), `evento con campo inesperado: ${JSON.stringify(evento)}`);

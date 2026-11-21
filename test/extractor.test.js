@@ -106,7 +106,7 @@ test('SSRF transport (undici) refuses a private address resolved at connect time
 });
 
 test('descubre reproductores enlazados (no solo iframes) de hosts conocidos', () => {
-  // PoseidonHD2 lista sus servidores como enlaces/data-*, sin embeberlos:
+  // Algunos sitios listan sus servidores como enlaces/data-*, sin embeberlos:
   // antes el crawl no los veía nunca.
   const hosts = ['uqload.vc', 'voe.sx', 'streamwish.to'];
   const encontrados = parseEmbeds(

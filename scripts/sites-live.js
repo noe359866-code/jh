@@ -12,12 +12,10 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const { resolver, validarUrlSitio } = require('../engines/sites');
 
-// Páginas de detalle reales (una por sitio). Antes eran rutas de ejemplo que
-// devolvían 404, así que la prueba nunca podía encontrar medios.
+// Único sitio soportado: FlixLatam. Página de detalle real (las rutas de
+// ejemplo devolvían 404 y la prueba nunca podía encontrar medios).
 const DEFAULT_URLS = [
-  'https://www.documaniatv.com/historia/la-pelicula-perdida-de-nuremberg-video_99a43ee3a.html',
-  'https://flixlatam.com/pelicula/patton',
-  'https://www.poseidonhd2.co/pelicula/933260/la-sustancia'
+  'https://flixlatam.com/pelicula/patton'
 ];
 
 function parseUrls(entorno = process.env) {

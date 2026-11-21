@@ -56,7 +56,7 @@ test('sin variables de entorno no se inventan credenciales', () => {
 
 test('una extracción fallida no devuelve claves en español ni datos internos', async t => {
   const base = await servidor(t, { resolve: async () => { throw new Error('boom interno'); } });
-  const respuesta = await fetch(base + '/stream/site?url=https://poseidonhd2.co/pelicula/x');
+  const respuesta = await fetch(base + '/stream/site?url=https://flixlatam.com/pelicula/x');
   assert.equal(respuesta.status, 502);
   const cuerpo = await respuesta.json();
   assert.deepEqual(cuerpo, { error: 'Extracción de stream del sitio fallida' });
