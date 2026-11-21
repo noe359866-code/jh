@@ -134,7 +134,17 @@ async function resolver(request, options = {}) {
   //    se reducen los que se intentan cuando ya hay medios (basta uno por
   //    idioma para que el cliente pueda reproducir).
   const MAX_SERVIDORES = 8;
-  for (const servidor of servidores.slice(0, MAX_SERVIDORES)) {
+  // Orden de intento: primero los players que este extractor resuelve sin
+  // ejecutar JavaScript (Voe descifra su JSON, Streamtape/Vidsrc piden su API).
+  // Los que sirven una página "Loading..." que exige navegador van al final,
+  // para que no consuman el turno de los que sí pueden dar medios.
+  const SIN_JS = ['voe.sx', 'streamtape', 'vidsrc'];
+  const prioridad = (url) => {
+    const host = new URL(url).hostname;
+    return SIN_JS.some(dominio => host === dominio || host.endsWith(`.${dominio}`)) ? 0 : 1;
+  };
+  const porIntentar = [...servidores].sort((a, b) => prioridad(a.url) - prioridad(b.url));
+  for (const servidor of porIntentar.slice(0, MAX_SERVIDORES)) {
     const restante = consumo.restante();
     if (restante <= 0) {
       emitir({ stage: 'deadline', host: new URL(servidor.url).hostname });

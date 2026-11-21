@@ -78,7 +78,7 @@ test('FlixLatam: ficha → Embed69 → servidores descifrados → HLS verificado
     'https://sw.example/e/sw1/index.m3u8',
     'https://voe.sx/hls/master.m3u8'
   ]);
-  assert.deepEqual(streams.map(s => s.title).sort(), ['LAT · Streamwish', 'LAT · Voe', 'SUB · Filemoon']);
+  assert.deepEqual(streams.map(s => s.title).sort(), ['Latino · Streamwish', 'Latino · Voe', 'Subtitulado · Filemoon']);
   for (const stream of streams) assert.equal(stream.name, 'FlixLatam');
   // El mirror rotado hglink.to se pidió como streamwish.to (registry correcto).
   assert.ok(pedidos.includes('streamwish.to/e/sw1'));

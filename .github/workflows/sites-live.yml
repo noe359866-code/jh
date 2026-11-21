@@ -45,6 +45,8 @@ jobs:
       # quedó en el repo un reporte de error presentado como verificación real.
       - name: Resumen del resultado
         id: resumen
+        # El reporte puede no existir si el step anterior murió antes de
+        # escribirlo: el resumen no debe romper el job ni ocultar el fallo real.
         if: always()
         run: |
           # El log de Actions no siempre es accesible: el resumen se publica
@@ -69,7 +71,8 @@ jobs:
               .map(e => e.host + ' capas=' + e.capasPacker + ' candidatos=' + e.candidatos + ' bytes=' + e.bytes
                 + ' packer=' + e.packer + ' jwplayer=' + e.jwplayer + ' bloqueado=' + e.bloqueado
                 + ' soloJs=' + e.soloJs + ' titulo=' + JSON.stringify(e.titulo)
-                + ' [' + (e.forma || '') + ']').join(' , ');
+                + ' [' + (e.forma || '') + ']'
+                + (e.cuerpo ? ' CUERPO=' + JSON.stringify(e.cuerpo) : '')).join(' , ');
             const fallos = (r.events || []).filter(e => e.stage === 'resolver-failed')
               .map(e => e.host + ':' + e.error).join(' , ');
             const etapas = {};

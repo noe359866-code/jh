@@ -51,6 +51,18 @@ const SERVIDORES = {
 // Describe la FORMA de una página que no tiene media, sin volcar contenido:
 // solo nombres de etiquetas, nombres de campos y hosts. Sirve para saber qué
 // interposición hay (formulario POST, redirección JS, meta refresh, loader).
+// Versión publicable de una página diminuta: se eliminan URLs, rutas, tokens
+// largos y valores de atributos; quedan etiquetas, nombres de atributo y texto.
+function cuerpoRedactado(html, maximo = 1200) {
+  return String(html)
+    .slice(0, maximo)
+    .replace(/https?:\/\/[^\s"'<>]+/gi, '<url>')
+    .replace(/\/\/[^\s"'<>]{4,}/g, '<url>')
+    .replace(/["'][A-Za-z0-9+/=_-]{24,}["']/g, '"<token>"')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function formaPagina(html) {
   const texto = String(html);
   const hosts = (listas) => listas.map(u => { try { return new URL(u).hostname; } catch { return '?'; } });
@@ -151,7 +163,9 @@ function crearResolvedorPacked({ nombre, dominios, allowedHosts, fetchImpl, look
         // Páginas que solo funcionan con JS o que piden verificación.
         soloJs: /enable javascript|please enable js|noscript|recaptcha|turnstile|hcaptcha/i.test(html.slice(0, 4000)),
         sinCuerpo: html.trim().length < 32,
-        forma: formaPagina(html)
+        forma: formaPagina(html),
+        // Solo para páginas mínimas: qué devuelve exactamente el player.
+        cuerpo: html.length <= 4000 ? cuerpoRedactado(html) : undefined
       });
       return [];
     }
@@ -166,4 +180,4 @@ function crearResolvedoresPacked(config = {}) {
   });
 }
 
-module.exports = { crearResolvedorPacked, crearResolvedoresPacked, SERVIDORES };
+module.exports = { crearResolvedorPacked, crearResolvedoresPacked, SERVIDORES, formaPagina, cuerpoRedactado, esInterstitial };

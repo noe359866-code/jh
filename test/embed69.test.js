@@ -228,3 +228,49 @@ test('el player recibe el Referer del reproductor que lo incrusta', async () => 
   await registro.resolver('https://streamwish.to/e/a', { pageReferer: 'https://embed69.org/f/tt1/' });
   assert.deepEqual(vistos.find(([host]) => host === 'streamwish.to'), ['streamwish.to', 'https://embed69.org/f/tt1/']);
 });
+
+test('el cuerpo redactado de un interstitial no filtra URLs ni tokens', () => {
+  // Se publica el cuerpo de páginas mínimas para entender qué interpone el
+  // player; debe salir sin URLs, rutas ni tokens.
+  const { cuerpoRedactado } = require('../engines/resolvers/packed');
+  const html = '<html><head><script src="https://cdn.ejemplo/x.js?k=1"></script></head>' +
+    '<body><div data-token="abcdefghijklmnopqrstuvwx1234"></div><p>Loading...</p></body></html>';
+  const salida = cuerpoRedactado(html);
+  assert.ok(!salida.includes('ejemplo'), 'sin hosts');
+  assert.ok(!salida.includes('abcdefghijklmnop'), 'sin tokens');
+  assert.match(salida, /Loading/);
+});
+
+test('los servidores que no exigen JS se intentan primero', async () => {
+  // Voe sí se resuelve sin navegador; los P.A.C.K.E.R. con interstitial no
+  // deben consumir el turno de los que sí pueden entregar medios.
+  const { resolver, hostsPermitidos } = require('../engines/sites');
+  const orden = [];
+  const streams = await resolver({ url: 'https://flixlatam.com/pelicula/x' }, {
+    allowedHosts: [...hostsPermitidos({}), 'sw.example'],
+    lookupImpl: async () => [{ address: '93.184.216.34' }],
+    fetchImpl: async (url) => {
+      const host = url.hostname;
+      if (host === 'flixlatam.com' && url.pathname === '/pelicula/x') {
+        return new Response('<iframe src="https://embed69.org/f/tt1/"></iframe>');
+      }
+      if (host === 'embed69.org') {
+        return new Response(paginaEmbed69({ grupos: [
+          { idioma: 'LAT', servidores: [['streamwish', 'https://streamwish.to/e/sw'], ['voe', 'https://voe.sx/e/ok']] }
+        ] }));
+      }
+      orden.push(host);
+      if (host === 'streamwish.to') return new Response('<html><title>Loading...</title></html>');
+      // Voe sirve su JSON de fuentes en una página estática (sin JS propio).
+      if (host === 'voe.sx' && url.pathname.startsWith('/e/')) {
+        return new Response('<script type="application/json">{"source":"https://voe.sx/hls/master.m3u8"}</script>');
+      }
+      // Playlist verificable (una cabecera suelta no cuenta como media).
+      return new Response('#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=800000\n720.m3u8\n');
+    }
+  });
+  // El título usa el idioma largo ("Latino"), no el código de Embed69 ("LAT").
+  assert.ok(streams.length >= 1, 'debe entregar al menos el medio de Voe');
+  assert.ok(streams.every(s => s.title === 'Latino · Voe'), JSON.stringify(streams.map(s => s.title)));
+  assert.equal(orden[0], 'voe.sx', `orden observado: ${orden.join(',')}`);
+});

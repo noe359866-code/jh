@@ -106,7 +106,7 @@ test('resolver sigue el flujo real: ficha → Embed69 → servidor → HLS', asy
     }
   });
   assert.deepEqual(streams.map(s => s.url), ['https://voe.sx/hls/master.m3u8']);
-  assert.deepEqual(streams.map(s => s.title), ['LAT · Voe']);
+  assert.deepEqual(streams.map(s => s.title), ['Latino · Voe']);
   assert.equal(streams[0].name, 'FlixLatam');
   assert.ok(pedidos.includes('embed69.org/f/tt1/'), 'debe abrir el reproductor de Embed69');
 });
@@ -179,7 +179,7 @@ test('resuelve un servidor uqload descifrado de Embed69', async () => {
     fetchImpl: async url => new Response(url.pathname.endsWith('.m3u8') ? HLS : (paginas[url.hostname + url.pathname] ?? ''))
   });
   assert.deepEqual(streams.map(s => s.url), ['https://uq.example/e/abc/index.m3u8']);
-  assert.equal(streams[0].title, 'LAT · Uqload');
+  assert.equal(streams[0].title, 'Latino · Uqload');
 });
 test('sigue la redirección de un player a otro dominio del mismo motor', async () => {
   // Caso real: Embed69 devuelve hglink.to y el player responde 302 a

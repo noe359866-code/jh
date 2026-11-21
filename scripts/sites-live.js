@@ -46,6 +46,8 @@ function eventoSanitizado(evento) {
   for (const clave of ['estado', 'cookies', 'auth']) if (Number.isFinite(evento[clave]) || typeof evento[clave] === 'boolean') limpio[clave] = evento[clave];
   if (Number.isFinite(evento.candidatos)) limpio.candidatos = evento.candidatos;
   if (Number.isFinite(evento.capasPacker)) limpio.capasPacker = evento.capasPacker;
+  // Página mínima redactada (sin URLs, rutas ni tokens): qué responde el player.
+  if (typeof evento.cuerpo === 'string') limpio.cuerpo = String(evento.cuerpo).slice(0, 1200);
   // Forma estructural de una página sin media (etiquetas, campos, hosts).
   if (evento.forma && typeof evento.forma === 'object') {
     const f = evento.forma;

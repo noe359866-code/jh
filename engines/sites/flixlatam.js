@@ -59,11 +59,16 @@ const crearProveedorFlixLatam = ({ allowedHosts, fetchImpl, lookupImpl, timeoutM
       return {
         reproductor,
         media: [...new Set([...media, ...mediosReproductor])],
-        servidores: servidores.map(servidor => ({
-          ...servidor,
-          idioma: nombreIdioma(servidor.idioma),
-          referer: reproductor
-        }))
+        servidores: servidores.map(servidor => {
+          const idioma = nombreIdioma(servidor.idioma);
+          return {
+            ...servidor,
+            idioma,
+            // La etiqueta que ve el usuario usa el idioma largo: "Latino · Voe".
+            etiqueta: `${idioma} · ${servidor.servidor}`,
+            referer: reproductor
+          };
+        })
       };
     }
   };
