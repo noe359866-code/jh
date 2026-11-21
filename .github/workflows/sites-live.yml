@@ -1,5 +1,6 @@
 name: Sites live extraction
 on:
+  push:
   workflow_dispatch:
     inputs:
       page_urls:
