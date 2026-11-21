@@ -48,6 +48,12 @@ function eventoSanitizado(evento) {
   if (Number.isFinite(evento.capasPacker)) limpio.capasPacker = evento.capasPacker;
   // Página mínima redactada (sin URLs, rutas ni tokens): qué responde el player.
   if (typeof evento.cuerpo === 'string') limpio.cuerpo = String(evento.cuerpo).slice(0, 1200);
+  // Rutas de API descubiertas en el loader (sin valores de parámetros).
+  for (const clave of ['rutas', 'api']) {
+    if (Array.isArray(evento[clave])) limpio[clave] = evento[clave].slice(0, 12).map(String);
+  }
+  if (Number.isFinite(evento.scripts)) limpio.scripts = evento.scripts;
+  if (Number.isFinite(evento.total)) limpio.total = evento.total;
   // Forma estructural de una página sin media (etiquetas, campos, hosts).
   if (evento.forma && typeof evento.forma === 'object') {
     const f = evento.forma;

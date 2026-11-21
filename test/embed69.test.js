@@ -274,3 +274,32 @@ test('los servidores que no exigen JS se intentan primero', async () => {
   assert.ok(streams.every(s => s.title === 'Latino · Voe'), JSON.stringify(streams.map(s => s.title)));
   assert.equal(orden[0], 'voe.sx', `orden observado: ${orden.join(',')}`);
 });
+
+test('lee el loader del player (sin ejecutarlo) y prueba su API', async () => {
+  // Caso real de Streamwish: spinner de ~800 B con /main.js. El JS pide la
+  // fuente a una API del mismo host; se lee la ruta y se prueba, sin ejecutar
+  // nada del sitio.
+  const { crearRegistry } = require('../engines/resolvers');
+  const pedidos = [];
+  const spinner = '<!DOCTYPE html><head><title>Loading...</title></head><body>' +
+    '<div class="spinner"></div><p>Page is loading, please wait...</p>' +
+    '<script src="/main.js?v=1.1.9"></script></body>';
+  const loader = 'const api="/dl?op=player_api&file=abc&id=1";' +
+    'fetch(api).then(r=>r.json()).then(d=>{location.href=d.url});' +
+    'const css="/style.css"; const img="/logo.png";';
+  const registro = crearRegistry({
+    allowedHosts: ['sw.example'],
+    lookupImpl: async () => [{ address: '93.184.216.34' }],
+    fetchImpl: async (url) => {
+      pedidos.push(url.pathname + url.search);
+      if (url.pathname === '/e/a') return new Response(spinner);
+      if (url.pathname === '/main.js') return new Response(loader);
+      if (url.pathname === '/dl') return new Response(JSON.stringify({ url: 'https://sw.example/e/a/index.mp4' }));
+      return new Response(Buffer.from([0, 0, 0, 24, 102, 116, 121, 112, 105, 115, 111, 109]));
+    }
+  });
+  const streams = await registro.resolver('https://streamwish.to/e/a');
+  assert.deepEqual(streams.map(s => s.url), ['https://sw.example/e/a/index.mp4']);
+  assert.ok(pedidos.some(p => p.startsWith('/dl?')), 'debe probar la ruta de API del loader');
+  assert.ok(!pedidos.some(p => p === '/style.css' || p === '/logo.png'), 'no pide estáticos');
+});

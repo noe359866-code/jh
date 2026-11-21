@@ -75,10 +75,13 @@ jobs:
                 + (e.cuerpo ? ' CUERPO=' + JSON.stringify(e.cuerpo) : '')).join(' , ');
             const fallos = (r.events || []).filter(e => e.stage === 'resolver-failed')
               .map(e => e.host + ':' + e.error).join(' , ');
+            const loaders = (r.events || []).filter(e => e.stage === 'loader')
+              .map(e => e.host + ' scripts=' + e.scripts + ' rutas=' + JSON.stringify(e.rutas)
+                + ' api=' + JSON.stringify(e.api)).join(' , ');
             const etapas = {};
             for (const e of r.events || []) etapas[e.stage] = (etapas[e.stage] || 0) + 1;
             const resumen = 'success=' + r.success + ' :: ' + porSitio + (diag ? ' :: ' + diag : '') + (anubisIntentos ? ' :: anubis=' + anubisIntentos : '')
-              + (sinMedia ? ' :: sinMedia=' + sinMedia : '') + (fallos ? ' :: fallos=' + fallos : '') + ' :: etapas=' + JSON.stringify(etapas);
+              + (sinMedia ? ' :: sinMedia=' + sinMedia : '') + (loaders ? ' :: loader=' + loaders : '') + (fallos ? ' :: fallos=' + fallos : '') + ' :: etapas=' + JSON.stringify(etapas);
             fs.appendFileSync(process.env.GITHUB_OUTPUT || '/dev/null', 'resumen=' + resumen + '\n');
             console.log(resumen);
             if (r.hosts) console.log('hosts:', r.hosts.join(', '));

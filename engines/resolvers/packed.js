@@ -63,6 +63,41 @@ function cuerpoRedactado(html, maximo = 1200) {
     .trim();
 }
 
+// ---------------------------------------------------------------------------
+// Loader en JavaScript: leerlo, no ejecutarlo
+// ---------------------------------------------------------------------------
+//
+// Varios players (Streamwish entre ellos) sirven un spinner de ~800 B con
+// `<script src="/main.js">`. El JS hace una petición a una API del mismo host
+// que devuelve la fuente. Ese JS se puede LEER: de él se sacan las rutas de la
+// API y sus parámetros, y se prueban sin ejecutar nada del sitio.
+//
+// Devuelve las rutas candidatas (sin ejecutar) y marca las que parecen API.
+const RUTA_EN_JS = /["'`](\/[A-Za-z0-9_\-./]{2,80}(?:\?[^"'`\s]{0,120})?)["'`]/g;
+const API_SOSPECHOSA = /(?:api|dl|embed|source|stream|video|get|play|media|file)/i;
+
+function rutasDeLoader(js) {
+  const rutas = new Set();
+  for (const encontrado of String(js).matchAll(RUTA_EN_JS)) {
+    const ruta = encontrado[1];
+    // Se descarta lo que es claramente un recurso estático del player.
+    if (/\.(?:css|png|jpe?g|svg|ico|woff2?|ttf|map)$/i.test(ruta)) continue;
+    rutas.add(ruta);
+    if (rutas.size >= 40) break;
+  }
+  return [...rutas];
+}
+
+// Copia publicable de una ruta de API: sin valores de parámetros (llevan
+// tokens) y con los nombres de los parámetros, que es lo que hace falta para
+// reconstruir la llamada.
+function rutaRedactada(ruta) {
+  const [camino, consulta] = String(ruta).split('?');
+  if (!consulta) return camino;
+  const nombres = consulta.split('&').map(par => par.split('=')[0]).filter(Boolean);
+  return `${camino}?${nombres.join('&')}`;
+}
+
 function formaPagina(html) {
   const texto = String(html);
   const hosts = (listas) => listas.map(u => { try { return new URL(u).hostname; } catch { return '?'; } });
@@ -127,6 +162,53 @@ function crearResolvedorPacked({ nombre, dominios, allowedHosts, fetchImpl, look
         if (siguiente.length > html.length) html = siguiente;
         else break;
       }
+      // Si sigue siendo un spinner, se lee su loader (sin ejecutarlo) para
+      // descubrir la API que devuelve la fuente. Solo scripts del mismo host.
+      let api = null;
+      if (esInterstitial(html)) {
+        const origen = new URL(link).origin;
+        const scripts = [...html.matchAll(/<script[^>]+src=["']([^"']+)["']/gi)]
+          .map(m => { try { return new URL(m[1], link).href; } catch { return null; } })
+          .filter(Boolean)
+          .filter(src => new URL(src).origin === origen)
+          .slice(0, 3);
+        const rutas = new Set();
+        for (const src of scripts) {
+          try {
+            const js = await fetcher.getText(src, cabeceras);
+            for (const ruta of rutasDeLoader(js)) rutas.add(ruta);
+          } catch { /* loader inaccesible: se sigue con la página tal cual */ }
+        }
+        const candidatas = [...rutas].filter(ruta => API_SOSPECHOSA.test(ruta));
+        emitir({
+          stage: 'loader', host: new URL(link).hostname, scripts: scripts.length,
+          rutas: [...rutas].slice(0, 12).map(rutaRedactada),
+          api: candidatas.slice(0, 8).map(rutaRedactada)
+        });
+        // Se prueban las rutas de API con el propio enlace como referencia: si
+        // alguna devuelve un media verificable, ese es el resultado.
+        for (const ruta of candidatas.slice(0, 6)) {
+          try {
+            const cuerpo = await fetcher.getText(new URL(ruta, origen).href, cabeceras);
+            const medios = [];
+            for (const capa of unPackerTodo(cuerpo)) {
+              const { media } = fetcher.parsePage(capa, new URL(ruta, origen).href);
+              for (const url of media) if (!medios.includes(url)) medios.push(url);
+              // JSON con la fuente en texto plano.
+              for (const m of capa.matchAll(/"(?:file|source|src|url|hls)"\s*:\s*"([^"]*\.(?:m3u8|mp4)[^"]*)"/gi)) {
+                const url = m[1].replace(/\\\//g, '/');
+                if (!medios.includes(url)) medios.push(url);
+              }
+            }
+            const verificados = await verificarCandidatos(fetcher, nombre, medios.slice(0, 6));
+            if (verificados.length) {
+              emitir({ stage: 'loader-api', host: new URL(link).hostname, total: verificados.length });
+              return verificados;
+            }
+          } catch { /* ruta no válida para este player */ }
+        }
+      }
+
       // Todas las capas: HTML original + cada bloque P.A.C.K.E.R desempaquetado.
       const capas = unPackerTodo(html);
       emitir({ stage: 'packer', host: new URL(link).hostname, capas: capas.length });
