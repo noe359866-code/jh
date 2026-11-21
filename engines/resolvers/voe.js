@@ -1,4 +1,5 @@
 const { Resolvedor, verificarCandidatos } = require('./base');
+const { esInterstitial, eventoSinMedia } = require('./packed');
 const { aesCbcDecryptRaw, quitarRelleno, encontrarCifrado } = require('./crypto');
 
 // Clave/IV por defecto del player VOE; se pueden sobreescribir con VOE_KEY y
@@ -52,7 +53,20 @@ function crearResolvedorVoe({ allowedHosts, fetchImpl, lookupImpl, timeoutMs, de
     ],
     resuelve: async (link) => {
       const url = new URL(link);
-      const html = await fetcher.getText(link);
+      let html;
+      try {
+        html = await fetcher.getText(link);
+      } catch (error) {
+        // Un fallo de red no es "sin medios": se informa con su causa real.
+        emitir({ stage: 'resolver-failed', host: url.hostname, error: error.message });
+        return [];
+      }
+      // Un interstitial mínimo del player no se resuelve sin su JS: se informa
+      // en vez de devolver vacío sin explicación.
+      if (esInterstitial(html)) {
+        eventoSinMedia({ link, html, capas: 1, candidatos: 0, emitir });
+        return [];
+      }
       const cifrado = encontrarCifrado(html);
       const urls = [];
       const agregarFuente = (fuente) => {
@@ -76,7 +90,9 @@ function crearResolvedorVoe({ allowedHosts, fetchImpl, lookupImpl, timeoutMs, de
       if (streams.length) return streams;
       // Barrido literal como respaldo.
       const { media } = fetcher.parsePage(html, link);
-      return verificarCandidatos(fetcher, 'VOE', media.slice(0, 10));
+      const respaldo = await verificarCandidatos(fetcher, 'VOE', media.slice(0, 10));
+      if (!respaldo.length) eventoSinMedia({ link, html, capas: 1, candidatos: urls.length + media.length, emitir });
+      return respaldo;
     }
   });
 }

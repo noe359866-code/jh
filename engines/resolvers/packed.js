@@ -174,7 +174,31 @@ function esInterstitial(html) {
   if (/eval\(function\s*\(p\s*,\s*a\s*,\s*c/i.test(texto)) return false;
   if (/\.m3u8|\.mp4|\/embed\/|jwplayer|playerjs/i.test(texto)) return false;
   if (/<video|<source/i.test(texto)) return false;
+  // Un payload de player (base64, incluso corto) no es un spinner: Voe sirve
+  // su JSON cifrado en una página diminuta.
+  if (/[A-Za-z0-9+/=]{32,}/.test(texto)) return false;
+  // JSON de player (claro o cifrado): lleva una fuente, un cifrado o una URL.
+  if (/<script[^>]+type=["']application\/json["'][^>]*>\s*[{A-Za-z0-9+/=]/i.test(texto)) return false;
+  if (/"(?:source|file|hls|url)"\s*:/i.test(texto)) return false;
   return /Loading|Cargando|Please wait|Espera/i.test(texto) || texto.length < 600;
+}
+
+// Evento común de "esta página no dio media", con el contexto suficiente para
+// diagnosticar sin volcar contenido (título, tamaño, P.A.C.K.E.R., bloqueo...).
+function eventoSinMedia({ link, html, capas, candidatos, emitir }) {
+  const texto = String(html || '');
+  emitir({
+    stage: 'sin-media', host: new URL(link).hostname,
+    capasPacker: capas, candidatos: candidatos, bytes: texto.length,
+    packer: /eval\(function\s*\(p\s*,\s*a\s*,\s*c\s*,\s*k\s*,\s*e/.test(texto),
+    bloqueado: /403 forbidden|access denied|not found|deleted|removed/i.test(texto.slice(0, 4000)),
+    jwplayer: /jwplayer|jwp-config|sources\s*:\s*\[/i.test(texto),
+    titulo: (/<title[^>]*>([^<]{0,80})<\/title>/i.exec(texto) || [, ''])[1].trim(),
+    soloJs: /enable javascript|please enable js|noscript|recaptcha|turnstile|hcaptcha/i.test(texto.slice(0, 4000)),
+    sinCuerpo: texto.trim().length < 32,
+    forma: formaPagina(texto),
+    cuerpo: texto.length <= 4000 ? cuerpoRedactado(texto) : undefined
+  });
 }
 
 function crearResolvedorPacked({ nombre, dominios, allowedHosts, fetchImpl, lookupImpl, timeoutMs, deadlineMs, maxBytes, pageReferer, onEvent } = {}) {
@@ -285,22 +309,7 @@ function crearResolvedorPacked({ nombre, dominios, allowedHosts, fetchImpl, look
       if (streams.length) return streams;
 
       // Sin candidato verificado no se entrega el embed: no es reproducible.
-      // Se informa qué se encontró (sin volcar el HTML: lleva enlaces firmados).
-      emitir({
-        stage: 'sin-media', host: new URL(link).hostname, capasPacker: capas.length,
-        candidatos: candidatos.length, bytes: html.length,
-        packer: /eval\(function\s*\(p\s*,\s*a\s*,\s*c\s*,\s*k\s*,\s*e/.test(html),
-        bloqueado: /403 forbidden|access denied|not found|deleted|removed/i.test(html.slice(0, 4000)),
-        jwplayer: /jwplayer|jwp-config|sources\s*:\s*\[/i.test(html),
-        // Título de la página (texto suyo, no enlaces) para saber qué sirvió.
-        titulo: (/<title[^>]*>([^<]{0,80})<\/title>/i.exec(html) || [, ''])[1].trim(),
-        // Páginas que solo funcionan con JS o que piden verificación.
-        soloJs: /enable javascript|please enable js|noscript|recaptcha|turnstile|hcaptcha/i.test(html.slice(0, 4000)),
-        sinCuerpo: html.trim().length < 32,
-        forma: formaPagina(html),
-        // Solo para páginas mínimas: qué devuelve exactamente el player.
-        cuerpo: html.length <= 4000 ? cuerpoRedactado(html) : undefined
-      });
+      eventoSinMedia({ link, html, capas: capas.length, candidatos: candidatos.length, emitir });
       return [];
     }
   });
@@ -316,5 +325,6 @@ function crearResolvedoresPacked(config = {}) {
 
 module.exports = {
   crearResolvedorPacked, crearResolvedoresPacked, SERVIDORES,
-  formaPagina, cuerpoRedactado, esInterstitial, rutasDeLoader, formaLoader, rutaRedactada, loaderOfuscado
+  formaPagina, cuerpoRedactado, esInterstitial, rutasDeLoader, formaLoader, rutaRedactada,
+  loaderOfuscado, eventoSinMedia
 };
