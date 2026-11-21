@@ -65,6 +65,7 @@ function sanitizarUrl(raw, quitarQuery = false) {
 async function resolver(request, options = {}) {
   const { url, proveedor } = validarUrlSitio(request && request.url);
   const allowed = options.allowedHosts || hostsPermitidos();
+  const emitir = typeof options.onEvent === 'function' ? options.onEvent : () => {};
   const configuracion = {
     allowedHosts: allowed,
     fetchImpl: options.fetchImpl,
@@ -76,11 +77,22 @@ async function resolver(request, options = {}) {
     onEvent: options.onEvent
   };
 
+  // Presupuesto total compartido: la ficha, Anubis y los players se reparten el
+  // mismo deadline en lugar de encadenar esperas independientes.
+  const PRESUPUESTO_SERVIDOR = 25000;
+  const total = Math.max(Number(options.deadlineMs) || 20000, 15000);
+  const limite = Date.now() + total;
+  const consumo = { restante: () => limite - Date.now() };
+
   const descubridor = crearProveedorFlixLatam(configuracion);
   const { media, servidores, reproductor } = await descubridor.descubrir(url.href);
 
-  const registry = crearRegistry({
+  // El registry fija su presupuesto al construirse (cada resolvedor crea su
+  // fetcher con ese deadline), así que se construye uno por servidor con el
+  // tiempo que queda: un player lento no puede dejar sin turno a los demás.
+  const registryPara = (milisegundos) => crearRegistry({
     ...configuracion,
+    deadlineMs: Math.max(3000, milisegundos),
     onEvent: options.onEvent,
     voeKey: options.voeKey,
     voeIv: options.voeIv,
@@ -115,18 +127,33 @@ async function resolver(request, options = {}) {
   //    registry resuelve a HLS/MP4. La etiqueta indica idioma y servidor.
   //    Si el resolvedor dedicado falla, se intenta el genérico: los players
   //    rotan de dominio y el mismo motor (P.A.C.K.E.R.) sirve sin etiqueta.
-  for (const servidor of servidores.slice(0, 12)) {
+  //
+  //    Presupuesto por servidor: todos comparten el deadline total, así que
+  //    los primeros podían consumirlo y dejar a los siguientes con "tiempo
+  //    agotado" sin haberlos probado. Cada servidor recibe su propio límite y
+  //    se reducen los que se intentan cuando ya hay medios (basta uno por
+  //    idioma para que el cliente pueda reproducir).
+  const MAX_SERVIDORES = 8;
+  for (const servidor of servidores.slice(0, MAX_SERVIDORES)) {
+    const restante = consumo.restante();
+    if (restante <= 0) {
+      emitir({ stage: 'deadline', host: new URL(servidor.url).hostname });
+      break;
+    }
     try {
       // Los players comprueban el Referer de la página que los incrusta.
       const contexto = { pageReferer: reproductor };
+      const presupuesto = Math.min(restante, PRESUPUESTO_SERVIDOR);
+      const registry = registryPara(presupuesto);
       const resueltos = await registry.resolver(servidor.url, contexto);
       for (const stream of resueltos) agregar(stream, servidor.etiqueta);
-      if (!resueltos.length) {
-        const generico = await registry.resolver(servidor.url, { ...contexto, soloGenerico: true });
+      if (!resueltos.length && consumo.restante() > 0) {
+        const generico = await registryPara(Math.min(consumo.restante(), PRESUPUESTO_SERVIDOR))
+          .resolver(servidor.url, { ...contexto, soloGenerico: true });
         for (const stream of generico) agregar(stream, servidor.etiqueta);
       }
     } catch (error) {
-      if (options.onEvent) options.onEvent({ stage: 'resolver-failed', host: new URL(servidor.url).hostname, error: error.message });
+      emitir({ stage: 'resolver-failed', host: new URL(servidor.url).hostname, error: error.message });
     }
   }
   return streams;

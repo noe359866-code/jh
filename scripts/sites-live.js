@@ -93,7 +93,8 @@ async function main(report) {
           // mínima) + varios players externos, cada uno con su propia página.
           streams = await resolver({ url: pageUrl }, {
             timeoutMs: 20000,
-            deadlineMs: 90000,
+            // Ficha + Anubis (PoW + espera) + hasta 8 players con reintento.
+            deadlineMs: 180000,
             onEvent: evento => {
               const limpio = eventoSanitizado(evento);
               if (limpio.host) hostsVistos.add(limpio.host);

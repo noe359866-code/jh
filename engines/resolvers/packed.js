@@ -81,10 +81,11 @@ function formaPagina(html) {
 // pesar poco: no se debe pedir dos veces una página que ya sirve).
 function esInterstitial(html) {
   const texto = String(html);
-  if (texto.length > 3000) return false;
+  if (texto.length > 4000) return false;
   if (/eval\(function\s*\(p\s*,\s*a\s*,\s*c/i.test(texto)) return false;
-  if (/\.m3u8|\.mp4|\/embed\//i.test(texto)) return false;
-  return /Loading|Cargando|Please wait|Espera/i.test(texto) || texto.length < 400;
+  if (/\.m3u8|\.mp4|\/embed\/|jwplayer|playerjs/i.test(texto)) return false;
+  if (/<video|<source/i.test(texto)) return false;
+  return /Loading|Cargando|Please wait|Espera/i.test(texto) || texto.length < 600;
 }
 
 function crearResolvedorPacked({ nombre, dominios, allowedHosts, fetchImpl, lookupImpl, timeoutMs, deadlineMs, maxBytes, pageReferer, onEvent } = {}) {
@@ -104,10 +105,15 @@ function crearResolvedorPacked({ nombre, dominios, allowedHosts, fetchImpl, look
       let html = await fetcher.getText(link, cabeceras, { seguirMismoMotor: true });
       // Varios players sirven primero un interstitial mínimo ("Loading...")
       // con una cookie; con esa cookie llega la página con la fuente.
-      if (esInterstitial(html)) {
-        emitir({ stage: 'reintento-interstitial', host: new URL(link).hostname, bytes: html.length });
-        const segunda = await fetcher.getText(link, cabeceras, { seguirMismoMotor: true });
-        if (segunda.length > html.length) html = segunda;
+      // El interstitial es JS suyo: se reintenta con espera corta (su JS tarda
+      // unos cientos de ms en dejar la cookie) y se acepta la primera página
+      // que ya traiga player o P.A.C.K.E.R.
+      for (let intento = 1; intento <= 2 && esInterstitial(html); intento++) {
+        emitir({ stage: 'reintento-interstitial', host: new URL(link).hostname, intento, bytes: html.length });
+        await new Promise(r => setTimeout(r, 1200 * intento));
+        const siguiente = await fetcher.getText(link, cabeceras, { seguirMismoMotor: true });
+        if (siguiente.length > html.length) html = siguiente;
+        else break;
       }
       // Todas las capas: HTML original + cada bloque P.A.C.K.E.R desempaquetado.
       const capas = unPackerTodo(html);

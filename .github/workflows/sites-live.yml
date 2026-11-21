@@ -24,7 +24,7 @@ jobs:
     # workflow loop (pushing the report retriggers the workflow).
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
         with:
