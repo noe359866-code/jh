@@ -55,6 +55,9 @@ jobs:
             const porSitio = r.tested.map(t => t.site + '=' + (t.success ? t.verifiedMedia + ' medios' : 'sin medios')
               + ' [paginas=' + (t.pages ?? 0) + ' candidatos=' + (t.candidates ?? 0) + ' frames=' + (t.frames ?? 0) + ' verificados=' + (t.verified ?? 0) + ']'
               + (t.blockedHosts?.length ? ' bloqueados=' + t.blockedHosts.join(',') : '')
+              + (t.stages && Object.keys(t.stages).length
+                ? ' [' + Object.entries(t.stages).map(([etapa, hosts]) => etapa + ':' + hosts.join('+')).join(' ') + ']'
+                : '')
               + (t.error ? ' ERROR=' + t.error : '')).join(' | ');
             const etapas = {};
             for (const e of r.events || []) etapas[e.stage] = (etapas[e.stage] || 0) + 1;

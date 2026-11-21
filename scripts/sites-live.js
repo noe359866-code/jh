@@ -47,7 +47,7 @@ async function main(report) {
   for (const pageUrl of urls) {
     const entry = {
       site: null, host: null, success: false, verifiedMedia: 0, error: null,
-      pages: 0, candidates: 0, frames: 0, verified: 0, blockedHosts: []
+      pages: 0, candidates: 0, frames: 0, verified: 0, blockedHosts: [], stages: {}
     };
     try {
       // Validar antes de cualquier petición de red para fallar rápido.
@@ -68,6 +68,11 @@ async function main(report) {
           if (limpio.stage === 'candidate' && limpio.verified) entry.verified++;
           if ((limpio.stage === 'blocked-frame' || limpio.stage === 'blocked-host') && limpio.host
             && !entry.blockedHosts.includes(limpio.host)) entry.blockedHosts.push(limpio.host);
+          if (limpio.host) {
+            const clave = limpio.stage === 'page' ? 'pages' : limpio.stage;
+            entry.stages[clave] = entry.stages[clave] || [];
+            if (!entry.stages[clave].includes(limpio.host)) entry.stages[clave].push(limpio.host);
+          }
           if (report.events.length < 200) report.events.push({ ...limpio, site: proveedor.clave });
         }
       });
