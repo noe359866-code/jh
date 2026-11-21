@@ -73,19 +73,44 @@ function cuerpoRedactado(html, maximo = 1200) {
 // API y sus parámetros, y se prueban sin ejecutar nada del sitio.
 //
 // Devuelve las rutas candidatas (sin ejecutar) y marca las que parecen API.
-const RUTA_EN_JS = /["'`](\/[A-Za-z0-9_\-./]{2,80}(?:\?[^"'`\s]{0,120})?)["'`]/g;
-const API_SOSPECHOSA = /(?:api|dl|embed|source|stream|video|get|play|media|file)/i;
+// Rutas citadas en el JS. Cubre las tres formas habituales: absolutas
+// ("/api/x"), relativas ("api/x") y plantillas (`/api/${id}`).
+const RUTA_EN_JS = /["'`]((?:https?:\/\/[^"'`\s]+|\/?[A-Za-z0-9_\-][A-Za-z0-9_\-./]{1,80}))(?:\?[^"'`\s]{0,120})?["'`]/g;
+const API_SOSPECHOSA = /(?:\bapi\b|\bdl\b|embed|source|stream|video|\bget\b|\bplay\b|media|\bfile\b|link|url|\bop\b|download|mp4|m3u8|ajax|fetch)/i;
 
 function rutasDeLoader(js) {
   const rutas = new Set();
   for (const encontrado of String(js).matchAll(RUTA_EN_JS)) {
     const ruta = encontrado[1];
     // Se descarta lo que es claramente un recurso estático del player.
-    if (/\.(?:css|png|jpe?g|svg|ico|woff2?|ttf|map)$/i.test(ruta)) continue;
-    rutas.add(ruta);
+    if (/\.(?:css|png|jpe?g|svg|ico|woff2?|ttf|map|js)$/i.test(ruta)) continue;
+    if (/^[A-Za-z_$][\w$]*$/.test(ruta) && !API_SOSPECHOSA.test(ruta)) continue;
+    rutas.add(ruta.startsWith('/') || /^https?:/i.test(ruta) ? ruta : `/${ruta}`);
     if (rutas.size >= 40) break;
   }
   return [...rutas];
+}
+
+// Forma publicable del loader: qué mecanismos usa y literales sin valores. Es
+// lo que permite ajustar la lectura sin volcar el JS del sitio.
+function formaLoader(js) {
+  const texto = String(js);
+  const literales = [];
+  for (const m of texto.matchAll(RUTA_EN_JS)) {
+    if (literales.length >= 8) break;
+    const valor = rutaRedactada(m[1]);
+    if (!literales.includes(valor)) literales.push(valor);
+  }
+  return {
+    bytes: texto.length,
+    fetch: /\bfetch\s*\(/.test(texto),
+    xhr: /XMLHttpRequest|\$\.ajax|axios/.test(texto),
+    atob: /\batob\s*\(/.test(texto),
+    b64: /base64/i.test(texto),
+    eval: /\beval\s*\(/.test(texto),
+    sha: /sha-?256|crypto\.subtle|md5/i.test(texto),
+    literales
+  };
 }
 
 // Copia publicable de una ruta de API: sin valores de parámetros (llevan
@@ -175,7 +200,10 @@ function crearResolvedorPacked({ nombre, dominios, allowedHosts, fetchImpl, look
         const rutas = new Set();
         for (const src of scripts) {
           try {
-            const js = await fetcher.getText(src, cabeceras);
+            // El loader es del propio player: su Referer natural es su página.
+            const js = await fetcher.getText(src, { Referer: link });
+            const forma = formaLoader(js);
+            emitir({ stage: 'loader-forma', host: new URL(link).hostname, ...forma });
             for (const ruta of rutasDeLoader(js)) rutas.add(ruta);
           } catch { /* loader inaccesible: se sigue con la página tal cual */ }
         }
@@ -262,4 +290,7 @@ function crearResolvedoresPacked(config = {}) {
   });
 }
 
-module.exports = { crearResolvedorPacked, crearResolvedoresPacked, SERVIDORES, formaPagina, cuerpoRedactado, esInterstitial };
+module.exports = {
+  crearResolvedorPacked, crearResolvedoresPacked, SERVIDORES,
+  formaPagina, cuerpoRedactado, esInterstitial, rutasDeLoader, formaLoader, rutaRedactada
+};

@@ -78,10 +78,14 @@ jobs:
             const loaders = (r.events || []).filter(e => e.stage === 'loader')
               .map(e => e.host + ' scripts=' + e.scripts + ' rutas=' + JSON.stringify(e.rutas)
                 + ' api=' + JSON.stringify(e.api)).join(' , ');
+            const formas = (r.events || []).filter(e => e.stage === 'loader-forma')
+              .map(e => e.host + ' bytes=' + e.bytes + ' fetch=' + e.fetch + ' xhr=' + e.xhr
+                + ' atob=' + e.atob + ' b64=' + e.b64 + ' eval=' + e.eval + ' sha=' + e.sha
+                + ' literales=' + JSON.stringify(e.literales)).join(' , ');
             const etapas = {};
             for (const e of r.events || []) etapas[e.stage] = (etapas[e.stage] || 0) + 1;
             const resumen = 'success=' + r.success + ' :: ' + porSitio + (diag ? ' :: ' + diag : '') + (anubisIntentos ? ' :: anubis=' + anubisIntentos : '')
-              + (sinMedia ? ' :: sinMedia=' + sinMedia : '') + (loaders ? ' :: loader=' + loaders : '') + (fallos ? ' :: fallos=' + fallos : '') + ' :: etapas=' + JSON.stringify(etapas);
+              + (sinMedia ? ' :: sinMedia=' + sinMedia : '') + (loaders ? ' :: loader=' + loaders : '') + (formas ? ' :: loaderForma=' + formas : '') + (fallos ? ' :: fallos=' + fallos : '') + ' :: etapas=' + JSON.stringify(etapas);
             fs.appendFileSync(process.env.GITHUB_OUTPUT || '/dev/null', 'resumen=' + resumen + '\n');
             console.log(resumen);
             if (r.hosts) console.log('hosts:', r.hosts.join(', '));

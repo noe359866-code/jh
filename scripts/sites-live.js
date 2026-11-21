@@ -53,6 +53,14 @@ function eventoSanitizado(evento) {
     if (Array.isArray(evento[clave])) limpio[clave] = evento[clave].slice(0, 12).map(String);
   }
   if (Number.isFinite(evento.scripts)) limpio.scripts = evento.scripts;
+  // Forma del loader (mecanismos y literales redactados, sin valores).
+  if (evento.stage === 'loader-forma') {
+    for (const clave of ['fetch', 'xhr', 'atob', 'b64', 'eval', 'sha']) {
+      if (typeof evento[clave] === 'boolean') limpio[clave] = evento[clave];
+    }
+    if (Number.isFinite(evento.bytes)) limpio.bytes = evento.bytes;
+    if (Array.isArray(evento.literales)) limpio.literales = evento.literales.slice(0, 8).map(String);
+  }
   if (Number.isFinite(evento.total)) limpio.total = evento.total;
   // Forma estructural de una página sin media (etiquetas, campos, hosts).
   if (evento.forma && typeof evento.forma === 'object') {
