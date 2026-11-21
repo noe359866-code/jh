@@ -22,6 +22,10 @@ function createExtractor({ allowedHosts = ['documaniatv.com', 'flixlatam.com', '
   timeoutMs = 10000, maxPages = 5, maxBytes = 2 * 1024 * 1024,
   name = 'Sites', title = 'HLS / MP4', onEvent = () => {} } = {}) {
   const hosts = new Set(allowedHosts.map(host => host.toLowerCase()));
+  const DEFAULT_HEADERS = {
+    // Public sites commonly reject requests without a browser User-Agent.
+    'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+  };
   async function request(raw, headers = {}) {
     const url = new URL(raw);
     onEvent({ stage: 'request', host: url.hostname });
@@ -32,7 +36,7 @@ function createExtractor({ allowedHosts = ['documaniatv.com', 'flixlatam.com', '
     }
     const addresses = await lookupImpl(url.hostname, { all: true, family: 4 });
     if (!addresses.length || addresses.some(({ address }) => !publicAddress(address))) throw new Error('Non-public destination blocked');
-    const response = await fetchImpl(url, { redirect: 'error', signal: AbortSignal.timeout(timeoutMs), headers });
+    const response = await fetchImpl(url, { redirect: 'error', signal: AbortSignal.timeout(timeoutMs), headers: { ...DEFAULT_HEADERS, ...headers } });
     if (!response.ok) throw new Error(`Media request failed: HTTP ${response.status}`);
     return response;
   }
