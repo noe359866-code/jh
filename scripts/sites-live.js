@@ -18,6 +18,9 @@ const DEFAULT_URLS = [
   'https://flixlatam.com/pelicula/patton'
 ];
 
+// Espera entre reintentos tras un 403/429 (los sitios limitan ráfagas).
+const esperar = ms => new Promise(r => setTimeout(r, ms));
+
 function parseUrls(entorno = process.env) {
   const raw = (entorno.SITES_TEST_URLS || entorno.SITES_TEST_URL || '').trim();
   if (!raw) return DEFAULT_URLS;
@@ -77,28 +80,43 @@ async function main(report) {
       const { url, proveedor } = validarUrlSitio(pageUrl);
       entry.site = proveedor.clave;
       entry.host = url.hostname;
-      const streams = await resolver({ url: pageUrl }, {
-        onEvent: evento => {
-          const limpio = eventoSanitizado(evento);
-          if (limpio.host) hostsVistos.add(limpio.host);
-          // Conteos por sitio: explican si falló el acceso, el análisis del
-          // HTML o la verificación de los candidatos.
-          if (limpio.stage === 'page') {
-            entry.pages++;
-            entry.candidates += limpio.candidates || 0;
-            entry.frames += limpio.frames || 0;
-          }
-          if (limpio.stage === 'candidate' && limpio.verified) entry.verified++;
-          if ((limpio.stage === 'blocked-frame' || limpio.stage === 'blocked-host') && limpio.host
-            && !entry.blockedHosts.includes(limpio.host)) entry.blockedHosts.push(limpio.host);
-          if (limpio.host) {
-            const clave = limpio.stage === 'page' ? 'pages' : limpio.stage;
-            entry.stages[clave] = entry.stages[clave] || [];
-            if (!entry.stages[clave].includes(limpio.host)) entry.stages[clave].push(limpio.host);
-          }
-          if (report.events.length < 200) report.events.push({ ...limpio, site: proveedor.clave });
+      // El sitio limita ráfagas: un 403/429 es transitorio, no un fallo de
+      // extracción. Se reintenta con espera creciente antes de darlo por roto.
+      let streams = [];
+      let intento = 0;
+      for (;;) {
+        intento++;
+        try {
+          streams = await resolver({ url: pageUrl }, {
+            onEvent: evento => {
+              const limpio = eventoSanitizado(evento);
+              if (limpio.host) hostsVistos.add(limpio.host);
+              // Conteos por sitio: explican si falló el acceso, el análisis del
+              // HTML o la verificación de los candidatos.
+              if (limpio.stage === 'page') {
+                entry.pages++;
+                entry.candidates += limpio.candidates || 0;
+                entry.frames += limpio.frames || 0;
+              }
+              if (limpio.stage === 'candidate' && limpio.verified) entry.verified++;
+              if ((limpio.stage === 'blocked-frame' || limpio.stage === 'blocked-host') && limpio.host
+                && !entry.blockedHosts.includes(limpio.host)) entry.blockedHosts.push(limpio.host);
+              if (limpio.host) {
+                const clave = limpio.stage === 'page' ? 'pages' : limpio.stage;
+                entry.stages[clave] = entry.stages[clave] || [];
+                if (!entry.stages[clave].includes(limpio.host)) entry.stages[clave].push(limpio.host);
+              }
+              if (report.events.length < 200) report.events.push({ ...limpio, site: proveedor.clave });
+            }
+          });
+          break;
+        } catch (error) {
+          const transitorio = /HTTP (403|429|503)/.test(error.message);
+          if (!transitorio || intento >= 3) throw error;
+          entry.stages.reintentos = [String(intento)];
+          await esperar(intento * 8000);
         }
-      });
+      }
       entry.success = streams.length > 0;
       entry.verifiedMedia = streams.length;
       if (streams.length) anyVerified = true;
