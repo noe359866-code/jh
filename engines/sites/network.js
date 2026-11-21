@@ -1,6 +1,9 @@
 const dns = require('node:dns');
 const { isIP, BlockList } = require('node:net');
-const { Agent, fetch } = require('undici');
+// Se accede a undici como módulo (no desestructurado) para que las pruebas
+// puedan interceptar el transporte real y comprobar las opciones que salen.
+const undici = require('undici');
+const { Agent } = undici;
 const blocked = new BlockList();
 for (const [ip, prefix] of [['0.0.0.0', 8], ['10.0.0.0', 8], ['100.64.0.0', 10], ['127.0.0.0', 8], ['169.254.0.0', 16], ['172.16.0.0', 12], ['192.168.0.0', 16], ['192.0.0.0', 24], ['192.0.2.0', 24], ['198.18.0.0', 15], ['198.51.100.0', 24], ['203.0.113.0', 24], ['224.0.0.0', 4], ['240.0.0.0', 4]]) blocked.addSubnet(ip, prefix, 'ipv4');
 function publicAddress(address) {
@@ -61,17 +64,21 @@ function assertPublicUrl(url) {
   const host = new URL(url).hostname.replace(/^\[|\]$/g, '');
   if (isIP(host) && !publicAddress(host)) throw new Error('Non-public destination blocked');
 }
-function publicFetch(url, options) {
+// `redirect` es 'error' por defecto (no seguir redirecciones a ciegas), pero
+// quien pide explícitamente 'manual' debe conservarlo: si se pisa aquí, ninguna
+// redirección controlada funciona y Anubis (302 + Set-Cookie) se vuelve
+// inalcanzable.
+function publicFetch(url, options = {}) {
   assertPublicUrl(url);
-  return fetch(url, { ...options, dispatcher, redirect: 'error' });
+  return undici.fetch(url, { ...options, dispatcher, redirect: options.redirect || 'error' });
 }
 // Variante con lookup inyectable: permite probar la validación del dispatcher
 // sin resolver DNS real. En producción se usa publicFetch (lookup del sistema).
 function createPublicFetch({ lookupImpl = dns.lookup, timeoutMs = 10000 } = {}) {
   const agent = createAgent(lookupImpl, timeoutMs);
-  return (url, options) => {
+  return (url, options = {}) => {
     assertPublicUrl(url);
-    return fetch(url, { ...options, dispatcher: agent, redirect: 'error' });
+    return undici.fetch(url, { ...options, dispatcher: agent, redirect: options.redirect || 'error' });
   };
 }
 module.exports = { publicAddress, createPublicLookup, createAgent, publicFetch, createPublicFetch, normalizarLookup, resolveAddresses };

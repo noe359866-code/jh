@@ -151,3 +151,27 @@ test('P.A.C.K.E.R. soporta alfabetos con más de 36 palabras', () => {
   // El diccionario sustituye también el "1" del cuerpo (índice 1 del array).
   assert.equal(unPacker(bloque), ' urlFinal="palabra1";');
 });
+
+test('las redirecciones controladas sobreviven al fetcher endurecido', async () => {
+  // Regresión real: createPublicFetch forzaba redirect:'error' después de las
+  // opciones, así que 'manual' se perdía y Anubis (302 + Set-Cookie) fallaba
+  // solo en producción, nunca con un fetchImpl inyectado en los tests.
+  // Aquí se intercepta undici.fetch para ver la opción que sale de verdad.
+  const undici = require('undici');
+  const original = undici.fetch;
+  const opcionesVistas = [];
+  undici.fetch = async (url, opciones) => {
+    opcionesVistas.push(opciones.redirect);
+    return new Response(null, { status: 302, headers: { 'Set-Cookie': 'a=b' } });
+  };
+  try {
+    const { createPublicFetch } = require('../engines/sites/network');
+    const fetchFn = createPublicFetch({ lookupImpl: async () => [{ address: '93.184.216.34' }] });
+    await fetchFn('https://example.com/', { redirect: 'manual' });
+    await fetchFn('https://example.com/');
+    await fetchFn('https://example.com/', { redirect: 'follow' });
+  } finally {
+    undici.fetch = original;
+  }
+  assert.deepEqual(opcionesVistas, ['manual', 'error', 'follow']);
+});
