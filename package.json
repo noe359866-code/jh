@@ -6,8 +6,8 @@
   "scripts": {
     "start": "node index.js",
     "test": "node --test",
-    "check": "node --check index.js && node --check engines/embed69/index.js && node --check engines/embed69/extractor.js && node --check scripts/embed69-live.js && node --check engines/embed69/network.js && node --check engines/embed69/cache.js",
-    "test:live": "node scripts/embed69-live.js"
+    "check": "node --check index.js && node --check engines/sites/index.js && node --check engines/sites/extractor.js && node --check scripts/sites-live.js && node --check engines/sites/network.js && node --check engines/sites/cache.js",
+    "test:sites-live": "node scripts/sites-live.js"
   },
   "engines": {
     "node": ">=22.0.0"

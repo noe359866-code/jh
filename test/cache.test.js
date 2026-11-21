@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { createResolverCache } = require('../engines/embed69/cache');
+const { createResolverCache } = require('../engines/sites/cache');
 test('deduplicates concurrent requests, expires entries, and returns independent values', async () => {
   let calls = 0;
   let time = 0;

@@ -1,0 +1,39 @@
+name: Sites live extraction
+on:
+  workflow_dispatch:
+    inputs:
+      page_urls:
+        description: Comma-separated page URLs to test (defaults to the three site homepages)
+        required: false
+        default: ''
+        type: string
+      allowed_hosts:
+        description: Comma-separated trusted hosts (add media/iframe hosts after checking them)
+        required: false
+        default: ''
+        type: string
+permissions:
+  contents: read
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: node scripts/sites-live.js
+        env:
+          SITES_TEST_URLS: ${{ inputs.page_urls }}
+          SITES_ALLOWED_HOSTS: ${{ inputs.allowed_hosts }}
+      - name: Upload sanitized diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sites-live-report
+          path: reports/sites-live.json
+          if-no-files-found: warn
+          retention-days: 7

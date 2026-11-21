@@ -2,8 +2,8 @@ const express = require('express');
 const fs = require('node:fs');
 const path = require('node:path');
 const manifest = require('./manifest.json');
-const embed69Provider = require('./engines/embed69');
-const { createResolverCache } = require('./engines/embed69/cache');
+const sitesProvider = require('./engines/sites');
+const { createResolverCache } = require('./engines/sites/cache');
 
 // Sample metadata only; these entries do not imply that a stream is available.
 const catalogs = {
@@ -60,11 +60,12 @@ function loadStreams() {
   return validateStreams(JSON.parse(fs.readFileSync(filename, 'utf8')));
 }
 
-function createApp({ streams = loadStreams(), embed69 = embed69Provider, enableEmbed69 = process.env.EMBED69_ENABLED === 'true' } = {}) {
+function createApp({ streams = loadStreams(), sites = sitesProvider } = {}) {
   validateStreams(streams);
   const app = express();
-  const resolveEmbed69 = createResolverCache(request => embed69.resolve(request));
-  const discoverEmbed69 = createResolverCache(async request => [await embed69.discover(request)]);
+  const resolveSites = createResolverCache(request => sites.resolve(request), {
+    keyFn: request => JSON.stringify([request.type || 'site', request.url])
+  });
   app.disable('x-powered-by');
   app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -104,51 +105,41 @@ function createApp({ streams = loadStreams(), embed69 = embed69Provider, enableE
     return res.json({ meta });
   });
 
-  // Diagnostic discovery endpoint. Embed69 pages are not direct playable streams.
-  app.get('/providers/embed69/check/:type/:id.json', async (req, res) => {
-    const { type, id } = req.params;
-    if (!['movie', 'series', 'episode'].includes(type)) {
-      return res.status(400).json({ error: 'Type must be movie, series, or episode' });
+  // Direct site resolution: stream-only. Validates the page URL, extracts
+  // verified HLS/MP4 candidates and returns { streams }. No catalogs, no
+  // metadata, no demo entries: an empty list means nothing verifiable found.
+  app.get('/stream/site', async (req, res) => {
+    const url = req.query.url;
+    if (typeof url !== 'string' || !url.trim()) {
+      return res.status(400).json({ error: 'Expected a url query parameter' });
     }
-    if (!/^tt\d{7,}$/.test(id)) {
-      return res.status(400).json({ error: 'Expected a valid IMDb ID' });
+    // Validate before extraction so only request errors map to 400; network
+    // or provider failures during extraction map to 502.
+    const validateSiteUrl = sites.validateSiteUrl || sitesProvider.validateSiteUrl;
+    try {
+      validateSiteUrl(url);
+    } catch (error) {
+      return res.status(400).json({ error: error.message });
     }
     try {
-      const request = { type, imdbId: id };
-      if (type === 'episode') {
-        request.season = req.query.season;
-        request.episode = req.query.episode;
-      }
-      const [result] = await discoverEmbed69(request);
-      return res.json(result);
+      const streams = await resolveSites({ url });
+      return res.json({ streams });
     } catch (error) {
-      const status = error.code === 'EXTRACTOR_BUSY' ? 503 : error instanceof TypeError ? 400 : 502;
-      return res.status(status).json({
-        error: status === 400 ? 'Invalid Embed69 request' : 'Embed69 discovery failed',
-        message: status === 400 ? 'Check IMDb ID, season and episode' : 'Provider unavailable or busy'
-      });
+      if (error.code === 'EXTRACTOR_BUSY') return res.status(503).set('Retry-After', '10').json({ error: 'Extractor busy' });
+      return res.status(502).json({ error: 'Site stream extraction failed' });
     }
   });
 
-  app.get('/stream/:type/:id.json', async (req, res) => {
+  app.get('/stream/:type/:id.json', (req, res) => {
     const { type, id } = req.params;
     if (!manifest.types.includes(type)) return res.status(404).json({ error: 'Unsupported type' });
     if (!validId(type, id)) return res.status(400).json({ error: 'Expected IMDb ID; series require :season:episode' });
     const configured = (streams[`${type}:${id}`] || []).map(({ url, name, title }) => ({ url, name, title }));
-    if (configured.length || !enableEmbed69) return res.json({ streams: configured });
-    const [imdbId, season, episode] = id.split(':');
-    try {
-      const found = await resolveEmbed69({ type: type === 'series' ? 'episode' : 'movie', imdbId, season, episode });
-      return res.json({ streams: found });
-    } catch (error) {
-      if (error.code === 'EXTRACTOR_BUSY') return res.status(503).set('Retry-After', '10').json({ error: 'Extractor busy' });
-      // Provider outages must not masquerade as a successful empty lookup.
-      return res.status(502).json({ error: 'Embed69 extraction failed' });
-    }
+    return res.json({ streams: configured });
   });
 
   app.get(['/', '/config'], (req, res) => {
-    res.type('html').send('<!doctype html><html lang="es"><meta charset="utf-8"><title>Latino Stream Addon</title><h1>Latino Stream Addon</h1><p>Catálogos de ejemplo: películas, series y anime (tipo series).</p><p>Incluye extracción estática experimental de Embed69, desactivada por defecto. Consulta configuración y límites en README.md.</p><p>El administrador puede configurar enlaces directos HLS/MP4 autorizados en streams.json o STREAMS_FILE. Consulta README.md.</p><a href="/manifest.json">Ver manifiesto para Stremio</a></html>');
+    res.type('html').send('<!doctype html><html lang="es"><meta charset="utf-8"><title>Latino Stream Addon</title><h1>Latino Stream Addon</h1><p>Catálogos de ejemplo: películas, series y anime (tipo series).</p><p>Incluye resolución directa de streams (mp4/HLS verificados) para documaniatv.com, flixlatam.com y poseidonhd2.co: GET /stream/site?url=&lt;página del sitio&gt;. Solo devuelve streams, sin catálogos, metas ni demos.</p><p>El administrador puede configurar enlaces directos HLS/MP4 autorizados en streams.json o STREAMS_FILE. Consulta README.md.</p><a href="/manifest.json">Ver manifiesto para Stremio</a></html>');
   });
   app.use((req, res) => res.status(404).json({ error: 'Not found' }));
   return app;

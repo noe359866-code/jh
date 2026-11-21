@@ -17,8 +17,10 @@ function parsePage(html, base) {
 }
 
 // No script execution, cookie handling, CAPTCHA solving, or DRM circumvention.
-function createExtractor({ allowedHosts = ['embed69.org'], fetchImpl = publicFetch, lookupImpl = lookup,
-  timeoutMs = 10000, maxPages = 5, maxBytes = 2 * 1024 * 1024, onEvent = () => {} } = {}) {
+function createExtractor({ allowedHosts = ['documaniatv.com', 'flixlatam.com', 'poseidonhd2.co'],
+  fetchImpl = publicFetch, lookupImpl = lookup,
+  timeoutMs = 10000, maxPages = 5, maxBytes = 2 * 1024 * 1024,
+  name = 'Sites', title = 'HLS / MP4', onEvent = () => {} } = {}) {
   const hosts = new Set(allowedHosts.map(host => host.toLowerCase()));
   async function request(raw, headers = {}) {
     const url = new URL(raw);
@@ -87,7 +89,7 @@ function createExtractor({ allowedHosts = ['embed69.org'], fetchImpl = publicFet
       try {
         const verified = await verify(url);
         onEvent({ stage: 'candidate', host: new URL(url).hostname, verified });
-        if (verified) streams.push({ name: 'Embed69', title: 'HLS / MP4', url });
+        if (verified) streams.push({ name, title, url });
       } catch { onEvent({ stage: 'candidate-failed', host: new URL(url).hostname }); }
     }
     return streams;

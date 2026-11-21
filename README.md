@@ -1,6 +1,6 @@
 # Latino Stream Addon
 
-Addon HTTP para Stremio. Incluye catálogos **de ejemplo**, metadatos básicos y resolución de streams directos configurados por el administrador. **No incluye un catálogo actualizado. La extracción experimental Embed69 requiere activación y verificación contra el proveedor real.**
+Addon HTTP para Stremio. Incluye catálogos **de ejemplo**, metadatos básicos y resolución de streams directos configurados por el administrador. **No incluye un catálogo actualizado.** Incluye además resolución directa de streams (mp4/HLS verificados) para **documaniatv.com**, **flixlatam.com** y **poseidonhd2.co**: `GET /stream/site?url=<página del sitio>`, que solo devuelve `{ streams }`.
 
 ## Ejecutar
 
@@ -45,6 +45,7 @@ Solo se admiten URLs HTTP(S) cuya ruta termine en `.m3u8` o `.mp4` (con query st
 - `GET /meta/movie/tt0137523.json`: `{ "meta": {...} }`.
 - `GET /stream/movie/tt0137523.json`: `{ "streams": [...] }`.
 - `GET /stream/series/tt0944947:1:2.json`: streams del episodio exacto.
+- `GET /stream/site?url=<página del sitio>`: resolución directa para `documaniatv.com`, `flixlatam.com` y `poseidonhd2.co`. **Solo devuelve `{ "streams": [...] }`**; no entrega catálogos, metadatos ni entradas de demostración.
 - `GET /config`: información del estado real del addon; no es un editor de configuración.
 
 Sin fuentes configuradas para un ID válido, se devuelve HTTP 200 con `{ "streams": [] }`. IDs mal formados dan 400; tipos, catálogos y rutas no reconocidos dan 404. No se conservan las rutas antiguas `/catalog/movies.json` porque no siguen el protocolo de Stremio.
@@ -64,73 +65,39 @@ docker run --rm -p 8080:8080 \
   -e STREAMS_FILE=/config/streams.json latino-addon
 ```
 
-## Errores encontrados y correcciones
+## Resolución directa de sitios (mp4/HLS)
 
-1. **URLs inventadas, no extracción real.** Las cinco funciones solo interpolaban el IMDb en una URL. La primera siempre devolvía texto y bloqueaba las restantes. Se eliminaron estas falsas integraciones; ahora solo se entregan fuentes explícitamente configuradas.
-2. **Manifiesto incompatible.** Se usaban `resource`, `type`, `id_prefixes` y `behaviour_hints` en lugar de los campos esperados. Ahora declara `resources`, `types` e `idPrefixes`; se quitaron hints inexistentes. El endpoint y el archivo ya no duplican el manifiesto.
-3. **Catálogos incompatibles.** Faltaba el tipo en las rutas y se devolvían arrays sin `{ metas }`. Faltaba `type` en cada elemento. Se corrigieron las rutas y respuestas, y se añadió el recurso `meta`.
-4. **Datos incorrectos.** Había una serie en películas y varios IMDb no correspondían al título. Se corrigieron esos datos y se retiraron posters que apuntaban solo a un directorio de TMDB, no a imágenes.
-5. **Episodios indistinguibles.** No se validaban temporada ni episodio. Ahora se usan IDs completos y se separan las fuentes por episodio.
-6. **Ausencia de fuentes tratada como error.** Ahora una búsqueda válida sin resultados devuelve `streams: []` con HTTP 200.
-7. **Pruebas que daban falsos positivos.** Buscaban una cadena en URLs inventadas; un fallo solo imprimía texto sin hacer fallar CI. El workflow apuntaba a una rama antigua y tenía `timeout` en un paso en vez de `timeout-minutes`. Se reemplazó por pruebas con aserciones reales que fallan con código distinto de cero, activas en pushes y PRs.
-8. **Arranque al importar.** Importar `index.js` abría un puerto; ahora `createApp()` permite pruebas aisladas y solo el punto de entrada inicia el servidor.
-9. **Dependencias y runtime inconsistentes.** Axios y Cheerio se importaban sin usarse. Se eliminaron; el runtime mínimo y Docker ahora usan Node 22, y CI cubre 22 y 24.
-10. **Documentación engañosa o ausente.** La página anunciaba extracción que no existía y el README solo tenía un título. Ahora se explican configuración, límites y despliegue.
-11. **Dependencias generadas dentro de Git.** Se habían versionado 2034 archivos de `node_modules`. Se retiraron del índice y se añadió `.gitignore`; se reproducen con `npm ci` a partir del lockfile, sin guardar paquetes generados en el repositorio.
+`GET /stream/site?url=<página del sitio>` resuelve una página de **documaniatv.com**, **flixlatam.com** o **poseidonhd2.co** y devuelve **solo** `{ "streams": [...] }`: sin catálogos, sin metadatos, sin demos y sin entradas inventadas. El endpoint está siempre activo; no requiere configuración de administrador.
+
+```
+GET /stream/site?url=https://www.documaniatv.com/pelicula/xyz
+→ { "streams": [ { "name": "DocumaniaTV", "title": "HLS / MP4", "url": "https://www.documaniatv.com/cdn/a.m3u8?t=1" } ] }
+```
+
+- Solo se aceptan URLs HTTPS sin credenciales y con hostname de uno de los tres sitios (con o sin `www`). Otros hosts, HTTP claro, credenciales y URLs malformadas devuelven 400 sin hacer peticiones.
+- La página se analiza como HTML estático: URLs literales `.m3u8`/`.mp4` en atributos, cadenas JS y iframes. Cada candidato se solicita con `Range` y se verifica por firma: `#EXTM3U` para HLS o caja `ftyp` para MP4. **Esto no prueba reproducción completa**, codecs, audio latino ni CORS.
+- **No se ejecuta JavaScript**, no se usan cookies, no se resuelven CAPTCHAs ni se evade DRM. Reproductores que dependan de APIs dinámicas o de un Referer no están soportados.
+- Los hosts confiables son solo los dominios de los tres sitios. Si un medio se sirve desde un CDN, añade sus hosts explícitamente con `SITES_ALLOWED_HOSTS=cdn.example.com,...` **después de comprobar que son confiables**; nunca se autorizan automáticamente. Los hosts no permitidos se omiten (la lista resultante puede quedar vacía).
+- Transporte seguro: IPv4 público validado en el socket, sin redirecciones, sin IPv6 ni direcciones privadas. Los mismos límites del extractor HLS/MP4 se aplican (tamaño de página, tiempo por petición, diez candidatos, dos extracciones concurrentes) y hay caché por URL (30 s con medios, 5 s sin ellos).
+- Fallos del extractor: 400 para solicitudes inválidas, 502 si la extracción falla, 503 (`Retry-After: 10`) si hay saturación.
+- **Verificación real**: el entorno de desarrollo solo permite salida a GitHub y registros de paquetes, no a estos dominios, así que no se afirma que funcione contra los sitios reales. Para comprobarlo, usa un URL de prueba con acceso real:
+
+```sh
+SITES_TEST_URL=https://www.documaniatv.com/pelicula/xyz npm run test:sites-live
+```
+
+`scripts/sites-live.js` valida cada URL antes de hacer peticiones, resuelve la página y **falla si ningún sitio de la lista devuelve al menos un medio con firma válida**. Por defecto prueba los tres sitios (`documaniatv.com`, `flixlatam.com`, `poseidonhd2.co`); puedes indicar URLs concretas con `SITES_TEST_URLS` (separadas por comas). Escribe un reporte sanitizado en `reports/sites-live.json` con el resultado por sitio (disponible, hosts encontrados/bloqueados y conteos; **no URLs, queries, HTML ni tokens**), y imprime por consola cuáles devolvieron HLS/MP4. Si aparecen eventos `blocked-frame`/`blocked-host`, revisa ese dominio antes de autorizarlo en `SITES_ALLOWED_HOSTS`; nunca habilites dominios automáticamente. Los reportes locales quedan en `reports/`, fuera de Git. Las pruebas de `npm test` son deterministas y mockadas, y no sustituyen esta comprobación.
+
+En GitHub Actions, el workflow **Sites live extraction** (`workflow_dispatch`) ejecuta la misma prueba con red real: deja el campo `page_urls` vacío para probar los tres sitios o pasa URLs concretas, y sube `sites-live-report` con el reporte sanitizado incluso si falla. GitHub puede exigir que `workflow_dispatch` exista primero en la rama predeterminada; no se afirma que haya pasado: el entorno de desarrollo solo permite salida a GitHub y registros de paquetes, no a estos dominios. Si falla, inspecciona el flujo real y ajusta los hosts; no conviertas un fallo en un skip.
+
+## Caché y diagnósticos
+
+Cada instancia deduplica peticiones simultáneas al mismo URL, mantiene hasta 100 resultados y limita a dos trabajos distintos concurrentes por resolver. Caché de extracción: 30 segundos si hay medios y 5 segundos si no los hay; errores no se cachean. Estos límites no sustituyen controles de tráfico en el proxy. Las URLs temporales pueden expirar incluso dentro de ese período.
+
+El workflow en vivo permite probar páginas y sube `sites-live-report` incluso cuando falla. El reporte contiene hosts encontrados/bloqueados y conteos, **no URLs, queries, HTML ni tokens**. Si aparece `blocked-frame` o `blocked-host`, revisa el dominio antes de autorizarlo; nunca habilites dominios automáticamente. Los reportes locales quedan en `reports/`, fuera de Git. Un reporte fallido sin eventos puede indicar fallo de validación o conectividad antes de iniciar el análisis HTML.
 
 ## Verificación y límites
 
 `npm run check`, `npm test` y `npm audit --omit=dev` comprueban sintaxis, contrato HTTP, resolución de configuración y dependencias respectivamente. Las pruebas usan dominios de ejemplo y no descargan videos: **no validan reproducción real ni extractores externos**. CI está configurada para Node 22 y 24; la ejecución local se verificó en Node 22. La imagen Docker necesita una comprobación adicional en un entorno con Docker.
 
-JH mantiene Embed69 como único proveedor de descubrimiento previsto. No se incluyen ni se mantienen adaptadores para otros sitios. Incluye un extractor estático experimental HLS/MP4: no se ha confirmado todavía su compatibilidad con el reproductor real de Embed69.
-
-
-## Integración experimental: Embed69
-
-El plugin WordPress **ToroPlay Embed69 Auto 1.1.0** no contiene un extractor de video. Su código consulta `https://apiz.6969009.xyz/api/check` y construye páginas `https://embed69.org/f/...`; además automatiza cómo WordPress guarda esos enlaces en los metadatos de ToroPlay. Por eso no se copió el plugin PHP ni se presentó una página HTML como si fuera un stream reproducible.
-
-JH incorpora ahora un adaptador Node.js aislado en `engines/embed69/` que:
-- valida IMDb IDs;
-- consulta disponibilidad de películas, series y episodios;
-- conserva el formato de episodio `IMDb-temporadaxepisodio` con dos dígitos;
-- construye la URL de la página Embed69 solo cuando la API confirma disponibilidad;
-- falla de forma explícita ante respuestas HTTP o JSON inesperadas.
-
-Endpoint de diagnóstico:
-- `GET /providers/embed69/check/movie/tt0137523.json`
-- `GET /providers/embed69/check/series/tt0944947.json`
-- `GET /providers/embed69/check/episode/tt0944947.json?season=1&episode=5`
-
-**El endpoint de diagnóstico sigue siendo solo descubrimiento** (`playable: false`). El resolver experimental descrito abajo es independiente y solo devuelve candidatos cuya respuesta tenga firma HLS o MP4. No se ha verificado contra Embed69 en vivo.
-
-
-## Extractor estático HLS/MP4 (experimental)
-
-```sh
-EMBED69_ENABLED=true EMBED69_ALLOWED_HOSTS=embed69.org npm start
-```
-
-`/stream` prioriza las fuentes configuradas. Si no hay fuentes y se activa el proveedor, consulta disponibilidad y analiza HTML, cadenas JS con URLs literales y hasta cinco páginas/iframes. Agrega explícitamente los hosts de iframes y medios a `EMBED69_ALLOWED_HOSTS` (separados por comas) después de comprobar que son confiables. Solo HTTPS, sin credenciales, sin redirecciones automáticas. Limita tamaño de página, tiempo por petición, diez candidatos y dos extracciones simultáneas por instancia. Un fallo del proveedor produce 502; saturación produce 503.
-
-Cada candidato se solicita con Range y se inspecciona su firma: `#EXTM3U` o caja MP4 `ftyp`. **Esto no prueba reproducción completa**, segmentos HLS, codecs, audio latino, permisos, CORS ni duración. No se inventan URLs. No ejecuta JavaScript, desempaqueta código, resuelve CAPTCHA, usa cookies, evade DRM ni añade Referer: reproductores que dependan de eso o de APIs dinámicas no están soportados. Una lista vacía puede significar formato no soportado, no necesariamente ausencia del título.
-
-El transporte Undici valida el IPv4 que entrega al socket, sin una segunda resolución DNS entre la validación y la conexión. Se rechazan IPs privadas, reservadas e IPv6 y se desactivan redirecciones también en la API de disponibilidad. Para servidores públicos utiliza filtrado de salida a nivel de red, únicamente hosts confiables y límites de solicitudes en el proxy inverso. La concurrencia limitada no sustituye rate limiting por cliente.
-
-### Prueba real en GitHub Actions
-
-El workflow **Embed69 live extraction** se ejecuta manualmente con `workflow_dispatch`, un IMDb que tengas autorización para probar y la lista de hosts confiables. Usa red real, no mocks, y **falla si no encuentra al menos un medio con firma válida**. No imprime URLs firmadas. Las entradas se pasan como variables de entorno, no se interpolan en comandos shell.
-
-Equivalente local (requiere acceso a esos dominios):
-
-```sh
-EMBED69_TEST_IMDB=ttXXXXXXX EMBED69_ALLOWED_HOSTS=embed69.org npm run test:live
-```
-
-Este workflow debe publicarse en GitHub para poder ejecutarse; GitHub puede exigir que `workflow_dispatch` exista primero en la rama predeterminada. No se afirma que haya pasado: el entorno de desarrollo solo permite salida a GitHub y registros de paquetes, no a Embed69. Si falla, inspecciona el flujo real y ajusta el adaptador o los hosts; no conviertas un fallo en un skip. Las pruebas de `npm test` son deterministas y no sustituyen esta comprobación.
-
-
-### Caché y diagnósticos
-
-Cada instancia deduplica peticiones simultáneas al mismo título, mantiene hasta 100 resultados y limita a dos trabajos distintos concurrentes por resolver (descubrimiento y extracción tienen presupuestos separados). Caché de extracción: 30 segundos si hay medios y 5 segundos si no los hay; errores no se cachean. Descubrimiento se cachea 30 segundos. Estos límites no sustituyen controles de tráfico en el proxy. Las URLs temporales pueden expirar incluso dentro de ese período.
-
-El workflow en vivo permite probar películas o episodios y sube `embed69-live-report` incluso cuando falla. El reporte contiene disponibilidad, hosts encontrados/bloqueados y conteos, **no URLs, queries, HTML ni tokens**. Si aparece `blocked-frame` o `blocked-host`, revisa el dominio antes de autorizarlo; nunca habilites dominios automáticamente. Los reportes locales quedan en `reports/`, fuera de Git. Un reporte fallido sin eventos puede indicar fallo de API, validación o conectividad antes de iniciar el análisis HTML.
+El extractor de sitios es estático: no se ejecuta JavaScript, no se usan cookies, no se resuelven CAPTCHAs ni se evade DRM. Reproductores que dependan de APIs dinámicas o de un Referer no están soportados. Una lista vacía puede significar formato no soportado o que los medios estén en hosts no autorizados, no necesariamente ausencia de contenido en la página.

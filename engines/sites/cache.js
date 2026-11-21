@@ -1,10 +1,14 @@
 // Bounded, short-lived cache: signed media URLs must not be stored indefinitely.
+// keyFn lets callers (e.g. URL-keyed site resolvers) provide their own cache key;
+// it defaults to the IMDb request shape.
 function createResolverCache(resolve, { ttlMs = 30000, negativeTtlMs = 5000,
-  maxEntries = 100, maxConcurrent = 2, now = Date.now } = {}) {
+  maxEntries = 100, maxConcurrent = 2, now = Date.now, keyFn } = {}) {
+  const defaultKey = request => JSON.stringify([request.type, request.imdbId, request.season, request.episode]);
+  const keyOf = typeof keyFn === 'function' ? keyFn : defaultKey;
   const cached = new Map();
   const pending = new Map();
   return async function run(request) {
-    const key = JSON.stringify([request.type, request.imdbId, request.season, request.episode]);
+    const key = keyOf(request);
     const hit = cached.get(key);
     if (hit && hit.expires > now()) return structuredClone(hit.value);
     cached.delete(key);
