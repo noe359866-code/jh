@@ -21,6 +21,15 @@ const DEFAULT_URLS = [
 // Espera entre reintentos tras un 403/429 (los sitios limitan ráfagas).
 const esperar = ms => new Promise(r => setTimeout(r, ms));
 
+// Presupuesto total de la extracción en vivo. Se puede bajar (tests de contrato)
+// o subir (workflow) sin tocar el código; por defecto, holgado para el flujo
+// real: ficha + Anubis (PoW y espera) + varios players con reintento.
+function presupuesto(entorno = process.env) {
+  const valor = Number(entorno.SITES_LIVE_BUDGET_MS);
+  if (Number.isFinite(valor) && valor >= 2000) return valor;
+  return 180000;
+}
+
 function parseUrls(entorno = process.env) {
   const raw = (entorno.SITES_TEST_URLS || entorno.SITES_TEST_URL || '').trim();
   if (!raw) return DEFAULT_URLS;
@@ -114,9 +123,8 @@ async function main(report) {
           // Presupuesto holgado: el flujo real es ficha + Anubis (PoW y espera
           // mínima) + varios players externos, cada uno con su propia página.
           streams = await resolver({ url: pageUrl }, {
-            timeoutMs: 20000,
-            // Ficha + Anubis (PoW + espera) + hasta 8 players con reintento.
-            deadlineMs: 180000,
+            timeoutMs: Math.min(20000, presupuesto()),
+            deadlineMs: presupuesto(),
             onEvent: evento => {
               const limpio = eventoSanitizado(evento);
               if (limpio.host) hostsVistos.add(limpio.host);

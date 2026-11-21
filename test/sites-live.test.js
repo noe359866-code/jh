@@ -12,7 +12,14 @@ const { execFile } = require('node:child_process');
 // saneado, sin URLs ni queries.
 const RAIZ = path.join(__dirname, '..');
 const SCRIPT = path.join(RAIZ, 'scripts', 'sites-live.js');
-const ENTORNO_BASE = { ...process.env, SITES_TEST_URLS: 'https://flixlatam.com/pelicula/patton' };
+// Presupuesto corto: el contrato se prueba sin depender de cuánto tarde la red
+// real (con el presupuesto de producción el proceso podía pasarse del timeout
+// del propio test y fallar de forma intermitente en CI).
+const ENTORNO_BASE = {
+  ...process.env,
+  SITES_TEST_URLS: 'https://flixlatam.com/pelicula/patton',
+  SITES_LIVE_BUDGET_MS: '6000'
+};
 delete ENTORNO_BASE.SITES_ALLOWED_HOSTS;
 
 function ejecutar() {
