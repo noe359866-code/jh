@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { once } = require('node:events');
 const { createApp } = require('../index');
-const { createCatalog, mergeSources } = require('../engines/live/catalog');
+const { createCatalog, mergeSources, countsOf } = require('../engines/live/catalog');
 const { buildM3u, parseM3u } = require('../engines/live/m3u');
 const addon = require('../engines/live/addon');
 
@@ -100,6 +100,63 @@ test('manifest: cabe en 8 KB e incluye el prefijo de las regiones', () => {
   assert.equal(new Set(manifest.catalogs.map(catalog => catalog.id)).size, manifest.catalogs.length);
 });
 
+test('mergeSources: ids únicos y válidos para Stremio', () => {
+  // Dos fuentes con claves distintas para el mismo canal: antes salían dos
+  // canales con el mismo id y el segundo quedaba inaccesible.
+  const same = mergeSources([
+    { id: 'eja', entries: [{ name: 'Canal 5', country: 'LATAM', origin: 'MX', key: 'LATAM:canal-5', streams: [{ url: 'https://a/1.m3u8', kind: 'hls' }] }] },
+    { id: 'iptvorg', entries: [{ name: 'Canal 5', country: 'LATAM', origin: 'MX', key: 'MX:canal-5', streams: [{ url: 'https://b/5.m3u8', kind: 'hls' }] }] }
+  ]);
+  assert.equal(same.length, 1, 'el mismo canal no se duplica');
+  assert.equal(same[0].streams.length, 2, 'pero conserva las dos señales');
+
+  // Un nombre larguísimo generaba un id de 94 caracteres que el patrón del SDK
+  // rechaza: `findChannel` no lo encontraba y el canal no se abría.
+  const largo = 'Canal de prueba con un nombre larguísimo que supera el límite de longitud del identificador';
+  const big = mergeSources([{ id: 'x', entries: [{ name: largo, origin: 'MX', streams: [{ url: 'https://x/1.m3u8', kind: 'hls' }] }] }]);
+  assert.ok(addon.ID_PATTERN.test(big[0].id), `id inválido: ${big[0].id}`);
+  assert.ok(big[0].id.length <= 80);
+  assert.ok(addon.findChannel(big, big[0].id), 'el canal se encuentra por su id');
+
+  // Dos canales distintos que producen el mismo slug: el segundo lleva sufijo.
+  const colision = mergeSources([{ id: 'x', entries: [
+    { name: 'Solo', origin: 'MX', streams: [{ url: 'https://x/1.m3u8', kind: 'hls' }] },
+    { name: 'S0lo', origin: 'MX', streams: [{ url: 'https://x/2.m3u8', kind: 'hls' }] }
+  ] }]);
+  assert.equal(new Set(colision.map(channel => channel.id)).size, colision.length);
+});
+
+test('mergeSources: un stream nulo no tumba el catálogo', () => {
+  const merged = mergeSources([{ id: 'x', entries: [
+    { name: 'Rota', origin: 'MX', streams: [null, { url: 'https://x/1.m3u8', kind: 'hls' }] }
+  ] }]);
+  assert.equal(merged.length, 1);
+  assert.equal(merged[0].streams.length, 1, 'solo queda la señal válida');
+});
+
+test('mergeSources: una entrada rota no tumba el catálogo', () => {
+  const merged = mergeSources([
+    { id: 'a', entries: [null, { name: 'sin streams' }, { origin: 'MX', streams: [{ url: 'https://x/1.m3u8', kind: 'hls' }] },
+      { name: 'Buena', origin: 'MX', streams: [{ url: 'https://x/2.m3u8', kind: 'hls' }] }] }
+  ]);
+  assert.deepEqual(merged.map(channel => channel.name), ['Buena']);
+});
+
+test('countsOf: recuentos coherentes con el catálogo final', () => {
+  const counts = countsOf([
+    { country: 'ES', origin: 'ES', playable: true },
+    { country: 'LATAM', origin: 'MX', playable: false, dead: true },
+    { country: 'US', origin: 'US', playable: true },
+    { country: 'LATAM', origin: 'Internacional', playable: true }
+  ]);
+  assert.deepEqual(counts, { total: 4, playable: 3, dead: 1, alive: 3, es: 1, latam: 2, us: 1, paises: 3 });
+});
+
+test('manifest incluye el icono y el servidor lo sirve', () => {
+  assert.equal(addon.manifest().logo, addon.LOGO_PATH);
+  assert.equal(addon.LOGO_PATH, '/logo.svg');
+});
+
 test('manifest: tipo tv, un catálogo por país y prefijos de país', () => {
   const manifest = addon.manifest();
   assert.deepEqual(manifest.types, ['tv']);
@@ -158,6 +215,20 @@ test('catálogo Stremio: solo canales publicables, paginado y filtros', () => {
   assert.equal(addon.catalog(CHANNELS, 'todos', '', 1).metas.length, 1);
 });
 
+test('streams: la misma URL repetida no se ofrece dos veces', async () => {
+  const channel = {
+    id: 'mx-1', name: 'Canal 5', sources: ['a', 'b'],
+    streams: [
+      { url: 'https://x/1.m3u8', kind: 'hls', source: 'eja' },
+      { url: 'https://x/1.m3u8', kind: 'hls', source: 'iptvorg' },
+      { url: 'https://x/2.m3u8', kind: 'hls', source: 'tvgarden' }
+    ]
+  };
+  const options = await addon.streams(channel, {});
+  assert.equal(options.length, 2);
+  assert.equal(new Set(options.map(option => option.url)).size, 2);
+});
+
 test('streams: directos tal cual, `page` resuelto y sin URL inventada', async () => {
   const direct = await addon.streams(CHANNELS[0], {});
   assert.equal(direct.length, 2);
@@ -199,6 +270,12 @@ test('rutas HTTP: manifest, catálogo, meta, stream, M3U y config', async () => 
   await withServer(fakeCatalog(), async base => {
     const manifest = await (await fetch(base + '/manifest.json')).json();
     assert.equal(manifest.id, 'org.tvespanol.live');
+    assert.ok(manifest.logo, 'el manifiesto declara icono');
+    const logo = await fetch(base + manifest.logo);
+    assert.equal(logo.status, 200);
+    assert.match(logo.headers.get('content-type'), /svg/);
+    const robots = await fetch(base + '/robots.txt');
+    assert.equal(robots.status, 200);
     assert.ok(manifest.catalogs.some(catalog => catalog.id === 'pais-mx'));
 
     const catalog = await (await fetch(base + '/catalog/tv/todos.json')).json();

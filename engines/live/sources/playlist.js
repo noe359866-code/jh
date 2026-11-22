@@ -150,11 +150,19 @@ function entryFromItem(item, { source, defaultCountry = null, forcedCountry = nu
   // `cleanChannelName` no toca emojis: se quitan aquí para que el nombre quede
   // limpio en Stremio (`Azteca 🇲🇽` → `Azteca`).
   const name = cleanChannelName(rawName)
-    .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{2B00}-\u{2BFF}]/gu, ' ')
+    // Etiquetas HTML que algunas listas dejan en el nombre (`<script>…`): no
+    // deben acabar en Stremio ni en el M3U.
+    .replace(/<[^>]*>/g, ' ')
+    // Emoji, símbolos encerrados (`Ⓨ` de YouTube, `Ⓖ` de Google) y dingbats que
+    // usan las listas para marcar la plataforma. Sin esto, 40 de los 159 canales
+    // de Free-TV salían como `TN Todo Noticias Ⓨ` en Stremio y en el M3U.
+    .replace(/[\u{1F000}-\u{1FAFF}\u{2190}-\u{21FF}\u{2460}-\u{24FF}\u{25A0}-\u{25FF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}]/gu, ' ')
     .replace(/^[\s☆✔️•·-]+/u, '')
     .replace(/\s+/g, ' ')
     .trim();
-  if (!name) return null;
+  // Un nombre que solo era una etiqueta o código (`alert(1)`) no identifica un
+  // canal: se descarta en lugar de publicarlo.
+  if (!name || /^(alert|console|function|document|window)\b/i.test(name)) return null;
   const language = String(item.attrs['tvg-language'] || '').toLowerCase();
   if (OTHER_LANGUAGES.has(language)) return null;
   // Lista mundial: solo entra lo que demuestra ser español. Sin `tvg-language`

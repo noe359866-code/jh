@@ -13,7 +13,7 @@
 //     → se publica marcado `language: 'en'`, como complemento.
 //   - el resto de `us.m3u` (ingleses locales) → se descarta.
 const { parseM3u } = require('../m3u');
-const { entryFromItem } = require('./playlist');
+const { entryFromItem, categoryFromGroup } = require('./playlist');
 
 const STREAMS_URL = 'https://raw.githubusercontent.com/iptv-org/iptv/master/streams/us.m3u';
 const FEEDS_URL = 'https://raw.githubusercontent.com/iptv-org/database/master/data/feeds.csv';
@@ -100,7 +100,10 @@ async function collect({ get, onSource }) {
     const entry = entryFromItem({ ...item, name }, { source: 'Estados Unidos (iptv-org)', forcedCountry: 'US' });
     if (!entry) continue;
     entry.language = isSpanish ? 'es' : 'en';
-    entry.category = item.attrs['group-title'] || (isSpanish ? 'Generalista' : 'Generalista (inglés)');
+    // En `us.m3u` el `group-title` suele ser `News`/`Sports`/`Movies`, que sí es
+    // una categoría; se traduce. Antes se copiaba tal cual y Stremio mostraba
+    // «News» como categoría, sin traducir.
+    entry.category = categoryFromGroup(item.attrs['group-title']) || (isSpanish ? 'Generalista' : 'Generalista (inglés)');
     entries.push(entry);
   }
   if (onSource) {

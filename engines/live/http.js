@@ -42,13 +42,17 @@ const dispatcher = new Agent({
   connections: 6, pipelining: 1, headersTimeout: 12000, bodyTimeout: 20000
 });
 
-// Puertos plausibles para un CDN público (evita 22, 25, 3306, 6379…).
-const PUBLIC_PORT = /^\d{2,5}$/;
+// Puertos plausibles para un CDN público: se excluyen los de servicios de
+// administración (22, 23, 25, 3306, 6379, 27017…) y se deja el resto, porque los
+// CDN de IPTV usan 8080, 8443, 2095, 9999, 8000…
+const BLOCKED_PORTS = new Set(['22', '23', '25', '445', '3306', '3389', '5432', '6379', '11211', '27017']);
+const portAllowed = port => !port || !BLOCKED_PORTS.has(String(port));
 
 const BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
 
-// `redirect: 'error'` evita saltos a hosts no validados. El cuerpo se lee
-// completo pero con límite estricto de bytes.
+// `redirect: 'manual'` + validación por salto en `get`: un `redirect: 'error'`
+// aquí impediría seguir las redirecciones legítimas de los CDN (y era lo que
+// decía el comentario, pero no lo que hacía el código).
 function publicFetch(url, { allowHttp: allowHttpOption = false, ...options } = {}) {
   let parsed;
   try {
@@ -63,7 +67,7 @@ function publicFetch(url, { allowHttp: allowHttpOption = false, ...options } = {
   // Puertos no estándar (8080, 8443, 2095…) son habituales en los CDN de IPTV.
   // Se aceptan siempre que el destino resuelva a una IPv4 pública y no haya
   // credenciales; los catálogos siguen limitados abajo por el llamador.
-  if (parsed.port && !PUBLIC_PORT.test(parsed.port)) throw new Error('Puerto no permitido');
+  if (!portAllowed(parsed.port)) throw new Error('Puerto no permitido');
   const host = parsed.hostname.replace(/^\[|\]$/g, '');
   if (isIP(host) && !publicAddress(host)) throw new Error('Destino no público bloqueado');
   return fetch(parsed, { ...options, dispatcher, redirect: 'manual' });
@@ -106,7 +110,7 @@ async function get(url, {
       throw new Error('Solo se permite HTTPS');
     }
     if (current.username || current.password) throw new Error('URL con credenciales rechazada');
-    if (current.port && !PUBLIC_PORT.test(current.port)) throw new Error('Puerto no permitido');
+    if (!portAllowed(current.port)) throw new Error('Puerto no permitido');
     const addresses = await lookupImpl(current.hostname, { all: true, family: 4 });
     if (!addresses || !addresses.length || addresses.some(({ address }) => !publicAddress(address))) {
       throw new Error('Destino no público bloqueado');

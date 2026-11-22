@@ -216,6 +216,23 @@ function createApp({
 
   app.get('/manifest.json', (req, res) => res.json(addon.manifest()));
 
+  // Icono del addon: un SVG pequeño, sin depender de servicios externos.
+  app.get(addon.LOGO_PATH, (req, res) => {
+    res.type('image/svg+xml').set('Cache-Control', 'public, max-age=86400').send(
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">' +
+      '<rect width="100" height="100" rx="18" fill="#111827"/>' +
+      '<rect x="16" y="26" width="68" height="42" rx="6" fill="#f9fafb"/>' +
+      '<rect x="26" y="36" width="48" height="22" rx="3" fill="#111827"/>' +
+      '<path d="M44 41l14 6-14 6z" fill="#f9fafb"/>' +
+      '<rect x="32" y="74" width="36" height="5" rx="2.5" fill="#f9fafb"/>' +
+      '</svg>'
+    );
+  });
+
+  app.get('/robots.txt', (req, res) => {
+    res.type('text/plain').send('User-agent: *\nAllow: /\n');
+  });
+
   // Catálogo: `/catalog/tv/todos.json`, `/catalog/tv/todos/skip=100.json`,
   // `/catalog/tv/todos/genre=España&skip=100.json`.
   app.get(/^\/catalog\/([^/]+)\/(.+)\.json$/, async (req, res) => {

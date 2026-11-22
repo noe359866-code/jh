@@ -122,6 +122,31 @@ test('group-title se convierte en categoría y no en país', () => {
   assert.equal(categoryFromGroup('🏙️ Buenos Aires'), null);
 });
 
+test('un nombre que solo es código se descarta', () => {
+  const entries = parsePlaylist([
+    '#EXTM3U',
+    '#EXTINF:-1 tvg-country="MX",<script>alert(1)</script>',
+    'https://x/1.m3u8',
+    '#EXTINF:-1 tvg-country="MX",Canal 5',
+    'https://x/2.m3u8'
+  ].join('\n'), { source: 's' });
+  assert.deepEqual(entries.map(entry => entry.name), ['Canal 5']);
+});
+
+test('los símbolos de plataforma se quitan del nombre', () => {
+  // Free-TV marca YouTube con `Ⓨ` y Google con `Ⓖ`; salían en Stremio y el M3U.
+  const entries = parsePlaylist([
+    '#EXTM3U',
+    '#EXTINF:-1 tvg-country="AR",TN Todo Noticias Ⓨ',
+    'https://x/1.m3u8',
+    '#EXTINF:-1 tvg-country="AR",Encuentro Ⓨ Ⓖ',
+    'https://x/2.m3u8',
+    '#EXTINF:-1 tvg-country="ES",La 1 🇪🇸',
+    'https://x/3.m3u8'
+  ].join('\n'), { source: 's' });
+  assert.deepEqual(entries.map(entry => entry.name), ['TN Todo Noticias', 'Encuentro', 'La 1']);
+});
+
 test('lista mundial: solo entra lo que es español', () => {
   const mundial = [
     '#EXTM3U',

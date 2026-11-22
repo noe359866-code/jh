@@ -158,3 +158,23 @@ test('penalización: un origen sin resultados deja de intentarse un tiempo', asy
   assert.equal(tercera.candidates, 1);
   assert.deepEqual(tercera.penalizedSources, ['tvenvivo.org']);
 });
+
+test('enrich no revienta si un canal no trae `sources`', async () => {
+  const channel = {
+    id: 'x-1', name: 'Sin fuente', country: 'LATAM', origin: 'MX',
+    streams: [{ url: 'https://www.tvenvivo.org/canal.php', kind: 'page', source: 'tvenvivo' }]
+  };
+  const status = {};
+  const counts = await enrich([channel], {
+    get: async () => ({ text: '<iframe src="https://x.example/player">' }),
+    byId: id => (id === 'tvenvivo' ? { resolve: async () => ({ url: 'https://cdn.example/a.m3u8' }) } : null),
+    probe: async () => ({ ok: true, status: 200 }),
+    status,
+    stats: new Map(),
+    wait: async () => {}
+  });
+  assert.equal(counts.extracted, 1);
+  assert.equal(channel.streams[0].kind, 'hls');
+  // El contador se apunta a la fuente de la página, no a un `undefined`.
+  assert.ok(status.tvenvivo && status.tvenvivo.extracted >= 1);
+});

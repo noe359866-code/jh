@@ -1,5 +1,5 @@
 // Generación y lectura de listas M3U con atributos IPTV.
-const { groupFor, slug } = require('./text');
+const { groupFor } = require('./text');
 const { isCountry } = require('./countries');
 
 // País del canal para el M3U: el real si se conoce, la región si no.
@@ -89,9 +89,4 @@ function parseM3u(text) {
   return items;
 }
 
-/** Nombre de archivo estable por combinación país/categoría. */
-function playlistName(country, category) {
-  return slug([country, category].filter(Boolean).join('-'), 'tv');
-}
-
-module.exports = { buildM3u, parseM3u, playlistName, groupFor };
+module.exports = { buildM3u, parseM3u, groupFor };

@@ -17,8 +17,6 @@ function stripTags(value = '') {
     .trim();
 }
 
-const unescapeJs = value => String(value).replace(/\\\//g, '/').replace(/\\u0026/gi, '&');
-
 /**
  * Normaliza un nombre de canal para mostrarlo y para agrupar duplicados:
  * marcas de calidad entre corchetes/paréntesis, sufijos de país y espacios.
@@ -55,9 +53,11 @@ const REGION_LABELS = { ES: 'España', US: 'Estados Unidos', LATAM: 'Latinoamér
  * tiene país identificado) y de su categoría.
  */
 function groupFor(country, category) {
+  // `require` aquí a propósito: `countries.js` no depende de `text.js`, pero
+  // cargarlo arriba crea un ciclo con el catálogo (`catalog` → `text` → …).
   const { countryName, isCountry } = require('./countries');
   const base = isCountry(country) ? countryName(country) : (REGION_LABELS[country] || country || 'Internacional');
   return category ? `${base} · ${category}` : base;
 }
 
-module.exports = { decodeHtml, stripTags, unescapeJs, cleanChannelName, channelKey, slug, groupFor };
+module.exports = { decodeHtml, stripTags, cleanChannelName, channelKey, slug, groupFor };

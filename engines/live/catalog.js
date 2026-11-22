@@ -9,23 +9,65 @@ const { applyReport, summarize } = require('./checker');
 
 const TTL_MS = 30 * 60 * 1000;
 
+/**
+ * Id estable y válido para Stremio: el patrón del SDK admite 80 caracteres y un
+ * nombre largo lo superaba, con lo que `findChannel` rechazaba el canal y no se
+ * podía abrir. Si hay colisión se añade un sufijo numérico.
+ */
+function uniqueId(base, byId) {
+  let candidate = base.slice(0, 80).replace(/-+$/, '') || 'canal';
+  if (!byId.has(candidate)) return candidate;
+  for (let n = 2; ; n++) {
+    const suffix = `-${n}`;
+    const next = `${candidate.slice(0, 80 - suffix.length)}${suffix}`;
+    if (!byId.has(next)) return next;
+  }
+}
+
+/**
+ * Recuentos del catálogo. `es`/`latam` cuentan regiones (compatibles con lo que
+ * ya había); `paises` cuenta los canales con país identificado.
+ */
+function countsOf(channels) {
+  return {
+    total: channels.length,
+    playable: channels.filter(channel => channel.playable).length,
+    dead: channels.filter(channel => channel.dead).length,
+    alive: channels.filter(channel => !channel.dead).length,
+    es: channels.filter(channel => channel.country === 'ES').length,
+    latam: channels.filter(channel => channel.country === 'LATAM').length,
+    us: channels.filter(channel => channel.country === 'US').length,
+    paises: channels.filter(channel => isCountry(channel.origin)).length
+  };
+}
+
 /** Une las fuentes conservando el orden y agrupando los streams por canal. */
 function mergeSources(results) {
   const byKey = new Map();
   for (const result of results) {
     if (!result || !Array.isArray(result.entries)) continue;
     for (const entry of result.entries) {
+      // Una fuente puede devolver una entrada a medio construir (sin nombre o
+      // sin `streams`): se salta en lugar de romper la recolección entera.
+      if (!entry || !entry.name || !Array.isArray(entry.streams)) continue;
+      // Una fuente puede devolver `null` en la lista de señales: se filtra antes
+      // de tocarla, o el catálogo entero revienta por una entrada rota.
+      const streams = entry.streams.filter(stream => stream && typeof stream === 'object');
       // Cada fuente nombra el país a su manera (`cl`, `CL`, `Chile`, `Mexico`).
       // Se normaliza aquí, en el único punto por el que pasan todas, para que
       // las categorías por país no se fragmenten. Si la fuente no da país, se
       // intenta deducir del nombre del canal.
       const origin = countryOf(entry.origin) || countryFromText(entry.name) || null;
       const region = origin ? regionOf(origin) : (entry.country || 'LATAM');
-      const key = entry.key || `${region}:${slug(entry.name)}`;
+      // La clave se calcula siempre igual. Antes se respetaba la de la fuente, y
+      // dos fuentes con criterios distintos (`LATAM:canal-5` y `MX:canal-5`)
+      // dejaban **dos canales con el mismo id**, con lo que Stremio abría el
+      // primero y el otro quedaba inaccesible.
+      const key = `${origin || region}:${slug(entry.name)}`;
       const existing = byKey.get(key);
       if (existing) {
         const seen = new Set(existing.streams.map(stream => stream.url));
-        for (const stream of entry.streams) {
+        for (const stream of streams) {
           if (!seen.has(stream.url)) {
             existing.streams.push(stream);
             seen.add(stream.url);
@@ -40,7 +82,7 @@ function mergeSources(results) {
       // no, la región (`latam-…`). Stremio valida `idPrefixes` sobre esto.
       const scope = origin ? origin.toLowerCase() : String(region).toLowerCase();
       byKey.set(key, {
-        id: `${scope}-${slug(entry.name)}`,
+        id: uniqueId(`${scope}-${slug(entry.name)}`, byKey),
         key,
         name: entry.name,
         country: region,
@@ -52,7 +94,7 @@ function mergeSources(results) {
         externalUrl: entry.externalUrl || null,
         info: entry.info || null,
         sources: [result.id],
-        streams: [...(entry.streams || [])]
+        streams: [...streams]
       });
     }
   }
@@ -151,12 +193,7 @@ function createCatalog({
       status,
       loadedAt: startedAt,
       ms: now() - startedAt,
-      counts: {
-        total: channels.length,
-        playable: channels.filter(channel => channel.playable).length,
-        es: channels.filter(channel => channel.country === 'ES').length,
-        latam: channels.filter(channel => channel.country === 'LATAM').length
-      }
+      counts: countsOf(channels)
     };
   }
 
@@ -170,12 +207,14 @@ function createCatalog({
     if (!health || !health.results) return entry;
     if (healthView && healthView.loadedAt === entry.loadedAt && healthView.report === health) return healthView.view;
     const channels = applyReport(entry.channels, health);
-    const dead = channels.filter(channel => channel.dead).length;
+    // Los contadores salen del catálogo final, no del de antes de la extracción:
+    // `playable`, `es` y `latam` se quedaban con los valores viejos (y `es`/`latam`
+    // contaban regiones, no países).
     const view = {
       ...entry,
       channels,
       health: summarize(channels, health),
-      counts: { ...entry.counts, dead, alive: entry.counts.total - dead }
+      counts: countsOf(channels)
     };
     healthView = { loadedAt: entry.loadedAt, report: health, view };
     return view;
@@ -219,4 +258,4 @@ function createCatalog({
   return self;
 }
 
-module.exports = { createCatalog, mergeSources, TTL_MS };
+module.exports = { createCatalog, mergeSources, countsOf, uniqueId, TTL_MS };

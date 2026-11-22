@@ -26,13 +26,9 @@ const LIMIT = number('LIMIT');
 const CONCURRENCY = number('CONCURRENCY');
 const BUDGET_MS = number('CHECK_BUDGET_MS');
 
-// Mismas listas que el servidor, con el mismo criterio.
-const PLAYLISTS = {
-  all: () => true,
-  es: channel => channel.country === 'ES',
-  latam: channel => channel.country === 'LATAM',
-  deportes: channel => /deporte|sport/i.test(channel.category)
-};
+// Las listas del servidor, sin duplicar la definición: antes este script tenía
+// su propia copia (solo all/es/latam/deportes) y no generaba ninguna de país.
+const { PLAYLISTS } = require('../index');
 
 function resolvePage(stream) {
   const source = { 'www.tvenvivo.org': 'tvenvivo', 'thedaddy.li': 'thedaddy' }[new URL(stream.url).hostname];

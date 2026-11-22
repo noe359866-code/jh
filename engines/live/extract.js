@@ -190,7 +190,12 @@ async function enrich(channels, {
     if (diag.reason) counts.reasons[diag.reason] = (counts.reasons[diag.reason] || 0) + 1;
     if (outcome === 'extracted') {
       counts.extracted++;
-      if (status) status[channel.sources[0]] = { ...(status[channel.sources[0]] || {}), extracted: (status[channel.sources[0]] && status[channel.sources[0]].extracted || 0) + 1 };
+      // Una entrada puede no traer `sources` (canal construido a mano o de una
+      // fuente sin id): sin esta guarda la recolección reventaba al extraer.
+      if (status) {
+        const owner = (channel.sources || [])[0] || key;
+        status[owner] = { ...(status[owner] || {}), extracted: ((status[owner] && status[owner].extracted) || 0) + 1 };
+      }
     } else if (outcome === 'failed') {
       counts.failed++;
     } else {

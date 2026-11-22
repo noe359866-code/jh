@@ -3,11 +3,14 @@
 // Tipo `tv`, ids propios (`es-la-1`, `latam-tudn`…). Los catálogos exponen solo
 // canales con al menos una URL reproducible (o resoluble), y `skip` pagina de
 // 100 en 100, que es el tamaño de página que Stremio solicita.
-const { groupFor, slug } = require('./text');
+const { slug } = require('./text');
 const { COUNTRIES, countryName } = require('./countries');
 
 const PAGE_SIZE = 100;
 const ID_PATTERN = /^[a-z0-9][a-z0-9-]{0,79}$/;
+
+// Icono del addon (SVG servido por el propio servidor).
+const LOGO_PATH = '/logo.svg';
 
 // Subcategorías que se ofrecen dentro de cada país (solo si hay canales).
 const COUNTRY_GENRES = ['Generalista', 'Deportes', 'Noticias', 'Infantil', 'Música', 'Cine y series'];
@@ -23,6 +26,8 @@ function manifest() {
     version: '3.4.0',
     name: 'TV en Español (directo)',
     description: 'Canales de televisión en español y de Estados Unidos, por país: España, México, Argentina, Colombia, Chile, Perú, Venezuela, Ecuador, Centroamérica, Caribe y más. Fuentes: eja.tv, iptvcat, TV Garden, Global Free TV, TVEnVivo, DaddyLive, Live24, CineCity, Telechancho, iptv-chile, Samsung TV Plus, Pluto TV, D9Kod e iptv-org.',
+    // Stremio usa este icono en la lista de addons; sin él muestra el genérico.
+    logo: LOGO_PATH,
     resources: ['catalog', 'meta', 'stream'],
     types: ['tv'],
     // Prefijo por país **y por región**: los canales cuya fuente no dice el país
@@ -179,6 +184,9 @@ async function streams(channel, { resolvePage } = {}) {
       continue;
     }
     if (!/^https?:\/\//i.test(stream.url || '')) continue;
+    // Varias fuentes pueden traer la misma señal del mismo canal: en el
+    // reproductor aparecían dos opciones idénticas. Se deduplica por URL.
+    if (out.some(option => option.url === stream.url)) continue;
     out.push({
       url: stream.url,
       name: stream.source || channel.sources[0],
@@ -202,5 +210,5 @@ function findChannel(channels, id) {
 }
 
 module.exports = {
-  manifest, catalog, streams, findChannel, toMeta, listed, initials, PAGE_SIZE, ID_PATTERN, slug
+  manifest, catalog, streams, findChannel, toMeta, listed, initials, LOGO_PATH, PAGE_SIZE, ID_PATTERN, slug
 };
