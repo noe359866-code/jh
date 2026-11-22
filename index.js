@@ -9,6 +9,10 @@ const addon = require('./engines/live/addon');
 const { createChecker } = require('./engines/live/checker');
 const extractor = require('./engines/live/extract');
 
+// Guía de programación usada en las listas M3U. TDTChannels publica una EPG
+// abierta de la TDT española; cubre una parte del catálogo, no todo.
+const EPG_URL = process.env.EPG_URL || 'https://www.tdtchannels.com/epg/TV.xml.gz';
+
 const SITE_NAME = 'TV en Español';
 
 // TTL del catálogo configurable por entorno (`CACHE_TTL` en ms, mínimo 60 s).
@@ -218,7 +222,7 @@ function createApp({
     const type = decodeURIComponent(req.params[0]);
     if (type !== 'tv') return res.status(404).json({ error: 'Tipo no soportado' });
     const { id, extras } = parseRoute(req.params[1], { withExtra: true });
-    const known = ['todos', 'espana', 'usa', 'latinoamerica', 'deportes', 'caidos'];
+    const known = ['todos', 'espana', 'usa', 'latinoamerica', 'sinpais', 'deportes', 'caidos'];
     const countryCatalog = /^pais-([a-z]{2})$/.exec(id);
     if (!known.includes(id) && !(countryCatalog && isCountry(countryCatalog[1].toUpperCase()))) {
       return res.status(404).json({ error: 'Catálogo desconocido' });
@@ -293,6 +297,7 @@ function createApp({
       // pruebas y los despliegues puedan sustituirlo.
       resolve: includePages ? resolve : null,
       siteName: SITE_NAME,
+      epgUrl: EPG_URL,
       siteUrl: `${req.protocol}://${req.get('host')}`
     });
     if (playlistCache.size > 32) playlistCache.delete(playlistCache.keys().next().value);

@@ -87,6 +87,19 @@ test('mergeSources: unifica el país venga como venga (`cl`, `CL`, `Chile`)', ()
   assert.equal(flagged[0].origin, 'MX');
 });
 
+test('manifest: cabe en 8 KB e incluye el prefijo de las regiones', () => {
+  const manifest = addon.manifest();
+  // Stremio puede rechazar un manifiesto demasiado grande.
+  assert.ok(JSON.stringify(manifest).length < 8192, `pesa ${JSON.stringify(manifest).length} bytes`);
+  // Los canales sin país llevan id `latam-…`: sin ese prefijo sus enlaces fallan.
+  assert.ok(manifest.idPrefixes.includes('latam-'));
+  // Un género por país en «Todos», no 126 combinaciones país·categoría.
+  const genres = manifest.catalogs[0].extra[0].options;
+  assert.ok(genres.includes('México'));
+  assert.ok(!genres.includes('México · Deportes'));
+  assert.equal(new Set(manifest.catalogs.map(catalog => catalog.id)).size, manifest.catalogs.length);
+});
+
 test('manifest: tipo tv, un catálogo por país y prefijos de país', () => {
   const manifest = addon.manifest();
   assert.deepEqual(manifest.types, ['tv']);
@@ -101,6 +114,7 @@ test('manifest: tipo tv, un catálogo por país y prefijos de país', () => {
   assert.equal(byId['pais-mx'].name, 'TV · México');
   assert.equal(byId['pais-us'].name, 'TV · Estados Unidos');
   assert.ok(byId['pais-mx'].extra[0].options.includes('México · Deportes'));
+  assert.ok(byId.sinpais, 'los canales sin país tienen su propio catálogo');
   assert.ok(byId.todos && byId.deportes && byId.caidos);
 });
 
@@ -121,6 +135,11 @@ test('catálogo por país: filtra por el país real del canal', () => {
   assert.equal(addon.catalog(channels, 'pais-us', 'Estados Unidos · Deportes', 0).metas.length, 0);
   // El género de un país no debe arrastrar canales de otro.
   assert.equal(addon.catalog(channels, 'pais-mx', 'Estados Unidos · Generalista', 0).metas.length, 0);
+  // `sinpais` deja fuera lo que sí tiene país.
+  const sinPais = addon.catalog([...channels,
+    { id: 'latam-x', key: 'LATAM:x', name: 'X', country: 'LATAM', origin: 'Internacional', category: 'Generalista',
+      sources: ['pluto'], streams: [{ url: 'https://x/x.m3u8', kind: 'hls' }], playable: true }], 'sinpais', '', 0);
+  assert.deepEqual(sinPais.metas.map(meta => meta.name), ['X']);
 });
 
 test('catálogo Stremio: solo canales publicables, paginado y filtros', () => {

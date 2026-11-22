@@ -13,20 +13,21 @@ const ID_PATTERN = /^[a-z0-9][a-z0-9-]{0,79}$/;
 const COUNTRY_GENRES = ['Generalista', 'Deportes', 'Noticias', 'Infantil', 'Música', 'Cine y series'];
 
 function manifest() {
-  // El género se ofrece por país (`México · Deportes`) para poder filtrar sin
-  // salir de la categoría del país.
-  const genres = [
-    'España', 'Estados Unidos', 'Latinoamérica',
-    ...COUNTRIES.flatMap(country => COUNTRY_GENRES.map(genre => `${country.name} · ${genre}`))
-  ];
+  // El género se ofrece por país en «Todos» para poder filtrar sin cambiar de
+  // catálogo. Se generan **solo los nombres de país** (`México`), no las 126
+  // combinaciones país·categoría: el manifiesto completo pasaba de 8 KB y
+  // Stremio puede rechazarlo. Las subcategorías van en el `extra` de cada país.
+  const genres = ['España', 'Estados Unidos', 'Latinoamérica', ...COUNTRIES.map(country => country.name)];
   return {
     id: 'org.tvespanol.live',
-    version: '3.3.0',
+    version: '3.4.0',
     name: 'TV en Español (directo)',
     description: 'Canales de televisión en español y de Estados Unidos, por país: España, México, Argentina, Colombia, Chile, Perú, Venezuela, Ecuador, Centroamérica, Caribe y más. Fuentes: eja.tv, iptvcat, TV Garden, Global Free TV, TVEnVivo, DaddyLive, Live24, CineCity, Telechancho, iptv-chile, Samsung TV Plus, Pluto TV, D9Kod e iptv-org.',
     resources: ['catalog', 'meta', 'stream'],
     types: ['tv'],
-    idPrefixes: COUNTRIES.map(country => `${country.code.toLowerCase()}-`),
+    // Prefijo por país **y por región**: los canales cuya fuente no dice el país
+    // llevan id `latam-…`, así que sin `latam-` Stremio rechazaría sus enlaces.
+    idPrefixes: [...COUNTRIES.map(country => `${country.code.toLowerCase()}-`), 'latam-'],
     catalogs: [
       { type: 'tv', id: 'todos', name: 'TV · Todos los canales', extra: [{ name: 'genre', options: genres }, { name: 'skip' }] },
       // Una entrada por país, en el orden de `countries.js`.
@@ -36,9 +37,7 @@ function manifest() {
         name: `TV · ${country.name}`,
         extra: [{ name: 'genre', options: COUNTRY_GENRES.map(genre => `${country.name} · ${genre}`) }, { name: 'skip' }]
       })),
-      { type: 'tv', id: 'espana', name: 'TV · España (región)', extra: [{ name: 'skip' }] },
-      { type: 'tv', id: 'usa', name: 'TV · Estados Unidos (región)', extra: [{ name: 'skip' }] },
-      { type: 'tv', id: 'latinoamerica', name: 'TV · Latinoamérica (región)', extra: [{ name: 'skip' }] },
+      { type: 'tv', id: 'sinpais', name: 'TV · Sin país asignado', extra: [{ name: 'skip' }] },
       { type: 'tv', id: 'deportes', name: 'TV · Deportes', extra: [{ name: 'skip' }] },
       { type: 'tv', id: 'caidos', name: 'TV · Caídos (verificador)', extra: [{ name: 'skip' }] }
     ],
@@ -116,6 +115,9 @@ function catalog(channels, id, genre, skip = 0) {
   if (country) items = items.filter(channel => (channel.origin || channel.country) === country);
   if (id === 'espana') items = items.filter(channel => channel.country === 'ES');
   if (id === 'usa' || id === 'us') items = items.filter(channel => channel.country === 'US');
+  // `sinpais`: los canales cuya fuente no declara país (la mayoría de Pluto y
+  // CineCity). `latinoamerica` se queda como sinónimo de la región completa.
+  if (id === 'sinpais') items = items.filter(channel => !channel.origin || channel.origin === 'Internacional');
   if (id === 'latinoamerica') items = items.filter(channel => channel.country === 'LATAM');
   if (id === 'deportes') items = items.filter(channel => /deporte|sport/i.test(channel.category));
   if (genre) items = items.filter(channel => matchesGenre(channel, genre));

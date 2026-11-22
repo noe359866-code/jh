@@ -32,6 +32,7 @@ function mergeSources(results) {
           }
         }
         existing.sources = [...new Set([...existing.sources, result.id])];
+        existing.epgId = existing.epgId || entry.epgId || null;
         existing.logo = existing.logo || entry.logo || null;
         continue;
       }
@@ -44,6 +45,7 @@ function mergeSources(results) {
         name: entry.name,
         country: region,
         origin: origin || 'Internacional',
+        epgId: entry.epgId || null,
         category: entry.category || 'Generalista',
         logo: entry.logo || null,
         geoBlocked: Boolean(entry.geoBlocked),

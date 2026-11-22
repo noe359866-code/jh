@@ -23,7 +23,10 @@ const sources = [
   // Estados Unidos: canales en español + cadenas mayoritarias (iptv-org).
   require('./usa'),
   // Listas por país de iptv-org: rellenan los países con pocas fuentes.
-  require('./iptvorg')
+  require('./iptvorg'),
+  // TDT española y lista mundial con filtro estricto de español.
+  require('./tdtchannels'),
+  require('./freetv')
 ];
 
 const MODE = {
@@ -42,7 +45,9 @@ const MODE = {
   pluto: 'direct',
   d9kod: 'direct',
   usa: 'direct',
-  iptvorg: 'direct'
+  iptvorg: 'direct',
+  tdtchannels: 'direct',
+  freetv: 'direct'
 };
 
 function byId(id) {

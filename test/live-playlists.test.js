@@ -98,14 +98,71 @@ test('lista CineCity real: tolera líneas EXTINF sin `#`', () => {
   assert.ok(entries.every(entry => !entry.name.includes('tvg-logo')));
 });
 
-test('las seis listas y la de USA están registradas', () => {
-  for (const id of ['cinecity', 'telechancho', 'iptvchile', 'samsungtvplus', 'pluto', 'd9kod', 'usa', 'iptvorg']) {
+test('las listas externas están registradas', () => {
+  for (const id of ['cinecity', 'telechancho', 'iptvchile', 'samsungtvplus', 'pluto', 'd9kod', 'usa', 'iptvorg', 'tdtchannels', 'freetv']) {
     const source = byId(id);
     assert.ok(source, `falta la fuente ${id}`);
     assert.equal(typeof source.collect, 'function');
   }
-  // Trece fuentes con red, la de Estados Unidos y las listas por país.
-  assert.equal(sources.length, 15);
+  // Siete sitios, seis listas, USA, iptv-org por país, TDT y Free-TV.
+  assert.equal(sources.length, 17);
+});
+
+test('group-title se convierte en categoría y no en país', () => {
+  const { categoryFromGroup } = require('../engines/live/sources/playlist');
+  assert.equal(categoryFromGroup('⚽ Deportes'), 'Deportes');
+  assert.equal(categoryFromGroup('🎬 Cine'), 'Cine y series');
+  assert.equal(categoryFromGroup('Novelas 🌎'), 'Cine y series');
+  assert.equal(categoryFromGroup('News'), 'Noticias');
+  assert.equal(categoryFromGroup('News (AR)'), 'Noticias');
+  assert.equal(categoryFromGroup('Informativos'), 'Noticias');
+  assert.equal(categoryFromGroup('Generalistas'), 'Generalista');
+  // Un país no es una categoría.
+  assert.equal(categoryFromGroup('Italy'), null);
+  assert.equal(categoryFromGroup('🏙️ Buenos Aires'), null);
+});
+
+test('lista mundial: solo entra lo que es español', () => {
+  const mundial = [
+    '#EXTM3U',
+    '#EXTINF:-1 tvg-country="IT" group-title="Italy",Rai 1',
+    'https://it.example/1.m3u8',
+    '#EXTINF:-1 tvg-country="ES" group-title="Generalistas",La 1',
+    'https://es.example/1.m3u8',
+    '#EXTINF:-1 tvg-language="spa",Canal Hispano',
+    'https://x.example/h.m3u8',
+    '#EXTINF:-1,アルバニア TV',
+    'https://x.example/al.m3u8'
+  ].join('\n');
+  const entries = parsePlaylist(mundial, { source: 'mundial', spanishOnly: true });
+  assert.deepEqual(entries.map(entry => entry.name).sort(), ['Canal Hispano', 'La 1']);
+  // Sin el filtro, la misma lista mete canales de cualquier país.
+  assert.equal(parsePlaylist(mundial, { source: 'mundial' }).length, 4);
+});
+
+test('TDTChannels: cadena pública española con su categoría y su EPG', () => {
+  const entries = parsePlaylist(fixture('tdtchannels.m3u'), { source: 'TDTChannels', defaultCountry: 'ES' });
+  const names = entries.map(entry => entry.name);
+  assert.ok(names.includes('La 1'));
+  assert.ok(entries.every(entry => entry.origin === 'ES'), 'es una lista nacional');
+  const la1 = entries.filter(entry => entry.name === 'La 1');
+  assert.equal(la1.length, 2, 'La 1 trae dos señales');
+  assert.ok(la1.every(entry => entry.epgId === 'La1.TV'), 'conserva el id de la EPG');
+  const byName = Object.fromEntries(entries.map(entry => [entry.name, entry]));
+  assert.equal(byName['24h'].category, 'Noticias');
+  assert.equal(byName.Teledeporte.category, 'Deportes');
+  assert.equal(byName['ETB Deportes'].streams[0].httpReferrer, 'https://kirolakeitb.eus/es/kirolak-360/en-directo/');
+});
+
+test('Free-TV: lista mundial reducida a los canales en español', () => {
+  const entries = parsePlaylist(fixture('freetv.m3u'), { source: 'Free-TV', spanishOnly: true });
+  const names = entries.map(entry => entry.name).sort();
+  assert.deepEqual(names, ['CNN en Español', 'La 1', 'Telefe']);
+  assert.ok(!names.includes('Rai 1'), 'el canal italiano se descarta');
+  assert.ok(!names.includes('Kanali 7'), 'el albanés se descarta');
+  // `tvg-country` en mayúsculas debe reconocerse.
+  assert.equal(entries.find(entry => entry.name === 'Telefe').origin, 'AR');
+  assert.equal(entries.find(entry => entry.name === 'CNN en Español').category, 'Noticias');
 });
 
 test('collect deduplica por URL de medio y tolera listas caídas', async () => {
