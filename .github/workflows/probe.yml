@@ -20,11 +20,12 @@ jobs:
           node-version: 22
       - run: 'true'
       - run: node scripts/probe9.js
+      - run: node scripts/probe10.js
       - name: Commit probe output
         if: always()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -f reports/probe.json reports/probe2.json reports/probe3.json reports/probe4.json reports/probe5.json reports/probe6.json reports/probe7.json reports/probe8.json reports/probe9.json
+          git add -f reports/probe.json reports/probe2.json reports/probe3.json reports/probe4.json reports/probe5.json reports/probe6.json reports/probe7.json reports/probe8.json reports/probe9.json reports/probe10.json
           git diff --cached --quiet || git commit -m "Probe output (generated)"
           git push
