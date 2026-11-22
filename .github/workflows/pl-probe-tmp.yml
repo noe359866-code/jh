@@ -44,6 +44,7 @@ jobs:
             fs.writeFileSync('reports/m3u-audit.txt', out.join('\n')+'\n');
           " || true
       - uses: actions/upload-artifact@v4
+        continue-on-error: true
         if: always()
         with:
           name: sonda
