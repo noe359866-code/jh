@@ -18,18 +18,18 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Ejecutar verificación en vivo
-        run: node scripts/live-check.js || true
+        run: node scripts/live-check.js || node -e 'require("fs").mkdirSync("reports",{recursive:true});require("fs").writeFileSync("reports/live-check-summary.txt","el script terminó con error (ver artefacto live-check)\n")' 
       - name: Resumen
         if: always()
         run: |
-          node -e "
-            const fs = require('fs');
-            if (!fs.existsSync('reports/live-check.json')) { console.log('sin reporte'); process.exit(0); }
-            const r = require('./reports/live-check.json');
+          node -e '
+            const fs = require("fs");
+            if (!fs.existsSync("reports/live-check.json")) { console.log("sin reporte"); process.exit(0); }
+            const r = JSON.parse(fs.readFileSync("reports/live-check.json", "utf8"));
             const summary = { ok: r.ok, totals: r.totals, sources: r.sources, checks: r.checks, playlistEntries: r.playlistEntries };
             console.log(JSON.stringify(summary, null, 1));
-            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, '```json\n' + JSON.stringify(summary, null, 1) + '\n```\n');
-          "
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, "```json\n" + JSON.stringify(summary, null, 1) + "\n```\n");
+          '
       - name: Publicar resumen en la rama
         if: always()
         run: |
