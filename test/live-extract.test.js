@@ -2,7 +2,7 @@
 // degradación a enlace de página cuando el embed no coopera.
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { enrich, extractChannel, extractable, genericResolve, findHlsLiteral } = require('../engines/live/extract');
+const { enrich, extractChannel, extractable, genericResolve, findHlsLiteral, resolveSource } = require('../engines/live/extract');
 const { createCatalog } = require('../engines/live/catalog');
 
 const PAGE_CHANNEL = {
@@ -113,4 +113,14 @@ test('un extractor que revienta no tumba la recolección', async () => {
   assert.equal(loaded.channels.length, 1);
   assert.equal(loaded.status._extract.ok, false);
   assert.match(loaded.status._extract.error, /embed caído/);
+});
+
+
+test('la fuente se resuelve por nombre visible y no por id (regresión)', () => {
+  const byId = id => (id === 'tvenvivo' ? { id: 'tvenvivo', name: 'tvenvivo.org', resolve: async () => null } : null);
+  // Los streams guardan el host (`tvenvivo.org`), no el id del registro.
+  assert.equal(resolveSource(byId, 'tvenvivo.org').id, 'tvenvivo');
+  assert.equal(resolveSource(byId, 'tvenvivo').id, 'tvenvivo');
+  assert.equal(resolveSource(byId, 'desconocido.tv'), null);
+  assert.equal(resolveSource(byId, null), null);
 });

@@ -15,6 +15,18 @@
 const { mapLimit } = require('./limit');
 const { probeMedia } = require('./checker');
 
+/** Busca la fuente por id o por nombre visible (`tvenvivo` / `tvenvivo.org`). */
+function resolveSource(byId, sourceName) {
+  if (!sourceName || typeof byId !== 'function') return null;
+  const direct = byId(sourceName);
+  if (direct) return direct;
+  const name = String(sourceName).toLowerCase();
+  for (const source of require('./sources').sources) {
+    if (source.id === name || String(source.name || '').toLowerCase() === name) return source;
+  }
+  return null;
+}
+
 const DEFAULTS = {
   concurrency: 10,
   budgetMs: 60000,
@@ -38,7 +50,9 @@ function extractable(channels) {
 async function extractChannel(channel, { get, byId, probe = probeMedia, probeTimeoutMs = DEFAULTS.probeTimeoutMs } = {}) {
   const page = (channel.streams || []).find(stream => stream.kind === 'page');
   if (!page) return 'skipped';
-  const source = byId(page.source);
+  // `stream.source` es el nombre visible (`tvenvivo.org`), no el id del registro
+  // (`tvenvivo`): se resuelve por id y, si no, por nombre.
+  const source = resolveSource(byId, page.source);
   if (!source || typeof source.resolve !== 'function') return 'skipped';
 
   let resolved = null;
@@ -182,4 +196,4 @@ async function genericResolve(pageUrl, { get, maxHops = 3 } = {}) {
   return null;
 }
 
-module.exports = { enrich, extractChannel, extractable, hasDirect, genericResolve, findHlsLiteral, DEFAULTS };
+module.exports = { enrich, extractChannel, extractable, hasDirect, genericResolve, findHlsLiteral, resolveSource, DEFAULTS };
