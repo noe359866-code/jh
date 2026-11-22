@@ -1,21 +1,21 @@
-bytes: 2991794 | entradas: 6356
+bytes: 2994347 | entradas: 6381
 sin URL http: 0
 sin tvg-country: 0
 sin group-title: 0
 sin tvg-id: 0
-senales con id repetido: 1966
+senales con id repetido: 1971
 ids compartidos por canales distintos: 1
-ejemplos: [["ESBC2700003T8-bigtime-peliculas-gratis",["Bigtime - Películas Gratis","Bigtime Peliculas Gratis"]]]
-grupos: [["Latinoamérica · Generalista",1057],["España · Generalista",851],["Argentina · Generalista",401],["Chile · Generalista",396],["Perú · Generalista",389],["Colombia · Generalista",385],["México · Generalista",353],["Estados Unidos · Generalista",315],["República Dominicana · Generalista",247],["Bolivia · Generalista",177],["Costa Rica · Generalista",166],["Paraguay · Generalista",165]]
-paises: {"ES":1036,"CR":166,"AR":601,"DO":249,"VE":137,"CL":397,"MX":379,"LATAM":1287,"PE":390,"US":387,"PY":165,"CO":385,"PA":34,"BO":177,"SV":56,"HN":127,"EC":158,"PR":81,"GT":98,"NI":24,"UY":16,"CU":6}
+ejemplos: [["ESBC2700003T8",["Bigtime - Películas Gratis","Bigtime Peliculas Gratis"]]]
+grupos: [["Latinoamérica · Generalista",1051],["España · Generalista",858],["Argentina · Generalista",405],["Chile · Generalista",397],["Perú · Generalista",391],["Colombia · Generalista",385],["México · Generalista",356],["Estados Unidos · Generalista",318],["República Dominicana · Generalista",251],["Bolivia · Generalista",181],["Costa Rica · Generalista",171],["Paraguay · Generalista",165]]
+paises: {"ES":1036,"CR":171,"AR":606,"DO":253,"VE":136,"CL":398,"MX":382,"LATAM":1285,"PE":392,"US":390,"PY":165,"CO":385,"PA":34,"BO":181,"SV":57,"HN":127,"EC":158,"PR":81,"GT":98,"NI":24,"UY":16,"CU":6}
 cabecera: #EXTM3U
-ejemplo: #EXTINF:-1 tvg-id="HOLA_Play.TV" tvg-name="¡HOLA! Play" tvg-logo="https://yt3.ggpht.com/ytc/AMLnZu_Hd2WYs49wYCBMAphVpvvpBzd-EJFU8XFQgccPIw=s200" group-title="España · Generalista" tvg-country="ES" source="TDTChannels",¡HOLA! Play ~ #EXTVLCOPT:http-user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 ~ https://hola-play-2108fd06-86d4-44e8-9867-c35b4895a1c1-es.fast.rakuten.tv/v1/master/0547f18649bd788bec7b67b746e47670f558b6b2/production-hls-aes128-rtv-6433-playout/master.m3u8
+ejemplo: #EXTINF:-1 tvg-id="ES26000025M" tvg-name="¡Hola! Play" tvg-logo="https://tvpnlogopeu.samsungcloud.tv/platform/image/sourcelogo/vc/00/02/34/ES26000025M_20241210T052650SQUARE.png" group-title="España · Generalista" tvg-country="ES" source="Samsung TV Plus ES",¡Hola! Play ~ #EXTVLCOPT:http-user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 ~ https://jmp2.uk/stvp-ES26000025M
 
 === RESUMEN ===
-Extracción de embeds: 0 HLS extraídos de 432 canales con página (fallidos 106, omitidos 326, 102 s)
-  por fuente: {"cinecity":{"extraidos":0,"fallidos":0,"omitidos":43},"D9Kod":{"extraidos":0,"fallidos":0,"omitidos":122},"Free-TV":{"extraidos":0,"fallidos":0,"omitidos":10},"Estados Unidos (iptv-org)":{"extraidos":0,"fallidos":0,"omitidos":8},"Pluto TV":{"extraidos":0,"fallidos":0,"omitidos":4},"thedaddy.li":{"extraidos":0,"fallidos":13,"omitidos":0},"iptv-org AR":{"extraidos":0,"fallidos":0,"omitidos":1},"livelive24.com":{"extraidos":0,"fallidos":23,"omitidos":0},"tvenvivo.org":{"extraidos":0,"fallidos":70,"omitidos":0},"telechancho":{"extraidos":0,"fallidos":0,"omitidos":1},"iptv-org NI":{"extraidos":0,"fallidos":0,"omitidos":2}}
-  motivos: {"sin resolutor para la fuente":191,"cadena de embed: HTTP 403":7,"la cadena no expone m3u8":93,"cadena de embed: fetch failed":6}
-Verificación: 4296 canales en 197 s · vivos 3730 · caídos 566 · bloqueados 947 · tiempo agotado 484 · sin verificar 0 · omitidos 1074
-Listas escritas en reports/: all (6356), es (1002), latam (4933), deportes (185), us (387), mx (379), ar (601), co (385), cl (397), pe (390), ve (137), ec (158), gt (98), hn (127), sv (56), ni (24), cr (166), pa (34), cu (6), do (249), pr (81), uy (16), py (165), bo (177)
-Países con canales vivos: Internacional 1576 · ES 758 · AR 500 · US 276 · CL 255 · MX 235 · DO 234 · PE 201 · CO 130 · BO 79 · PY 76 · HN 75 · EC 75 · VE 73 · CR 70 · GT 50 · PR 43 · SV 41 · PA 24 · NI 21 · UY 8 · CU 4
+Extracción de embeds: 0 HLS extraídos de 386 canales con página (fallidos 40, omitidos 346, 107 s)
+  por fuente: {"cinecity":{"extraidos":0,"fallidos":0,"omitidos":43},"D9Kod":{"extraidos":0,"fallidos":0,"omitidos":139},"Free-TV":{"extraidos":0,"fallidos":0,"omitidos":10},"Estados Unidos (iptv-org)":{"extraidos":0,"fallidos":0,"omitidos":8},"Pluto TV":{"extraidos":0,"fallidos":0,"omitidos":4},"thedaddy.li":{"extraidos":0,"fallidos":16,"omitidos":0},"iptv-org AR":{"extraidos":0,"fallidos":0,"omitidos":1},"livelive24.com":{"extraidos":0,"fallidos":24,"omitidos":0},"telechancho":{"extraidos":0,"fallidos":0,"omitidos":1},"iptv-org NI":{"extraidos":0,"fallidos":0,"omitidos":2}}
+  motivos: {"sin resolutor para la fuente":208,"cadena de embed: HTTP 403":7,"la cadena no expone m3u8":24,"cadena de embed: fetch failed":9}
+Verificación: 3761 canales en 196 s · vivos 3238 · caídos 523 · bloqueados 804 · tiempo agotado 421 · sin verificar 0 · omitidos 1544
+Listas escritas en reports/: all (6381), es (1002), latam (4955), deportes (188), us (390), mx (382), ar (606), co (385), cl (398), pe (392), ve (136), ec (158), gt (98), hn (127), sv (57), ni (24), cr (171), pa (34), cu (6), do (253), pr (81), uy (16), py (165), bo (181)
+Países con canales vivos: Internacional 1531 · ES 758 · AR 507 · US 279 · CL 256 · DO 238 · MX 238 · PE 202 · CO 130 · BO 81 · PY 77 · HN 75 · EC 75 · CR 72 · VE 72 · GT 50 · PR 43 · SV 41 · PA 24 · NI 21 · UY 8 · CU 4
 
