@@ -30,13 +30,20 @@ jobs:
             console.log(JSON.stringify(summary, null, 1));
             fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, '```json\n' + JSON.stringify(summary, null, 1) + '\n```\n');
           "
-      - name: Publicar reporte en la rama
+      - name: Publicar resumen en la rama
         if: always()
         run: |
+          mkdir -p reports
+          node -e "
+            if (require('fs').existsSync('reports/live-check.json')) {
+              const r = require('./reports/live-check.json');
+              require('fs').writeFileSync('reports/live-check-summary.txt', JSON.stringify({ ok: r.ok, totals: r.totals, sources: r.sources, checks: r.checks, playlistEntries: r.playlistEntries, error: r.error }, null, 1) + '\n');
+            }
+          "
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -f reports/live-check.json
-          git diff --cached --quiet || git commit -m "Reporte de verificación en vivo (generado)"
+          git add -f reports/live-check-summary.txt
+          git diff --cached --quiet || git commit -m "Resumen de verificación en vivo (generado)"
           git push
       - uses: actions/upload-artifact@v4
         if: always()
