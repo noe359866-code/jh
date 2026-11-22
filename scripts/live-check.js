@@ -27,6 +27,7 @@ function signature(text) {
 (async () => {
   const catalog = createCatalog({ sources: selected, fetchGet: get });
   const loaded = await catalog.load({ force: true });
+  console.log(JSON.stringify({ totals: loaded.counts }, null, 1));
   report.sources = loaded.status;
   report.totals = loaded.counts;
   console.log(`Canales: ${loaded.counts.total} (reproducibles: ${loaded.counts.playable}; ES: ${loaded.counts.es}; LATAM: ${loaded.counts.latam})`);

@@ -2,6 +2,8 @@ name: Sites live extraction
 on:
   push:
     paths:
+      - 'engines/live/**'
+      - 'scripts/live-check.js'
       - '.github/workflows/sites-live.yml'
 
 permissions:
@@ -18,7 +20,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: node scripts/live-check.js || true
+      - name: Verificación en vivo
+        run: node scripts/live-check.js || true
       - name: Publicar salida
         if: always()
         run: |
