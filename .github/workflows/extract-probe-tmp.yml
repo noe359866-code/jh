@@ -3,6 +3,9 @@ on:
   push:
     paths:
       - '.github/workflows/extract-probe-tmp.yml'
+      - 'engines/live/extract.js'
+      - 'engines/live/catalog.js'
+      - 'scripts/verify.js'
 
 permissions:
   contents: write
