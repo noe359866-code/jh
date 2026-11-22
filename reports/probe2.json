@@ -20,7 +20,7 @@
   "url": "https://iptvcat.net/spain__1",
   "status": 200,
   "finalUrl": "https://iptvcat.net/spain__1",
-  "length": 404337,
+  "length": 404285,
   "samples": {
    "row": [
     "<tr class=\"border-solid belongs_to_2741546\"> <!-- <td>1</td>--> <!--<td>2741546</td>--> <td class=\"flag\"> <a href=\"/spain__1\"><img src=\"assets/images/flags/es.png\" alt=\"Spain\" title=\"Spain\" class=\"position-left\"></a> </td> <td> <span class=\"channel_name\" data-popup=\"popover\" data-trigger=\"hover\" data-html=\"true\" data-placement=\"top\" data-content=\" <div class='popover_channel_holder'> <table style='width: 100%'> <tr> <td> <span class='titile_span checked_title'>Checked: </span><span class='minor_content'>22 Nov 2026</span> </td> </tr>",
