@@ -1,20 +1,33 @@
 const { createFetcher } = require('./extractor');
 const { crearProveedorFlixLatam } = require('./flixlatam');
+const { crearProveedorGenerico } = require('./generico');
 const { crearRegistry, hostsReproductores } = require('../resolvers');
 
 // Proveedores de sitios: cada proveedor conoce el flujo real de su sitio y
 // devuelve las páginas de reproductor o los servidores ya descifrados.
 // Equivale a los *Provider.kt de Streamflix.
 //
-// Solo FlixLatam: DocumaniaTV y PoseidonHD2 se retiraron (el primero bloquea
-// IPs de datacenter con HTTP 403 y el segundo no expone los servidores en el
-// HTML estático).
+// DocumaniaTV y PoseidonHD2 se retiraron: el primero bloquea IPs de datacenter
+// con HTTP 403 y el segundo no expone los servidores en el HTML estático.
+//
+// `flujo` decide qué descubridor se usa:
+//   - 'embed69': el sitio incrusta Embed69 (lista de servidores cifrada + Anubis).
+//   - 'generico': WordPress con modal de reproducción; las pistas legibles del
+//     HTML (iframes, enlaces a players, data-*) se pasan al registry.
 const PROVEEDORES = [
   {
     clave: 'flixlatam',
     nombre: 'FlixLatam',
     titulo: 'HLS / MP4',
+    flujo: 'embed69',
     hosts: ['www.flixlatam.com', 'flixlatam.com']
+  },
+  {
+    clave: 'gnula',
+    nombre: 'Gnula',
+    titulo: 'HLS / MP4',
+    flujo: 'generico',
+    hosts: ['ww3.gnulahd.nu', 'gnulahd.nu', 'www.gnulahd.nu']
   }
 ];
 
@@ -84,7 +97,11 @@ async function resolver(request, options = {}) {
   const limite = Date.now() + total;
   const consumo = { restante: () => limite - Date.now() };
 
-  const descubridor = crearProveedorFlixLatam(configuracion);
+  // Cada sitio tiene su propio flujo; el resto (registry, presupuesto,
+  // etiquetas) es común.
+  const descubridor = proveedor.flujo === 'generico'
+    ? crearProveedorGenerico(configuracion)
+    : crearProveedorFlixLatam(configuracion);
   const { media, servidores, reproductor } = await descubridor.descubrir(url.href);
 
   // El registry fija su presupuesto al construirse (cada resolvedor crea su

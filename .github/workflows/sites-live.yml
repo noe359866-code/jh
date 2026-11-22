@@ -88,10 +88,20 @@ jobs:
                 + ' bytes=' + e.bytes + ' titulo=' + JSON.stringify(e.titulo)).join(' , ');
             const muertos = (r.events || []).filter(e => e.stage === 'mirror-muerto')
               .map(e => e.host).join(' , ');
+            // Sitios que inyectan el reproductor (Gnula): cuántas pistas
+            // legibles hay y, si no hay ninguna, la forma de la página.
+            const pistas = (r.events || []).filter(e => e.stage === 'pistas')
+              .map(e => e.host + ' pistas=' + e.total + ' idiomas=' + JSON.stringify(e.idiomas || [])
+                + ' servidores=' + JSON.stringify(e.servidores || [])).join(' , ');
+            const sinPistas = (r.events || []).filter(e => e.stage === 'sin-pistas')
+              .map(e => e.host + ' bytes=' + e.bytes + ' etiquetas=' + JSON.stringify(e.etiquetas)
+                + ' endpoints=' + JSON.stringify(e.endpoints) + ' acciones=' + JSON.stringify(e.acciones)
+                + ' ids=' + JSON.stringify(e.ids) + ' campos=' + JSON.stringify(e.campos)
+                + ' formularios=' + JSON.stringify(e.formularios)).join(' , ');
             const etapas = {};
             for (const e of r.events || []) etapas[e.stage] = (etapas[e.stage] || 0) + 1;
             const resumen = 'success=' + r.success + ' :: ' + porSitio + (diag ? ' :: ' + diag : '') + (anubisIntentos ? ' :: anubis=' + anubisIntentos : '')
-              + (sinMedia ? ' :: sinMedia=' + sinMedia : '') + (loaders ? ' :: loader=' + loaders : '') + (formas ? ' :: loaderForma=' + formas : '') + (humanos ? ' :: verificacion-humana=' + humanos : '') + (muertos ? ' :: mirror-muerto=' + muertos : '') + (fallos ? ' :: fallos=' + fallos : '') + ' :: etapas=' + JSON.stringify(etapas);
+              + (sinMedia ? ' :: sinMedia=' + sinMedia : '') + (loaders ? ' :: loader=' + loaders : '') + (formas ? ' :: loaderForma=' + formas : '') + (pistas ? ' :: pistas=' + pistas : '') + (sinPistas ? ' :: sin-pistas=' + sinPistas : '') + (humanos ? ' :: verificacion-humana=' + humanos : '') + (muertos ? ' :: mirror-muerto=' + muertos : '') + (fallos ? ' :: fallos=' + fallos : '') + ' :: etapas=' + JSON.stringify(etapas);
             fs.appendFileSync(process.env.GITHUB_OUTPUT || '/dev/null', 'resumen=' + resumen + '\n');
             console.log(resumen);
             if (r.hosts) console.log('hosts:', r.hosts.join(', '));

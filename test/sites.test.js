@@ -23,10 +23,14 @@ function paginaEmbed69({ challenge = 'ch-1', salt = 'sa-1', grupos = [] } = {}) 
 }
 const MP4 = Buffer.from([0, 0, 0, 24, 102, 116, 121, 112, 105, 115, 111, 109]);
 
-test('solo FlixLatam está configurado, con hosts www y sin www', () => {
-  assert.deepEqual(PROVEEDORES.map(site => site.clave), ['flixlatam']);
+test('los sitios configurados declaran sus hosts con www y sin www', () => {
+  assert.deepEqual(PROVEEDORES.map(site => site.clave), ['flixlatam', 'gnula']);
   assert.equal(encontrarProveedor('www.flixlatam.com').clave, 'flixlatam');
   assert.equal(encontrarProveedor('flixlatam.com').clave, 'flixlatam');
+  // Gnula sirve el sitio desde www3 y desde el dominio raíz.
+  assert.equal(encontrarProveedor('ww3.gnulahd.nu').clave, 'gnula');
+  assert.equal(encontrarProveedor('gnulahd.nu').clave, 'gnula');
+  assert.equal(encontrarProveedor('www.gnulahd.nu').clave, 'gnula');
   // Sitios retirados: ya no se aceptan.
   assert.equal(encontrarProveedor('www.documaniatv.com'), null);
   assert.equal(encontrarProveedor('www.poseidonhd2.co'), null);

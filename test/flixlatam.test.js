@@ -1,7 +1,8 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
-const { resolver, PROVEEDORES, hostsPermitidos } = require('../engines/sites');
+const { resolver, PROVEEDORES, hostsPermitidos, validarUrlSitio } = require('../engines/sites');
+const { buscarPistasReproductor } = require('../engines/sites/pistas');
 
 // CDNs de ejemplo de los fixtures. En producción se autorizan con
 // SITES_ALLOWED_HOSTS: ningún host descubierto en el HTML lo está por defecto.
@@ -155,7 +156,7 @@ test('FlixLatam tiene prioridad sobre el barrido literal para medios directos', 
 });
 
 test('el proveedor declara los hosts imprescindibles: sitio, embed69 y players', () => {
-  assert.deepEqual(PROVEEDORES.map(p => p.clave), ['flixlatam']);
+  assert.deepEqual(PROVEEDORES.map(p => p.clave), ['flixlatam', 'gnula']);
   const hosts = hostsPermitidos({});
   for (const host of ['flixlatam.com', 'www.flixlatam.com', 'embed69.org', 'voe.sx', 'streamwish.to',
     'vidhidepro.com', 'filemoon.sx', 'uqload.com', 'hglink.to', 'morencius.com']) {
@@ -184,4 +185,94 @@ test('la ficha publica varios reproductores: se recorren todos', async () => {
   assert.equal(reproductores.length, 1);
   assert.ok(servidores.some(s => s.url.includes('uqload.vc/embed-abc.html')), 'debe incluir el player enlazado');
   assert.ok(servidores.every(s => typeof s.etiqueta === 'string' && s.etiqueta.length > 0));
+});
+
+// ---------------------------------------------------------------------------
+// Gnula: WordPress con modal de reproducción
+// ---------------------------------------------------------------------------
+// La ficha real no lleva el reproductor en el HTML: el tema lo inyecta al
+// pulsar "Reproducir". Estas pruebas cubren lo que sí es legible (iframes,
+// enlaces a players conocidos, atributos data-*) y el diagnóstico cuando la
+// página no publica ninguna pista.
+
+const FICHA_GNULA = `<!DOCTYPE html><html><head>
+<script src="https://ww3.gnulahd.nu/wp-includes/js/jquery/jquery.min.js"></script>
+<script>var gnulaAjax = {"url":"https://ww3.gnulahd.nu/wp-admin/admin-ajax.php","action":"gnula_get_player","nonce":"abc123"};</script>
+</head><body>
+<div id="player-modal" class="modal">
+  <div class="audio-options"><button class="opt active">Latino</button><button class="opt">Subtitulado</button></div>
+  <div class="server-options"><button>Servidor 1</button><button>Servidor 2</button></div>
+  <div id="player-container" data-video-id="520864" data-post="9912">
+    <p>Haz clic para reproducir</p>
+  </div>
+</div>
+<a class="download" href="https://ww3.gnulahd.nu/ver/godzilla-minus-zero/#">Descargar</a>
+</body></html>`;
+
+const FICHA_GNULA_CON_PLAYER = FICHA_GNULA.replace('</body>',
+  '<iframe src="https://streamwish.to/e/abc123" allowfullscreen></iframe>' +
+  '<a class="mirror" href="https://vidhidepro.com/v/xyz789">Ver</a>' +
+  '<div data-src="https://filemoon.sx/e/qq1"></div></body>');
+
+test('Gnula: la ficha se acepta como sitio propio y con sus espejos', () => {
+  const { proveedor } = validarUrlSitio('https://ww3.gnulahd.nu/ver/godzilla-minus-zero/');
+  assert.equal(proveedor.clave, 'gnula');
+  assert.deepEqual(PROVEEDORES.find(p => p.clave === 'gnula').hosts,
+    ['ww3.gnulahd.nu', 'gnulahd.nu', 'www.gnulahd.nu']);
+});
+
+test('Gnula: recoge los reproductores legibles de la ficha, sin ejecutar JS', async () => {
+  const eventos = [];
+  const pedidos = [];
+  const fetchImpl = async (destino) => {
+    const url = String(destino);
+    pedidos.push(url);
+    if (url.includes('gnulahd.nu')) return new Response(FICHA_GNULA_CON_PLAYER);
+    // Los players de la ficha son páginas HTML: el registry las lee (no las
+    // ejecuta) y, cuando no hay media verificable, no se devuelve nada.
+    return new Response('<html><body><p>Loading...</p></body></html>');
+  };
+  const streams = await resolver({ url: 'https://ww3.gnulahd.nu/ver/godzilla-minus-zero/' }, {
+    lookupImpl, fetchImpl, onEvent: evento => eventos.push(evento)
+  });
+
+  // Las tres pistas de la ficha (iframe, enlace y data-src) se descubren.
+  const pistas = eventos.find(e => e.stage === 'pistas');
+  assert.ok(pistas, 'debe informar las pistas encontradas');
+  assert.equal(pistas.host, 'ww3.gnulahd.nu');
+  assert.equal(pistas.total, 3);
+
+  // Y se intentan de verdad: el registry pide cada host de player.
+  for (const host of ['streamwish.to', 'vidhidepro.com', 'filemoon.sx']) {
+    assert.ok(pedidos.some(p => p.includes(host)), `${host} debe intentarse`);
+  }
+
+  // Sin media verificable la lista queda vacía: nunca se inventa un stream.
+  assert.deepEqual(streams, []);
+});
+
+test('Gnula: sin pistas legibles se informa la forma de la página, no se inventa nada', async () => {
+  const eventos = [];
+  const streams = await resolver({ url: 'https://ww3.gnulahd.nu/ver/street-fighter/' }, {
+    lookupImpl,
+    fetchImpl: async () => new Response(FICHA_GNULA),
+    onEvent: evento => eventos.push(evento)
+  });
+  assert.deepEqual(streams, []);
+  const diagnostico = eventos.find(e => e.stage === 'sin-pistas');
+  assert.ok(diagnostico, 'debe emitir un diagnóstico de la página');
+  // Solo estructura: nombres de etiqueta, endpoints y acciones del tema.
+  assert.ok(diagnostico.etiquetas.includes('div'));
+  assert.ok(diagnostico.endpoints.includes('admin-ajax.php'));
+  assert.ok(diagnostico.acciones.includes('gnula_get_player'));
+  assert.ok(diagnostico.ids.includes('player-container'));
+  // Nunca el contenido de la página.
+  assert.equal(JSON.stringify(diagnostico).includes('Haz clic'), false);
+  assert.equal(JSON.stringify(diagnostico).includes('abc123'), false);
+});
+
+test('Gnula: los idiomas y servidores del modal se leen del texto visible', () => {
+  const { idiomas, servidores } = buscarPistasReproductor(FICHA_GNULA, 'https://ww3.gnulahd.nu/ver/x/');
+  assert.deepEqual(idiomas, ['Latino', 'Subtitulado']);
+  assert.deepEqual(servidores, [1, 2]);
 });

@@ -12,10 +12,12 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const { resolver, validarUrlSitio } = require('../engines/sites');
 
-// Único sitio soportado: FlixLatam. Página de detalle real (las rutas de
-// ejemplo devolvían 404 y la prueba nunca podía encontrar medios).
+// Páginas de detalle reales (las rutas de ejemplo devolvían 404 y la prueba
+// nunca podía encontrar medios). Se prueban todos los sitios soportados: una
+// ficha de FlixLatam (Embed69) y una de Gnula (WordPress con modal).
 const DEFAULT_URLS = [
-  'https://flixlatam.com/pelicula/patton'
+  'https://flixlatam.com/pelicula/patton',
+  'https://ww3.gnulahd.nu/ver/godzilla-minus-zero/'
 ];
 
 // Espera entre reintentos tras un 403/429 (los sitios limitan ráfagas).
@@ -48,7 +50,10 @@ const CAMPOS_SANEADOS = [
   'algorithm', 'intento',
   // Loader y verificación humana
   'fetch', 'xhr', 'atob', 'b64', 'eval', 'sha', 'ofuscado', 'literales',
-  'proveedor', 'formulario'
+  'proveedor', 'formulario',
+  // Diagnóstico de sitios que inyectan el reproductor (Gnula)
+  'idiomas', 'servidores', 'etiquetas', 'formularios', 'campos', 'endpoints',
+  'acciones', 'ids', 'propio'
 ];
 // Eventos permitidos en el reporte: solo etapa y host. Nunca paths, queries,
 // HTML, cuerpos ni tokens.
@@ -91,6 +96,15 @@ function eventoSanitizado(evento) {
     if (Array.isArray(evento.literales)) limpio.literales = evento.literales.slice(0, 8).map(String);
   }
   if (Number.isFinite(evento.total)) limpio.total = evento.total;
+  // Diagnóstico de sitios que inyectan el player (Gnula): solo nombres de
+  // etiqueta, campos, endpoints, acciones del tema e ids del modal. Nunca
+  // valores de atributo ni contenido de la página.
+  if (evento.stage === 'sin-pistas') {
+    if (Number.isFinite(evento.bytes)) limpio.bytes = evento.bytes;
+    for (const clave of ['etiquetas', 'formularios', 'campos', 'endpoints', 'acciones', 'ids']) {
+      if (Array.isArray(evento[clave])) limpio[clave] = evento[clave].slice(0, 14).map(v => String(v).slice(0, 60));
+    }
+  }
   // Forma estructural de una página sin media (etiquetas, campos, hosts).
   if (evento.forma && typeof evento.forma === 'object') {
     const f = evento.forma;

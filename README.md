@@ -69,7 +69,7 @@ docker run --rm -p 8080:8080 \
 
 Modelado en el proyecto [Streamflix](https://git.gay/streamflix-reborn2/streamflix), todo en español:
 
-- **Proveedores** (`engines/sites/`): cada uno corresponde a un sitio (hoy solo FlixLatam). Su función es descubrir las URLs de **servidores** (players/embeds) en una página de contenido, equivalente a los `*Provider.kt` de Streamflix. Solo resuelven streams: no catálogos, no metadatos, no demos.
+- **Proveedores** (`engines/sites/`): cada uno corresponde a un sitio (FlixLatam y Gnula). Su función es descubrir las URLs de **servidores** (players/embeds) en una página de contenido, equivalente a los `*Provider.kt` de Streamflix. Solo resuelven streams: no catálogos, no metadatos, no demos.
 - **Resolvedores de reproductores** (`engines/resolvers/`): cada uno mapea un dominio de reproductor (o alias) a una función que, dada la URL del embed/player, devuelve streams verificados (HLS/MP4). Equivale a los `*Extractor.kt` de Streamflix. Incluye:
   - **VOE** (`voe.js`): descifra el payload AES-128-CBC de la página del player (claves por defecto del player, sobreescribibles con `VOE_KEY`/`VOE_IV`; también acepta JSON en claro) y extrae la fuente `.m3u8`. Tolera las variantes `/hls/master.txt` y similares.
   - **Streamtape** (`streamtape.js`): extrae los parámetros del script `botlink`, construye la URL `get_video` y **sigue el 302** con `redirect: 'manual'` para obtener la URI real del media. La URL `get_video` nunca se entrega como stream: no es reproducible en el cliente.
@@ -82,9 +82,9 @@ Modelado en el proyecto [Streamflix](https://git.gay/streamflix-reborn2/streamfl
 
 ## Resolución directa de sitios (mp4/HLS)
 
-`GET /stream/site?url=<página del sitio>` resuelve una página de **flixlatam.com** y devuelve **solo** `{ "streams": [...] }`: sin catálogos, sin metadatos, sin demos y sin entradas inventadas. El endpoint está siempre activo; no requiere configuración de administrador.
+`GET /stream/site?url=<página del sitio>` resuelve una página de **flixlatam.com** o **gnulahd.nu** y devuelve **solo** `{ "streams": [...] }`: sin catálogos, sin metadatos, sin demos y sin entradas inventadas. El endpoint está siempre activo; no requiere configuración de administrador.
 
-> **Alcance actual:** solo FlixLatam. DocumaniaTV y PoseidonHD2 se retiraron por decisión del administrador (el primero responde HTTP 403 a IPs de datacenter y el segundo no expone los servidores en el HTML estático). Cualquier URL de esos hosts devuelve 400 "Host de sitio no soportado" sin hacer peticiones.
+> **Alcance actual:** FlixLatam (cadena Embed69) y Gnula (WordPress con modal). DocumaniaTV y PoseidonHD2 se retiraron por decisión del administrador (el primero responde HTTP 403 a IPs de datacenter y el segundo no expone los servidores en el HTML estático). Cualquier URL de esos hosts devuelve 400 "Host de sitio no soportado" sin hacer peticiones.
 
 La cadena real del sitio (no un barrido del HTML de la ficha) es:
 
@@ -102,6 +102,21 @@ flixlatam.com/pelicula|serie|anime/<slug>
 
 Si el reproductor está detrás de **Anubis** (`<script id="anubis_challenge">`), se resuelve su prueba de trabajo SHA-256 (`rules.difficulty` en nibbles, prefijo `anubis_base_prefix`, espera mínima de `dificultad × 80 ms`) y se obtiene la cookie `*-anubis-auth`; sin ella el sitio devuelve siempre el reto. Los algoritmos `metarefresh` se esperan y los no soportados (`argon2id`/`preact`) se informan como tales, sin inventar medios.
 
+### Gnula (`ww3.gnulahd.nu`)
+
+Es un WordPress con tema propio. Su ficha (`/ver/<slug>/`) **no lleva el reproductor en el HTML**: el tema lo inyecta al pulsar "Reproducir", con un modal que ofrece **Audio** (Latino/Subtitulado) y **Servidor** (1..4). Al no ejecutar JavaScript, el proveedor `generico` recoge las pistas que sí son legibles:
+
+- `<iframe src>`, `data-src` y `data-embed`/`data-player` de la ficha;
+- enlaces a hosts de reproductor conocidos (Streamwish, Vidhide, Filemoon, Uqload, Voe...), dentro del HTML o de JSON/JS escapado;
+- idiomas y números de servidor declarados en el texto del modal.
+
+Cada pista se pasa al registry como cualquier otra. Si la ficha no publica **ninguna** pista legible, el reporte en vivo emite la etapa `sin-pistas` con la **forma** de la página (nombres de etiqueta, `admin-ajax.php`, `action` del tema, ids del modal y nombres de campo), nunca su contenido. Así se puede ajustar el parser con datos reales en vez de adivinar el HTML.
+
+```
+GET /stream/site?url=https://ww3.gnulahd.nu/ver/godzilla-minus-zero/
+→ { "streams": [] }   # mientras los players de la ficha no sean resolubles sin JS
+```
+
 ```
 GET /stream/site?url=https://flixlatam.com/pelicula/patton
 → { "streams": [
@@ -110,7 +125,7 @@ GET /stream/site?url=https://flixlatam.com/pelicula/patton
       { "name": "FlixLatam", "title": "Subtitulado · Filemoon", "url": "https://…/master.m3u8" } ] }
 ```
 
-- Solo se aceptan URLs HTTPS sin credenciales y con hostname de FlixLatam (con o sin `www`). Otros hosts, HTTP claro, credenciales y URLs malformadas devuelven 400 sin hacer peticiones.
+- Solo se aceptan URLs HTTPS sin credenciales y con hostname de un sitio soportado (FlixLatam con o sin `www`; Gnula en `ww3`, `www` y dominio raíz). Otros hosts, HTTP claro, credenciales y URLs malformadas devuelven 400 sin hacer peticiones.
 - Cada ficha se resuelve por el camino real del sitio (arriba). Además se recogen los medios literales que aparezcan en la ficha o en el reproductor y se verifican por firma: una playlist HLS con `#EXT-X-STREAM-INF` o `#EXTINF`/`#EXT-X-TARGETDURATION`, o una caja `ftyp` para MP4. Una cabecera `#EXTM3U` suelta no se acepta. **Esto no prueba reproducción completa**, codecs, audio latino ni CORS.
 - **No se ejecuta JavaScript del sitio**: el cifrado de Embed69 se descifra con AES y P.A.C.K.E.R. se desempaqueta por texto. Sí se usan cookies (las del propio reproductor y la cookie de Anubis) y el `Referer` del reproductor que incrusta al player, porque los players los exigen. No se resuelven CAPTCHAs de terceros ni se evade DRM.
 - Los hosts confiables son los tres dominios del sitio más los dominios de reproductor conocidos del registry (VOE, Streamtape, Vidsrc, Doodstream, Filemoon, Vidhide, Streamwish...). Si un medio se sirve desde un CDN, añade sus hosts explícitamente con `SITES_ALLOWED_HOSTS=cdn.example.com,...` **después de comprobar que son confiables**; el HTML de la página nunca autoriza un host por sí solo. Los hosts no permitidos se omiten (la lista resultante puede quedar vacía) y se registra un evento `blocked-host`/`blocked-frame`.
@@ -123,7 +138,7 @@ GET /stream/site?url=https://flixlatam.com/pelicula/patton
 SITES_TEST_URLS=https://flixlatam.com/pelicula/patton npm run test:sites-live
 ```
 
-`scripts/sites-live.js` valida cada URL antes de hacer peticiones, resuelve la página y **falla si ningún sitio de la lista devuelve al menos un medio con firma válida**. El presupuesto total se ajusta con `SITES_LIVE_BUDGET_MS` (180 s por defecto; el test de contrato usa 6 s para no depender de la red real). Por defecto prueba FlixLatam; puedes indicar URLs concretas con `SITES_TEST_URLS` (separadas por comas). Escribe un reporte sanitizado en `reports/sites-live.json` con el resultado por sitio (disponible, hosts encontrados/bloqueados y conteos; **no URLs, queries, HTML ni tokens**), y imprime por consola cuáles devolvieron HLS/MP4. Si aparecen eventos `blocked-frame`/`blocked-host`, revisa ese dominio antes de autorizarlo en `SITES_ALLOWED_HOSTS`; nunca habilites dominios automáticamente. Los reportes locales quedan en `reports/`, fuera de Git. Las pruebas de `npm test` son deterministas y mockadas, y no sustituyen esta comprobación.
+`scripts/sites-live.js` valida cada URL antes de hacer peticiones, resuelve la página y **falla si ningún sitio de la lista devuelve al menos un medio con firma válida**. El presupuesto total se ajusta con `SITES_LIVE_BUDGET_MS` (180 s por defecto; el test de contrato usa 6 s para no depender de la red real). Por defecto prueba FlixLatam y Gnula (una ficha de cada uno); puedes indicar URLs concretas con `SITES_TEST_URLS` (separadas por comas). Escribe un reporte sanitizado en `reports/sites-live.json` con el resultado por sitio (disponible, hosts encontrados/bloqueados y conteos; **no URLs, queries, HTML ni tokens**), y imprime por consola cuáles devolvieron HLS/MP4. Si aparecen eventos `blocked-frame`/`blocked-host`, revisa ese dominio antes de autorizarlo en `SITES_ALLOWED_HOSTS`; nunca habilites dominios automáticamente. Los reportes locales quedan en `reports/`, fuera de Git. Las pruebas de `npm test` son deterministas y mockadas, y no sustituyen esta comprobación.
 
 **Resultado medido** (GitHub Actions, IP de datacenter, 2026-11-21, página de detalle real):
 
