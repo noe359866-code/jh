@@ -1,49 +1,49 @@
 {
- "startedAt": "2026-11-22T04:07:48.558Z",
+ "startedAt": "2026-11-22T04:12:12.137Z",
  "ok": true,
  "sources": {
   "tvgarden": {
-   "country": "bo",
-   "channels": 46,
+   "country": "do",
+   "channels": 161,
    "mode": "direct",
    "ok": true,
    "entries": 1211,
-   "ms": 1337
+   "ms": 968
   },
   "tvenvivo": {
-   "channels": 0,
+   "channels": 70,
    "mode": "page",
    "ok": true,
-   "entries": 0,
-   "ms": 917
+   "entries": 70,
+   "ms": 901
   },
   "eja": {
    "mode": "direct",
    "ok": false,
    "entries": 0,
    "error": "fetch failed",
-   "ms": 929
+   "ms": 928
   },
   "livelive24": {
    "channels": 29,
    "mode": "catalog",
    "ok": true,
    "entries": 29,
-   "ms": 1030
+   "ms": 1012
+  },
+  "thedaddy": {
+   "listed": 59,
+   "mode": "page",
+   "ok": true,
+   "entries": 59,
+   "ms": 1144
   },
   "iptvcat": {
    "mode": "direct",
    "ok": false,
    "entries": 0,
    "error": "fetch failed",
-   "ms": 1182
-  },
-  "thedaddy": {
-   "listed": 0,
-   "mode": "page",
-   "ok": true,
-   "entries": 0,
-   "ms": 1684
+   "ms": 1148
   },
   "globalfreetv": {
    "country": "ES",
@@ -51,16 +51,40 @@
    "mode": "direct",
    "ok": true,
    "entries": 265,
-   "ms": 21221
+   "ms": 27589
   }
  },
  "totals": {
-  "total": 1345,
-  "playable": 1316,
-  "es": 185,
+  "total": 1471,
+  "playable": 1445,
+  "es": 311,
   "latam": 1160
  },
  "checks": [
+  {
+   "channel": "es-antena-3-spain",
+   "source": "thedaddy.li",
+   "resolved": false,
+   "error": null
+  },
+  {
+   "channel": "es-barca-tv-spain",
+   "source": "thedaddy.li",
+   "resolved": false,
+   "error": null
+  },
+  {
+   "channel": "es-ctv-2-canada",
+   "source": "thedaddy.li",
+   "resolved": false,
+   "error": null
+  },
+  {
+   "channel": "es-ctv-canada",
+   "source": "thedaddy.li",
+   "resolved": false,
+   "error": null
+  },
   {
    "channel": "latam-opa",
    "source": "tvgarden.world",
@@ -93,5 +117,5 @@
   }
  ],
  "playlistEntries": 1453,
- "finishedAt": "2026-11-22T04:08:11.824Z"
+ "finishedAt": "2026-11-22T04:12:41.538Z"
 }
