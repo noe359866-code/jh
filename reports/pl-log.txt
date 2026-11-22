@@ -1,7 +1,7 @@
-Catálogo: 4181 canales (3725 con medio directo)
-Extracción de embeds: 0 HLS extraídos de 456 canales con página (fallidos 124, omitidos 332, 73 s)
-  por fuente: {"cinecity":{"extraidos":0,"fallidos":0,"omitidos":91},"D9Kod":{"extraidos":0,"fallidos":0,"omitidos":224},"Estados Unidos (iptv-org)":{"extraidos":0,"fallidos":0,"omitidos":11},"Pluto TV":{"extraidos":0,"fallidos":0,"omitidos":4},"thedaddy.li":{"extraidos":0,"fallidos":26,"omitidos":0},"iptv-chile":{"extraidos":0,"fallidos":0,"omitidos":1},"livelive24.com":{"extraidos":0,"fallidos":28,"omitidos":0},"tvenvivo.org":{"extraidos":0,"fallidos":70,"omitidos":0},"telechancho":{"extraidos":0,"fallidos":0,"omitidos":1}}
-  motivos: {"sin resolutor para la fuente":332,"cadena de embed: HTTP 403":7,"la cadena no expone m3u8":98,"cadena de embed: fetch failed":19}
-Verificación: 4069 canales en 195 s · vivos 3569 · caídos 500 · bloqueados 729 · tiempo agotado 544 · sin verificar 0 · omitidos 0
-Listas escritas en reports/: all (4496), es (511), latam (3594), deportes (159)
-Países con canales vivos: Internacional 1229 · AR 452 · ES 367 · US 281 · CL 229 · MX 202 · DO 163 · PE 141 · CO 98 · PY 67 · CR 65 · EC 63 · VE 61 · HN 57 · BO 49 · GT 44 · PR 38 · SV 26 · PA 18 · NI 17 · UY 7 · CU 1
+Catálogo: 4669 canales (4205 con medio directo)
+Extracción de embeds: 0 HLS extraídos de 464 canales con página (fallidos 106, omitidos 358, 113 s)
+  por fuente: {"cinecity":{"extraidos":0,"fallidos":0,"omitidos":59},"D9Kod":{"extraidos":0,"fallidos":0,"omitidos":120},"Estados Unidos (iptv-org)":{"extraidos":0,"fallidos":0,"omitidos":9},"Pluto TV":{"extraidos":0,"fallidos":0,"omitidos":4},"thedaddy.li":{"extraidos":0,"fallidos":15,"omitidos":0},"iptv-chile":{"extraidos":0,"fallidos":0,"omitidos":1},"iptv-org AR":{"extraidos":0,"fallidos":0,"omitidos":1},"livelive24.com":{"extraidos":0,"fallidos":21,"omitidos":0},"tvenvivo.org":{"extraidos":0,"fallidos":70,"omitidos":0},"telechancho":{"extraidos":0,"fallidos":0,"omitidos":1},"iptv-org NI":{"extraidos":0,"fallidos":0,"omitidos":1}}
+  motivos: {"sin resolutor para la fuente":196,"cadena de embed: HTTP 403":9,"la cadena no expone m3u8":91,"cadena de embed: fetch failed":6}
+Verificación: 3661 canales en 196 s · vivos 3123 · caídos 538 · bloqueados 574 · tiempo agotado 469 · sin verificar 0 · omitidos 895
+Listas escritas en reports/: all (5576), es (516), latam (4660), deportes (176)
+Países con canales vivos: Internacional 1276 · AR 505 · ES 369 · US 290 · CL 250 · DO 238 · MX 234 · PE 192 · CO 136 · VE 81 · EC 80 · BO 75 · PY 72 · HN 69 · CR 68 · GT 53 · SV 43 · PR 43 · PA 22 · NI 18 · UY 8 · CU 4
