@@ -1,2 +1,3 @@
-Catálogo: 1859 canales (1834 con medio directo)
-Cannot access 'blocked' before initialization
+Catálogo: 1789 canales (1764 con medio directo)
+Verificación: 1764 canales en 170 s · vivos 1655 · caídos 109 · bloqueados 291 · tiempo agotado 95 · sin verificar 0 · omitidos 0
+Listas escritas en reports/: all (2728), es (300), latam (2428), deportes (1)

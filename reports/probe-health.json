@@ -1,3 +1,1224 @@
 {
- "missing": true
+ "checkedAt": "2026-11-22T05:45:53.948Z",
+ "durationMs": 169861,
+ "inconclusive": false,
+ "totals": {
+  "checked": 1764,
+  "alive": 1655,
+  "dead": 109,
+  "blocked": 291,
+  "unconfirmed": 95,
+  "unknown": 0,
+  "skipped": 0
+ },
+ "blocked": 291,
+ "unconfirmed": 95,
+ "dead": [
+  {
+   "id": "latam-13max-television",
+   "name": "13Max Television",
+   "country": "LATAM",
+   "sources": [
+    "globalfreetv"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 2
+  },
+  {
+   "id": "es-24-horas-internacional",
+   "name": "24 Horas Internacional",
+   "country": "ES",
+   "sources": [
+    "globalfreetv"
+   ],
+   "status": "red",
+   "error": "getaddrinfo ENOTFOUND rtvelivestream.akamaized.net",
+   "attempts": 1
+  },
+  {
+   "id": "latam-4dmas-noticias-tv",
+   "name": "4Dmas Noticias TV",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-a7-tv",
+   "name": "A7 TV",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": "red",
+   "error": "getaddrinfo ENOTFOUND 183.bozztv.com",
+   "attempts": 1
+  },
+  {
+   "id": "latam-ae-radio-tv",
+   "name": "AE Radio TV",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-aguacate-tv",
+   "name": "Aguacate TV",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden",
+    "eja"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-amaga-television",
+   "name": "Amaga Television",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-antares-television",
+   "name": "Antares Television",
+   "country": "LATAM",
+   "sources": [
+    "globalfreetv"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "es-aragon-tv",
+   "name": "Aragon TV",
+   "country": "ES",
+   "sources": [
+    "globalfreetv"
+   ],
+   "status": "red",
+   "error": "getaddrinfo ENOTFOUND cartv.streaming.aranova.es",
+   "attempts": 1
+  },
+  {
+   "id": "latam-atacama-tv",
+   "name": "Atacama TV",
+   "country": "LATAM",
+   "sources": [
+    "globalfreetv"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-avc-hd",
+   "name": "AVC HD",
+   "country": "LATAM",
+   "sources": [
+    "globalfreetv"
+   ],
+   "status": "red",
+   "error": "fetch failed",
+   "attempts": 1
+  },
+  {
+   "id": "latam-ayni-tv",
+   "name": "AYNI TV",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-bamos-tv",
+   "name": "BAMOS TV",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "es-beteve",
+   "name": "Beteve",
+   "country": "ES",
+   "sources": [
+    "globalfreetv"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 2
+  },
+  {
+   "id": "es-burrianateve",
+   "name": "BurrianaTeVe",
+   "country": "ES",
+   "sources": [
+    "globalfreetv"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-cable-sur-tv",
+   "name": "Cable Sur TV",
+   "country": "LATAM",
+   "sources": [
+    "globalfreetv"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-calitv",
+   "name": "CaliTV",
+   "country": "LATAM",
+   "sources": [
+    "globalfreetv"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 2
+  },
+  {
+   "id": "latam-canal-14-codazzi",
+   "name": "Canal 14 Codazzi",
+   "country": "LATAM",
+   "sources": [
+    "globalfreetv"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-canal-2-salta",
+   "name": "Canal 2 Salta",
+   "country": "LATAM",
+   "sources": [
+    "globalfreetv"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "es-canal-4-mallorca",
+   "name": "Canal 4 Mallorca",
+   "country": "ES",
+   "sources": [
+    "globalfreetv"
+   ],
+   "status": "red",
+   "error": "fetch failed",
+   "attempts": 1
+  },
+  {
+   "id": "es-canal-4-mancha-centro",
+   "name": "Canal 4 Mancha Centro",
+   "country": "ES",
+   "sources": [
+    "globalfreetv"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-canal-5-pico-truncado",
+   "name": "Canal 5 Pico Truncado",
+   "country": "LATAM",
+   "sources": [
+    "globalfreetv"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-canal-6-entre-rios-tv",
+   "name": "Canal 6 Entre Rios TV",
+   "country": "LATAM",
+   "sources": [
+    "globalfreetv"
+   ],
+   "status": "red",
+   "error": "getaddrinfo ENOTFOUND ythls.armelin.one",
+   "attempts": 1
+  },
+  {
+   "id": "latam-canal-6-panadish",
+   "name": "Canal 6 Panadish",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": "red",
+   "error": "fetch failed",
+   "attempts": 1
+  },
+  {
+   "id": "latam-canal-9-cosespu",
+   "name": "Canal 9 Cosespu",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-canal-9-litoral",
+   "name": "Canal 9 Litoral",
+   "country": "LATAM",
+   "sources": [
+    "globalfreetv"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "es-canal-donana",
+   "name": "Canal Donana",
+   "country": "ES",
+   "sources": [
+    "tvgarden",
+    "globalfreetv"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-canal-scn",
+   "name": "Canal SCN",
+   "country": "LATAM",
+   "sources": [
+    "globalfreetv"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-canal-u",
+   "name": "Canal U",
+   "country": "LATAM",
+   "sources": [
+    "globalfreetv"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-capital-21",
+   "name": "Capital 21",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-ceacom-tv",
+   "name": "CEACOM TV",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden",
+    "eja"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-cpetv",
+   "name": "CPEtv",
+   "country": "LATAM",
+   "sources": [
+    "globalfreetv"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-diario-hechicera",
+   "name": "Diario Hechicera",
+   "country": "LATAM",
+   "sources": [
+    "globalfreetv"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-dios-tv-talanga",
+   "name": "Dios Tv Talanga",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-dmj",
+   "name": "DMJ",
+   "country": "LATAM",
+   "sources": [
+    "globalfreetv"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-eclipse-tv",
+   "name": "Eclipse TV",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-egm-channel",
+   "name": "EGM Channel",
+   "country": "LATAM",
+   "sources": [
+    "globalfreetv"
+   ],
+   "status": "red",
+   "error": "getaddrinfo ENOTFOUND paneltv.online",
+   "attempts": 1
+  },
+  {
+   "id": "latam-el-puerto-tv",
+   "name": "El Puerto TV",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-farra-play",
+   "name": "Farra Play",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-girovisual",
+   "name": "Girovisual",
+   "country": "LATAM",
+   "sources": [
+    "globalfreetv"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-heliconia-radio-tv",
+   "name": "Heliconia Radio TV",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-huasco-television",
+   "name": "Huasco Television",
+   "country": "LATAM",
+   "sources": [
+    "globalfreetv"
+   ],
+   "status": "red",
+   "error": "getaddrinfo ENOTFOUND paneltv.online",
+   "attempts": 1
+  },
+  {
+   "id": "latam-imperial-tv",
+   "name": "Imperial TV",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-jimani-tv",
+   "name": "Jimani TV",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-jne-tv",
+   "name": "JNE TV",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": "red",
+   "error": "getaddrinfo ENOTFOUND lbgo.bozztv.com",
+   "attempts": 1
+  },
+  {
+   "id": "latam-la-hermandad-salsera",
+   "name": "La Hermandad Salsera",
+   "country": "LATAM",
+   "sources": [
+    "globalfreetv"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-la-red",
+   "name": "La Red",
+   "country": "LATAM",
+   "sources": [
+    "globalfreetv"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-la-voz-grupera-tv",
+   "name": "La Voz Grupera TV",
+   "country": "LATAM",
+   "sources": [
+    "globalfreetv"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-magic-kids",
+   "name": "Magic Kids",
+   "country": "LATAM",
+   "sources": [
+    "globalfreetv"
+   ],
+   "status": "red",
+   "error": "getaddrinfo ENOTFOUND magicstream.ddns.net",
+   "attempts": 1
+  },
+  {
+   "id": "latam-malbec-play",
+   "name": "Malbec Play",
+   "country": "LATAM",
+   "sources": [
+    "globalfreetv"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-marla-vision",
+   "name": "Marla Vision",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-montones-tv",
+   "name": "Montones TV",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": "red",
+   "error": "getaddrinfo ENOTFOUND lbgo.bozztv.com",
+   "attempts": 1
+  },
+  {
+   "id": "latam-nande-portetepe-tv",
+   "name": "Nande Portetepe TV",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-nova-tv-star",
+   "name": "Nova TV Star",
+   "country": "LATAM",
+   "sources": [
+    "globalfreetv"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-oasis-rtv",
+   "name": "Oasis RTV",
+   "country": "LATAM",
+   "sources": [
+    "globalfreetv"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-omega-tv",
+   "name": "Omega TV",
+   "country": "LATAM",
+   "sources": [
+    "eja"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-peravia-vision",
+   "name": "Peravia Vision",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-planeta-tv",
+   "name": "Planeta TV",
+   "country": "LATAM",
+   "sources": [
+    "globalfreetv"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "es-radio-carnaval-tv",
+   "name": "Radio Carnaval TV",
+   "country": "ES",
+   "sources": [
+    "tvgarden",
+    "eja"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-radio-clasica-tv",
+   "name": "Radio Clasica TV",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-radio-mega-tv-amazonia",
+   "name": "Radio Mega TV Amazonia",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-radio-omega-tv",
+   "name": "Radio Omega TV",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "es-radio-television-marbella",
+   "name": "Radio Television Marbella",
+   "country": "ES",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-radio-universal",
+   "name": "Radio Universal",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-raly-tv",
+   "name": "Raly TV",
+   "country": "LATAM",
+   "sources": [
+    "globalfreetv"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-rcr",
+   "name": "RCR",
+   "country": "LATAM",
+   "sources": [
+    "globalfreetv"
+   ],
+   "status": "red",
+   "error": "fetch failed",
+   "attempts": 1
+  },
+  {
+   "id": "es-real-madrid-tv-spain",
+   "name": "Real Madrid TV Spain",
+   "country": "ES",
+   "sources": [
+    "thedaddy"
+   ],
+   "status": "red",
+   "error": "fetch failed",
+   "attempts": 1
+  },
+  {
+   "id": "latam-red-rubi",
+   "name": "Red Rubi",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-rocavision-tv",
+   "name": "Rocavision TV",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-super-tv-55",
+   "name": "Super TV 55",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-tele-2-web-retiro",
+   "name": "Tele 2 Web Retiro",
+   "country": "LATAM",
+   "sources": [
+    "globalfreetv"
+   ],
+   "status": "red",
+   "error": "fetch failed",
+   "attempts": 1
+  },
+  {
+   "id": "latam-tele-fe-bolivia",
+   "name": "Tele Fe Bolivia",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-tele-posadas",
+   "name": "Tele Posadas",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-tele-san-jacinto",
+   "name": "Tele San Jacinto",
+   "country": "LATAM",
+   "sources": [
+    "globalfreetv"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-tele-uv",
+   "name": "Tele UV",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-telecauquenes",
+   "name": "TeleCauquenes",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": "red",
+   "error": "getaddrinfo ENOTFOUND lbgo.bozztv.com",
+   "attempts": 1
+  },
+  {
+   "id": "es-telecinco-spain",
+   "name": "Telecinco Spain",
+   "country": "ES",
+   "sources": [
+    "thedaddy"
+   ],
+   "status": "red",
+   "error": "fetch failed",
+   "attempts": 1
+  },
+  {
+   "id": "es-teledeporte-spain-tdp",
+   "name": "Teledeporte Spain (TDP)",
+   "country": "ES",
+   "sources": [
+    "thedaddy"
+   ],
+   "status": "red",
+   "error": "fetch failed",
+   "attempts": 1
+  },
+  {
+   "id": "latam-telerayo",
+   "name": "Telerayo",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-telesol",
+   "name": "Telesol",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": "red",
+   "error": "fetch failed",
+   "attempts": 1
+  },
+  {
+   "id": "latam-tl-estrella",
+   "name": "TL Estrella",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-tmn-tv",
+   "name": "TMN TV",
+   "country": "LATAM",
+   "sources": [
+    "globalfreetv"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-top-fm-tv",
+   "name": "Top FM TV",
+   "country": "LATAM",
+   "sources": [
+    "eja"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-top-tv",
+   "name": "Top TV",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-tv-kaliente",
+   "name": "TV Kaliente",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": "red",
+   "error": "getaddrinfo ENOTFOUND lbgo.bozztv.com",
+   "attempts": 1
+  },
+  {
+   "id": "latam-tv-mar",
+   "name": "TV MAR",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-tv-oasis-monay",
+   "name": "TV Oasis Monay",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-tv-peru",
+   "name": "TV Peru",
+   "country": "LATAM",
+   "sources": [
+    "globalfreetv"
+   ],
+   "status": "red",
+   "error": "fetch failed",
+   "attempts": 1
+  },
+  {
+   "id": "latam-tv-peru-noticias",
+   "name": "TV Peru Noticias",
+   "country": "LATAM",
+   "sources": [
+    "globalfreetv"
+   ],
+   "status": "red",
+   "error": "fetch failed",
+   "attempts": 1
+  },
+  {
+   "id": "latam-tv-plata",
+   "name": "TV Plata",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-tv-publica-marcos-paz",
+   "name": "TV Publica Marcos Paz",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-tv-uct",
+   "name": "TV UCT",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden",
+    "globalfreetv"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "es-tv3-max-denmark",
+   "name": "TV3 Max Denmark",
+   "country": "ES",
+   "sources": [
+    "thedaddy"
+   ],
+   "status": "red",
+   "error": "fetch failed",
+   "attempts": 1
+  },
+  {
+   "id": "es-tv3-sport-denmark",
+   "name": "TV3 Sport Denmark",
+   "country": "ES",
+   "sources": [
+    "thedaddy"
+   ],
+   "status": "red",
+   "error": "fetch failed",
+   "attempts": 1
+  },
+  {
+   "id": "latam-tvgracia",
+   "name": "TVGracia",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-u-los-lagos-tv",
+   "name": "U Los Lagos TV",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": "red",
+   "error": "fetch failed",
+   "attempts": 1
+  },
+  {
+   "id": "latam-ultra-casanare-tv",
+   "name": "Ultra Casanare TV",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-umtv",
+   "name": "UMTV",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden",
+    "eja"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-un24",
+   "name": "UN24",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-unison-tv",
+   "name": "Unison TV",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": "red",
+   "error": "fetch failed",
+   "attempts": 1
+  },
+  {
+   "id": "latam-usil-tv",
+   "name": "USIL TV",
+   "country": "LATAM",
+   "sources": [
+    "globalfreetv"
+   ],
+   "status": "red",
+   "error": "fetch failed",
+   "attempts": 1
+  },
+  {
+   "id": "latam-v-classic-tv",
+   "name": "V Classic TV",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden",
+    "globalfreetv"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-veo-television",
+   "name": "Veo Televisión",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-vision-3000",
+   "name": "Vision 3000",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-vos-tv",
+   "name": "Vos TV",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-vz-tv",
+   "name": "VZ TV",
+   "country": "LATAM",
+   "sources": [
+    "globalfreetv"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-xhpbzc-tdt1",
+   "name": "XHPBZC-TDT1",
+   "country": "LATAM",
+   "sources": [
+    "globalfreetv"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-xhpbzc-tdt2",
+   "name": "XHPBZC-TDT2",
+   "country": "LATAM",
+   "sources": [
+    "globalfreetv"
+   ],
+   "status": 404,
+   "error": "HTTP 404",
+   "attempts": 1
+  },
+  {
+   "id": "latam-zona-play-tv",
+   "name": "Zona Play TV",
+   "country": "LATAM",
+   "sources": [
+    "tvgarden"
+   ],
+   "status": "red",
+   "error": "fetch failed",
+   "attempts": 1
+  }
+ ]
 }
