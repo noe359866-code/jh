@@ -1,9 +1,97 @@
 {
- "startedAt": "2026-11-22T03:57:05.401Z",
- "ok": false,
- "sources": {},
- "totals": {},
- "checks": [],
- "error": "La recolección del catálogo tardó demasiado",
- "finishedAt": "2026-11-22T03:57:50.406Z"
+ "startedAt": "2026-11-22T04:07:48.558Z",
+ "ok": true,
+ "sources": {
+  "tvgarden": {
+   "country": "bo",
+   "channels": 46,
+   "mode": "direct",
+   "ok": true,
+   "entries": 1211,
+   "ms": 1337
+  },
+  "tvenvivo": {
+   "channels": 0,
+   "mode": "page",
+   "ok": true,
+   "entries": 0,
+   "ms": 917
+  },
+  "eja": {
+   "mode": "direct",
+   "ok": false,
+   "entries": 0,
+   "error": "fetch failed",
+   "ms": 929
+  },
+  "livelive24": {
+   "channels": 29,
+   "mode": "catalog",
+   "ok": true,
+   "entries": 29,
+   "ms": 1030
+  },
+  "iptvcat": {
+   "mode": "direct",
+   "ok": false,
+   "entries": 0,
+   "error": "fetch failed",
+   "ms": 1182
+  },
+  "thedaddy": {
+   "listed": 0,
+   "mode": "page",
+   "ok": true,
+   "entries": 0,
+   "ms": 1684
+  },
+  "globalfreetv": {
+   "country": "ES",
+   "channels": 60,
+   "mode": "direct",
+   "ok": true,
+   "entries": 265,
+   "ms": 21221
+  }
+ },
+ "totals": {
+  "total": 1345,
+  "playable": 1316,
+  "es": 185,
+  "latam": 1160
+ },
+ "checks": [
+  {
+   "channel": "latam-opa",
+   "source": "tvgarden.world",
+   "signature": true
+  },
+  {
+   "channel": "latam-13-festival",
+   "source": "tvgarden.world",
+   "signature": false
+  },
+  {
+   "channel": "latam-13-humor",
+   "source": "tvgarden.world",
+   "signature": false
+  },
+  {
+   "channel": "latam-13-kids",
+   "source": "tvgarden.world",
+   "signature": false
+  },
+  {
+   "channel": "latam-13-realities",
+   "source": "tvgarden.world",
+   "signature": false
+  },
+  {
+   "channel": "latam-13c",
+   "source": "tvgarden.world",
+   "signature": false
+  }
+ ],
+ "playlistEntries": 1453,
+ "finishedAt": "2026-11-22T04:08:11.824Z"
 }
