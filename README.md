@@ -40,7 +40,7 @@ momento de la última recolección.
 npm ci
 npm start                 # http://localhost:8080
 PORT=3000 npm start       # otro puerto
-CACHE_TTL=600000 npm start  # TTL del catálogo en ms (por defecto 30 min)
+CACHE_TTL=600000 npm start  # TTL del catálogo en ms (por defecto 30 min, mínimo 1 min)
 ```
 
 Con Docker:

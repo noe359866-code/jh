@@ -8,6 +8,12 @@ const addon = require('./engines/live/addon');
 
 const SITE_NAME = 'TV en Español';
 
+// TTL del catálogo configurable por entorno (`CACHE_TTL` en ms, mínimo 60 s).
+function catalogTtl() {
+  const value = Number(process.env.CACHE_TTL);
+  return Number.isFinite(value) && value >= 60000 ? value : undefined;
+}
+
 // Resolutores por fuente para canales `kind:'page'` (se ejecutan bajo demanda,
 // nunca en el arranque). Solo se permite resolver páginas de las dos fuentes
 // cuyo reproductor es estable y público.
@@ -61,7 +67,7 @@ const PLAYLISTS = {
 };
 
 function createApp({
-  catalog = createCatalog({ sources }),
+  catalog = createCatalog({ sources, ...(catalogTtl() ? { ttlMs: catalogTtl() } : {}) }),
   resolve = resolvePage,
   playlistTtlMs = 5 * 60 * 1000,
   now = Date.now,
