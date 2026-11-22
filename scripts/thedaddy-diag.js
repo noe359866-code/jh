@@ -5,7 +5,7 @@ const path = require('node:path');
 const { get } = require('../engines/live/http');
 const td = require('../engines/live/sources/thedaddy');
 
-(async () => {
+async function main() {
   const out = [];
   const html = await get('https://thedaddy.li/24-7-channels.php').then(r => r.text);
   const items = td.parseList(html).filter(item => td.isSpanishSignal(item.name));
@@ -49,9 +49,17 @@ const td = require('../engines/live/sources/thedaddy');
     out.push({ step: 'hops', hops });
   }
   fs.mkdirSync('reports', { recursive: true });
-  fs.writeFileSync(path.join('reports', 'thedaddy-diag.json'), JSON.stringify(out, null, 1));
+  return out;
+}
+
+(async () => {
+  let out;
+  try {
+    out = await main();
+  } catch (error) {
+    out = [{ step: 'error', error: error.message }];
+  }
+  const file = path.join('reports', 'thedaddy-diag.json');
+  fs.writeFileSync(file, JSON.stringify(out, null, 1));
   console.log(JSON.stringify(out, null, 1).slice(0, 4000));
-})().catch(error => {
-  console.error('ERROR', error.message);
-  process.exit(1);
-});
+})();

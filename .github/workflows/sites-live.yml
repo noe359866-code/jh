@@ -25,6 +25,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git rm -q --cached reports/thedaddy-diag.json 2>/dev/null || true
           git add -f reports/thedaddy-diag.json
           git diff --cached --quiet && echo sin-cambios || git commit -m "Diagnóstico thedaddy (generado)"
           git push
