@@ -1,6 +1,6 @@
-Catálogo: 3794 canales (3150 con medio directo)
-Extracción de embeds: 0 HLS extraídos de 644 canales con página (fallidos 106, omitidos 538, 130 s)
-  por fuente: {"Samsung TV Plus ES":{"extraidos":0,"fallidos":0,"omitidos":93},"cinecity":{"extraidos":0,"fallidos":0,"omitidos":36},"D9Kod":{"extraidos":0,"fallidos":0,"omitidos":120},"Pluto TV":{"extraidos":0,"fallidos":0,"omitidos":33},"thedaddy.li":{"extraidos":0,"fallidos":13,"omitidos":0},"iptv-chile":{"extraidos":0,"fallidos":0,"omitidos":1},"livelive24.com":{"extraidos":0,"fallidos":23,"omitidos":0},"tvenvivo.org":{"extraidos":0,"fallidos":70,"omitidos":0},"telechancho":{"extraidos":0,"fallidos":0,"omitidos":1}}
-  motivos: {"sin resolutor para la fuente":284,"cadena de embed: HTTP 403":7,"la cadena no expone m3u8":93,"cadena de embed: fetch failed":6}
-Verificación: 3393 canales en 207 s · vivos 2990 · caídos 403 · bloqueados 642 · tiempo agotado 664 · sin verificar 0 · omitidos 314
-Listas escritas en reports/: all (3914), es (319), latam (3595), deportes (139)
+Catálogo: 3803 canales (3388 con medio directo)
+Extracción de embeds: 0 HLS extraídos de 415 canales con página (fallidos 106, omitidos 309, 116 s)
+  por fuente: {"cinecity":{"extraidos":0,"fallidos":0,"omitidos":34},"D9Kod":{"extraidos":0,"fallidos":0,"omitidos":120},"Pluto TV":{"extraidos":0,"fallidos":0,"omitidos":4},"thedaddy.li":{"extraidos":0,"fallidos":13,"omitidos":0},"iptv-chile":{"extraidos":0,"fallidos":0,"omitidos":1},"livelive24.com":{"extraidos":0,"fallidos":23,"omitidos":0},"tvenvivo.org":{"extraidos":0,"fallidos":70,"omitidos":0},"telechancho":{"extraidos":0,"fallidos":0,"omitidos":1}}
+  motivos: {"sin resolutor para la fuente":160,"cadena de embed: HTTP 403":7,"la cadena no expone m3u8":93,"cadena de embed: fetch failed":6}
+Verificación: 3213 canales en 211 s · vivos 2838 · caídos 375 · bloqueados 646 · tiempo agotado 439 · sin verificar 0 · omitidos 513
+Listas escritas en reports/: all (4210), es (516), latam (3694), deportes (170)
