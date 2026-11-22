@@ -53,7 +53,7 @@ const CAMPOS_SANEADOS = [
   'proveedor', 'formulario',
   // Diagnóstico de sitios que inyectan el reproductor (Gnula)
   'idiomas', 'servidores', 'etiquetas', 'formularios', 'campos', 'endpoints',
-  'acciones', 'ids', 'propio'
+  'acciones', 'ids', 'propio', 'otrosFrames'
 ];
 // Eventos permitidos en el reporte: solo etapa y host. Nunca paths, queries,
 // HTML, cuerpos ni tokens.
@@ -96,6 +96,13 @@ function eventoSanitizado(evento) {
     if (Array.isArray(evento.literales)) limpio.literales = evento.literales.slice(0, 8).map(String);
   }
   if (Number.isFinite(evento.total)) limpio.total = evento.total;
+  if (Number.isFinite(evento.otrosFrames)) limpio.otrosFrames = evento.otrosFrames;
+  // Pistas y modal: solo los nombres (idiomas y números de servidor), no URLs.
+  if (evento.stage === 'pistas') {
+    for (const clave of ['idiomas', 'servidores']) {
+      if (Array.isArray(evento[clave])) limpio[clave] = evento[clave].slice(0, 12).map(String);
+    }
+  }
   // Diagnóstico de sitios que inyectan el player (Gnula): solo nombres de
   // etiqueta, campos, endpoints, acciones del tema e ids del modal. Nunca
   // valores de atributo ni contenido de la página.

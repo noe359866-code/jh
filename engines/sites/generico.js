@@ -1,5 +1,5 @@
 const { createFetcher } = require('./extractor');
-const { buscarPistasReproductor, diagnosticarPagina, hostsDeReproductor } = require('./pistas');
+const { buscarPistasReproductor, diagnosticarPagina } = require('./pistas');
 
 // ---------------------------------------------------------------------------
 // Proveedor genérico (sitios WordPress con modal de reproducción)
@@ -33,28 +33,28 @@ const crearProveedorGenerico = ({ allowedHosts, fetchImpl, lookupImpl, timeoutMs
       const html = await fetcher.getText(pageUrl);
       const { media } = fetcher.parsePage(html, pageUrl);
       const { pistas, idiomas, servidores } = buscarPistasReproductor(html, pageUrl);
+      // Solo sirven las pistas de hosts de reproductor conocidos. Un tráiler de
+      // YouTube en la ficha es un iframe más: no es un reproductor del sitio.
+      const jugadores = pistas.filter(pista => pista.jugador);
 
       emitir({
         stage: 'pistas', host: new URL(pageUrl).hostname,
-        total: pistas.length, idiomas: idiomas.length, servidores: servidores.length
+        total: jugadores.length, idiomas, servidores,
+        otrosFrames: pistas.length - jugadores.length
       });
 
-      if (!pistas.length) {
-        // Sin pistas: se informa la forma de la página (nombres de etiqueta,
-        // formularios, endpoints y scripts del propio sitio). Nunca contenido.
+      if (!jugadores.length) {
+        // Nada utilizable: se informa la forma de la página (nombres de
+        // etiqueta, formularios, endpoints, acciones e ids del tema). Nunca
+        // contenido ni valores de atributo.
         const diagnostico = diagnosticarPagina(html, pageUrl);
         emitir({ stage: 'sin-pistas', host: new URL(pageUrl).hostname, ...diagnostico });
       }
 
-      // Las pistas de hosts de reproductor ya autorizados se resuelven primero:
-      // son las que el registry puede convertir en HLS/MP4.
-      const dePlayer = pistas.filter(pista => hostsDeReproductor.includes(new URL(pista.url).hostname));
-      const ordenadas = [...dePlayer, ...pistas.filter(pista => !dePlayer.includes(pista))];
-
       return {
-        reproductor: ordenadas[0] ? ordenadas[0].url : null,
+        reproductor: jugadores[0] ? jugadores[0].url : null,
         media,
-        servidores: ordenadas.map(pista => ({
+        servidores: jugadores.map(pista => ({
           idioma: pista.idioma || '',
           servidor: pista.nombre,
           url: pista.url,

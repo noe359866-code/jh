@@ -92,7 +92,8 @@ jobs:
             // legibles hay y, si no hay ninguna, la forma de la página.
             const pistas = (r.events || []).filter(e => e.stage === 'pistas')
               .map(e => e.host + ' pistas=' + e.total + ' idiomas=' + JSON.stringify(e.idiomas || [])
-                + ' servidores=' + JSON.stringify(e.servidores || [])).join(' , ');
+                + ' servidores=' + JSON.stringify(e.servidores || [])
+                + ' otrosFrames=' + e.otrosFrames).join(' , ');
             const sinPistas = (r.events || []).filter(e => e.stage === 'sin-pistas')
               .map(e => e.host + ' bytes=' + e.bytes + ' etiquetas=' + JSON.stringify(e.etiquetas)
                 + ' endpoints=' + JSON.stringify(e.endpoints) + ' acciones=' + JSON.stringify(e.acciones)

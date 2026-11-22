@@ -25,6 +25,16 @@ const HOSTS_PLAYER = [
   'vidsrc.to', 'vidsrc.net', 'vidsrc.icu', 'embed69.org', 'ok.ru', 'mixdrop.co'
 ];
 
+// Tráilers incrustados: son iframes legítimos de la ficha, pero no son
+// reproductores del sitio. Ni se intentan ni cuentan como pista utilizable
+// (intentarlos solo produce un `blocked-host` que ensucia el diagnóstico).
+const HOSTS_TRAILER = ['youtube.com', 'youtube-nocookie.com', 'youtu.be', 'vimeo.com', 'dailymotion.com'];
+
+function esHostTrailer(host) {
+  const limpio = String(host).toLowerCase();
+  return HOSTS_TRAILER.some(dominio => limpio === dominio || limpio.endsWith(`.${dominio}`));
+}
+
 const IDIOMAS = [
   [/latino|lat\b/i, 'Latino'],
   [/subtitulado|sub\b|caption/i, 'Subtitulado'],
@@ -71,6 +81,11 @@ function buscarPistasReproductor(html, base) {
       host,
       nombre: servidor,
       idioma,
+      // Solo las pistas de un host de player conocido son utilizables; el
+      // resto (tráilers, enlaces del propio sitio) se conserva para el
+      // diagnóstico pero no se intenta.
+      jugador: esHostPlayer(host),
+      trailer: esHostTrailer(host),
       etiqueta: [idioma, servidor].filter(Boolean).join(' · ') || servidor,
       referer
     });
@@ -154,5 +169,5 @@ const hostsDeReproductor = HOSTS_PLAYER;
 
 module.exports = {
   buscarPistasReproductor, diagnosticarPagina, idiomaDe, nombreDePlayer,
-  esHostPlayer, hostsDeReproductor, HOSTS_PLAYER
+  esHostPlayer, esHostTrailer, hostsDeReproductor, HOSTS_PLAYER, HOSTS_TRAILER
 };

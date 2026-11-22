@@ -271,6 +271,28 @@ test('Gnula: sin pistas legibles se informa la forma de la página, no se invent
   assert.equal(JSON.stringify(diagnostico).includes('abc123'), false);
 });
 
+test('Gnula: el tráiler de YouTube no cuenta como reproductor del sitio', async () => {
+  // La ficha real incrusta el tráiler antes que el modal del player. Si el
+  // tráiler se toma como pista, el único intento acaba en blocked-host y el
+  // diagnóstico real (no hay pistas del sitio) queda oculto.
+  const ficha = FICHA_GNULA.replace('</body>',
+    '<iframe src="https://www.youtube-nocookie.com/embed/abc?autoplay=1"></iframe></body>');
+  const eventos = [];
+  const pedidos = [];
+  const streams = await resolver({ url: 'https://ww3.gnulahd.nu/ver/marrow/' }, {
+    lookupImpl,
+    fetchImpl: async (destino) => { pedidos.push(String(destino)); return new Response(ficha); },
+    onEvent: evento => eventos.push(evento)
+  });
+  assert.deepEqual(streams, []);
+  const pistas = eventos.find(e => e.stage === 'pistas');
+  assert.equal(pistas.total, 0, 'el tráiler no es una pista de reproductor');
+  assert.equal(pistas.otrosFrames, 1);
+  assert.ok(eventos.some(e => e.stage === 'sin-pistas'));
+  // Y no se hace ninguna petición al host del tráiler.
+  assert.equal(pedidos.some(p => p.includes('youtube')), false);
+});
+
 test('Gnula: los idiomas y servidores del modal se leen del texto visible', () => {
   const { idiomas, servidores } = buscarPistasReproductor(FICHA_GNULA, 'https://ww3.gnulahd.nu/ver/x/');
   assert.deepEqual(idiomas, ['Latino', 'Subtitulado']);
