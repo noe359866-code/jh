@@ -22,52 +22,86 @@
    {
     "id": 446,
     "name": "DAZN 2 Spain"
+   },
+   {
+    "id": 447,
+    "name": "DAZN 3 Spain"
    }
   ]
  },
  {
   "step": "watch",
   "status": 200,
-  "length": 25332,
+  "length": 25413,
   "iframes": [
    "https://thedaddy.li/stream/stream-531.php",
    "https://thedaddy.li/stream/stream-531.php",
    "' + url + '"
-  ],
-  "snippets": [
-   "https://thedaddy.li/stream/stream-531.php",
-   "https://thedaddy.li/stream/stream-531.php",
-   "https://thedaddy.li/cast/stream-531.php",
-   "https://thedaddy.li/watch/stream-531.php",
-   "https://thedaddy.li/plus/stream-531.php"
   ]
  },
  {
-  "step": "hops",
-  "hops": [
-   {
-    "hop": 0,
-    "url": "https://thedaddy.li/watch.php?id=531",
-    "status": 200,
-    "length": 25560,
-    "iframe": "https://thedaddy.li/stream/stream-531.php",
-    "src": null,
-    "title": "Antena 3 Spain | Watch | DaddyLiveHD - Live Sports Streaming Free - DaddyLive.PK - DLHD"
-   },
-   {
-    "hop": 1,
-    "url": "https://thedaddy.li/stream/stream-531.php",
-    "status": 200,
-    "length": 656231,
-    "iframe": "https://dembed.st/premiumtv/daddy.php?id=531",
-    "src": null,
-    "title": null
-   },
-   {
-    "hop": 2,
-    "url": "https://dembed.st/premiumtv/daddy.php?id=531",
-    "error": "HTTP 403"
-   }
-  ]
+  "step": "player",
+  "status": 200,
+  "length": 656224,
+  "iframe": "https://dembed.st/premiumtv/daddy.php?id=531"
+ },
+ {
+  "step": "embed-url",
+  "embedUrl": "https://dembed.st/premiumtv/daddy.php?id=531"
+ },
+ {
+  "step": "embed",
+  "variant": "sin-referer",
+  "error": "HTTP 403"
+ },
+ {
+  "step": "embed",
+  "variant": "referer-thedaddy",
+  "error": "HTTP 403"
+ },
+ {
+  "step": "embed",
+  "variant": "referer-watch",
+  "error": "HTTP 403"
+ },
+ {
+  "step": "embed",
+  "variant": "referer-player",
+  "error": "HTTP 403"
+ },
+ {
+  "step": "embed",
+  "variant": "referer-self",
+  "error": "HTTP 403"
+ },
+ {
+  "step": "embed",
+  "variant": "con-origin",
+  "status": 200,
+  "length": 657591,
+  "hasSrc": true,
+  "head": "<!doctype html> <html lang=\"en\"> <head> <meta charset=\"utf-8\"> <meta name=\"viewport\" content=\"width=device-width,initial-scale=1,viewport-fit=cover\"> <meta name=\"apple-mobile-web-app-capable\" con"
+ },
+ {
+  "step": "embed",
+  "variant": "sin-sec-fetch",
+  "status": 200,
+  "length": 657591,
+  "hasSrc": true,
+  "head": "<!doctype html> <html lang=\"en\"> <head> <meta charset=\"utf-8\"> <meta name=\"viewport\" content=\"width=device-width,initial-scale=1,viewport-fit=cover\"> <meta name=\"apple-mobile-web-app-capable\" con"
+ },
+ {
+  "step": "alternate",
+  "url": "https://thedaddy.li/cast/stream-531.php",
+  "status": 200,
+  "length": 656340,
+  "iframe": "https://waterera.net/e/ul201lvsd924c"
+ },
+ {
+  "step": "alternate",
+  "url": "https://thedaddy.li/plus/stream-531.php",
+  "status": 200,
+  "length": 657574,
+  "iframe": "https://optimserve.shop/play.html#1/531"
  }
 ]
