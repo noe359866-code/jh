@@ -1,0 +1,2 @@
+Catálogo: 1859 canales (1834 con medio directo)
+Cannot access 'blocked' before initialization
