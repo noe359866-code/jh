@@ -210,3 +210,20 @@ test('collect deduplica por URL de medio y tolera listas caídas', async () => {
   assert.equal(entries.length, 1, 'misma URL → una sola entrada');
   assert.equal(entries[0].origin, 'ES');
 });
+
+test('las 24 listas de PLAYLISTS generan M3U', async () => {
+  const { PLAYLISTS } = require('../index');
+  const { buildM3u } = require('../engines/live/m3u');
+  const channels = [
+    { id: 'es-1', name: 'A', country: 'ES', origin: 'ES', category: 'Generalista', sources: ['x'], streams: [{ url: 'https://x/1.m3u8', kind: 'hls' }] },
+    { id: 'ar-1', name: 'B', country: 'LATAM', origin: 'AR', category: 'Deportes', sources: ['x'], streams: [{ url: 'https://x/2.m3u8', kind: 'hls' }] }
+  ];
+  for (const [id, definition] of Object.entries(PLAYLISTS)) {
+    // `filter` tiene que ser la función: pasarla mal dejaba las 24 listas vacías.
+    assert.equal(typeof definition.filter, 'function', `${id} sin filtro`);
+    const { count } = await buildM3u(channels.filter(definition.filter), {});
+    assert.ok(count >= 0, `${id} no generó lista`);
+  }
+  assert.equal(await buildM3u(channels.filter(PLAYLISTS.es.filter), {}).then(r => r.count), 1);
+  assert.equal(await buildM3u(channels.filter(PLAYLISTS.deportes.filter), {}).then(r => r.count), 1);
+});

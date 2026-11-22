@@ -118,10 +118,10 @@ async function main() {
   const vivos = channels.filter(channel => !channel.dead);
   const orden = ['all', ...Object.keys(PLAYLISTS).filter(id => id !== 'all')];
   for (const variant of orden) {
-    const filter = PLAYLISTS[variant];
-    if (!filter) continue;
+    const definition = PLAYLISTS[variant];
+    if (!definition) continue;
     try {
-      const { body, count } = await buildM3u(vivos.filter(filter), { siteName: 'TV en Español' });
+      const { body, count } = await buildM3u(vivos.filter(definition.filter), { siteName: 'TV en Español' });
       fs.writeFileSync(path.join('reports', `playlist-${variant}.m3u`), body);
       written[variant] = count;
     } catch (error) {
