@@ -2,6 +2,7 @@ name: Sites live extraction
 on:
   push:
     paths:
+      - 'scripts/thedaddy-diag.js'
       - '.github/workflows/sites-live.yml'
 
 permissions:
