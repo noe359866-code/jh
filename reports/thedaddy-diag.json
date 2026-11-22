@@ -32,7 +32,7 @@
  {
   "step": "watch",
   "status": 200,
-  "length": 25413,
+  "length": 25510,
   "iframes": [
    "https://thedaddy.li/stream/stream-531.php",
    "https://thedaddy.li/stream/stream-531.php",
@@ -89,6 +89,25 @@
   "length": 657591,
   "hasSrc": true,
   "head": "<!doctype html> <html lang=\"en\"> <head> <meta charset=\"utf-8\"> <meta name=\"viewport\" content=\"width=device-width,initial-scale=1,viewport-fit=cover\"> <meta name=\"apple-mobile-web-app-capable\" con"
+ },
+ {
+  "step": "src",
+  "src": "https://edge.wedd48c.top/premium531/index.m3u8"
+ },
+ {
+  "step": "media",
+  "variant": "sin-referer",
+  "error": "HTTP 403"
+ },
+ {
+  "step": "media",
+  "variant": "referer-embed",
+  "error": "HTTP 403"
+ },
+ {
+  "step": "media",
+  "variant": "referer-thedaddy",
+  "error": "HTTP 403"
  },
  {
   "step": "alternate",
