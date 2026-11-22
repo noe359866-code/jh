@@ -86,10 +86,12 @@ jobs:
             const humanos = (r.events || []).filter(e => e.stage === 'verificacion-humana')
               .map(e => e.host + ' proveedor=' + (e.proveedor || 'formulario') + ' formulario=' + e.formulario
                 + ' bytes=' + e.bytes + ' titulo=' + JSON.stringify(e.titulo)).join(' , ');
+            const muertos = (r.events || []).filter(e => e.stage === 'mirror-muerto')
+              .map(e => e.host).join(' , ');
             const etapas = {};
             for (const e of r.events || []) etapas[e.stage] = (etapas[e.stage] || 0) + 1;
             const resumen = 'success=' + r.success + ' :: ' + porSitio + (diag ? ' :: ' + diag : '') + (anubisIntentos ? ' :: anubis=' + anubisIntentos : '')
-              + (sinMedia ? ' :: sinMedia=' + sinMedia : '') + (loaders ? ' :: loader=' + loaders : '') + (formas ? ' :: loaderForma=' + formas : '') + (humanos ? ' :: verificacion-humana=' + humanos : '') + (fallos ? ' :: fallos=' + fallos : '') + ' :: etapas=' + JSON.stringify(etapas);
+              + (sinMedia ? ' :: sinMedia=' + sinMedia : '') + (loaders ? ' :: loader=' + loaders : '') + (formas ? ' :: loaderForma=' + formas : '') + (humanos ? ' :: verificacion-humana=' + humanos : '') + (muertos ? ' :: mirror-muerto=' + muertos : '') + (fallos ? ' :: fallos=' + fallos : '') + ' :: etapas=' + JSON.stringify(etapas);
             fs.appendFileSync(process.env.GITHUB_OUTPUT || '/dev/null', 'resumen=' + resumen + '\n');
             console.log(resumen);
             if (r.hosts) console.log('hosts:', r.hosts.join(', '));

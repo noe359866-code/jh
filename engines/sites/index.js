@@ -163,7 +163,11 @@ async function resolver(request, options = {}) {
         for (const stream of generico) agregar(stream, servidor.etiqueta);
       }
     } catch (error) {
-      emitir({ stage: 'resolver-failed', host: new URL(servidor.url).hostname, error: error.message });
+      const host = new URL(servidor.url).hostname;
+      // ENOTFOUND = el dominio del player ya no existe (mirror muerto): no es
+      // un fallo de extracción ni algo que se arregle reintentando.
+      if (/ENOTFOUND/i.test(error.message)) emitir({ stage: 'mirror-muerto', host });
+      else emitir({ stage: 'resolver-failed', host, error: error.message });
     }
   }
   return streams;
