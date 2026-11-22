@@ -102,10 +102,11 @@ async function principal() {
 }
 
 const fase = (process.argv[2] || 'todo');
+// Orden pensado para que lo imprescindible quede al principio de la salida.
 const ejecutar = fase === 'unpack' ? faseUnpack
   : fase === 'rutas' ? principal
     : fase === 'vars' ? faseVariables
-      : async () => { await principal(); await faseVariables(); await faseUnpack(); };
+      : async () => { await faseVariables(); await faseUnpack(); await principal(); };
 
 ejecutar().catch(error => {
   console.error(`diagnóstico falló: ${error.message}`);
