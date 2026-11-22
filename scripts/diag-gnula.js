@@ -112,7 +112,8 @@ const fase = (process.argv[2] || 'todo');
 const ejecutar = fase === 'unpack' ? faseUnpack
   : fase === 'rutas' ? principal
     : fase === 'vars' ? faseVariables
-      : async () => { await faseVariables(); await faseUnpack(); await principal(); };
+      : fase === 'players' ? fasePlayers
+      : async () => { await faseVariables(); await faseUnpack(); await fasePlayers(); };
 
 ejecutar().catch(error => {
   console.error(`diagnóstico falló: ${error.message}`);
@@ -262,6 +263,57 @@ async function faseVariables() {
   for (const nombre of ['_gnrdPid', '_gnrdTok', 'gnrdPid', 'gnrdTok']) {
     for (const match of html.matchAll(new RegExp(`.{0,120}${nombre}.{0,120}`, 'g'))) {
       console.log(`uso ${nombre}: ${redactar(match[0])}`);
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Fase 4: qué responde cada servidor del payload (sin resolverlo todavía)
+// ---------------------------------------------------------------------------
+// Se pide cada enlace tal como lo haría el registry (Referer de la ficha) y se
+// informa estado, tamaño, título y los mecanismos que se ven en la página. No
+// se publican URLs: solo host, largos de las partes y qué contiene la respuesta.
+async function fasePlayers() {
+  const { desempacar, leerPlayer } = require('../engines/sites/gnula');
+  const hosts = [...hostsPermitidos({})];
+  const fetcher = createFetcher({ allowedHosts: hosts, maxBytes: 4 * 1024 * 1024 });
+  const html = await fetcher.getText(FICHA);
+  const player = leerPlayer(html);
+  if (!player) return console.log('players: no se encontró el player de la ficha');
+  const url = new URL(`${player.prefijo}${player.id}${player.sufijo}${encodeURIComponent(player.token)}`, FICHA).href;
+  const json = JSON.parse(await fetcher.getText(url, { Accept: 'application/json', Referer: FICHA }));
+  const datos = desempacar(json.p);
+  if (!datos) return console.log('players: el payload no descifra');
+
+  for (const idioma of datos.langs || []) {
+    for (const servidor of idioma.servers || []) {
+      const destino = String(servidor.src || '');
+      let forma = '?';
+      try {
+        const u = new URL(destino);
+        forma = `${u.hostname} partes=${u.pathname.split('/').filter(Boolean).map(x => x.length).join(',')}`
+          + `${u.search ? ' query=si' : ''}${u.hash ? ` hash=${u.hash.length}` : ''}`;
+      } catch { forma = 'no-url'; }
+      const etiqueta = `${idioma.label}/${servidor.title}`;
+      // Sin fragmento: muchos players no lo esperan y algunos devuelven 404.
+      const sinHash = destino.split('#')[0];
+      for (const [intento, objetivo] of [['con-hash', destino], ['sin-hash', sinHash]]) {
+        try {
+          const cuerpo = await fetcher.getText(objetivo, { Referer: FICHA, Accept: 'text/html,*/*' });
+          const titulo = (/<title[^>]*>([^<]{0,80})/i.exec(cuerpo) || [, ''])[1].trim();
+          const señales = [
+            /eval\(function\(p,a,c,k,e,d\)/i.test(cuerpo) ? 'packer' : '',
+            /atob\(/i.test(cuerpo) ? 'atob' : '',
+            /\.m3u8/i.test(cuerpo) ? 'm3u8' : '',
+            /"hls"|file\s*:/i.test(cuerpo) ? 'file-json' : '',
+            /<iframe/i.test(cuerpo) ? 'iframe' : '',
+            /captcha|humano|robot/i.test(cuerpo) ? 'humano' : ''
+          ].filter(Boolean).join('+');
+          console.log(`player ${etiqueta} ${intento} ${forma} -> bytes=${cuerpo.length} titulo=${JSON.stringify(titulo)} señales=${señales || '-'}`);
+        } catch (error) {
+          console.log(`player ${etiqueta} ${intento} ${forma} -> ${error.message.slice(0, 90)}`);
+        }
+      }
     }
   }
 }
