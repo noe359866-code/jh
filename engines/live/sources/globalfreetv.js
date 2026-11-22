@@ -12,7 +12,7 @@ const COUNTRIES = [
   ['ES', 'ES'], ['MX', 'LATAM'], ['AR', 'LATAM'], ['CO', 'LATAM'], ['CL', 'LATAM'],
   ['PE', 'LATAM']
 ];
-const MAX_PAGES = 6;
+const MAX_PAGES = 4;
 
 /** Enlaces de canal (`La1.es`) de una página de país. */
 function channelIds(html) {
@@ -80,7 +80,7 @@ function parseChannel(html) {
   return { name: cleanChannelName(name), country, logo: logo || null, streams, status };
 }
 
-async function collect({ get, onSource, maxChannelsPerCountry = 60 }) {
+async function collect({ get, onSource, maxChannelsPerCountry = 45 }) {
   const perCountry = await mapLimit(COUNTRIES, 6, async ([code, region]) => {
     const entries = [];
     const ids = new Set();
@@ -98,7 +98,7 @@ async function collect({ get, onSource, maxChannelsPerCountry = 60 }) {
       if (ids.size === before || !found.length) break;
     }
     const wanted = [...ids].slice(0, maxChannelsPerCountry);
-    const parsed = await mapLimit(wanted, 6, async id => {
+    const parsed = await mapLimit(wanted, 10, async id => {
       try {
         return parseChannel(await get(`${BASE}/channels/${id}`).then(r => r.text));
       } catch {

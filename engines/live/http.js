@@ -58,7 +58,7 @@ function publicFetch(url, options) {
   if (parsed.port && parsed.port !== '443') throw new Error('Puerto no permitido');
   const host = parsed.hostname.replace(/^\[|\]$/g, '');
   if (isIP(host) && !publicAddress(host)) throw new Error('Destino no público bloqueado');
-  return fetch(parsed, { ...options, dispatcher, redirect: 'error' });
+  return fetch(parsed, { ...options, dispatcher, redirect: 'manual' });
 }
 
 function decodeBody(buffer) {
@@ -73,8 +73,13 @@ function decodeBody(buffer) {
 }
 
 /**
- * Descarga un recurso de texto. Devuelve `{ status, url, contentType, text }`.
- * Lanza `HTTP <status>` en respuestas no 2xx para que el llamador decida.
+ * Descarga un recurso de texto siguiendo redirecciones con validación por salto.
+ * Devuelve `{ status, url, contentType, text }`. Lanza `HTTP <status>` en
+ * respuestas no 2xx para que el llamador decida.
+ *
+ * `allowHttp` se reserva a catálogos públicos cuyo origen solo responde por
+ * HTTP tras la redirección (p. ej. eja.tv); el destino se valida igualmente
+ * (sin credenciales, puerto 80/443, IPv4 pública).
  */
 async function get(url, {
   fetchImpl = publicFetch,
@@ -83,51 +88,66 @@ async function get(url, {
   maxBytes = 6 * 1024 * 1024,
   headers = {},
   referer,
-  accept = 'text/html,application/json;q=0.9,*/*;q=0.8'
+  accept = 'text/html,application/json;q=0.9,*/*;q=0.8',
+  allowHttp = false,
+  maxRedirects = 4
 } = {}) {
-  const parsed = new URL(url);
-  if (parsed.protocol !== 'https:') throw new Error('Solo se permite HTTPS');
-  const addresses = await lookupImpl(parsed.hostname, { all: true, family: 4 });
-  if (!addresses || !addresses.length || addresses.some(({ address }) => !publicAddress(address))) {
-    throw new Error('Destino no público bloqueado');
-  }
-  const response = await fetchImpl(parsed.href, {
-    redirect: 'error',
-    signal: AbortSignal.timeout(timeoutMs),
-    headers: {
-      'User-Agent': BROWSER_UA,
-      Accept: accept,
-      'Accept-Language': 'es-ES,es;q=0.9,en;q=0.6',
-      'Accept-Encoding': 'gzip, deflate',
-      'Upgrade-Insecure-Requests': '1',
-      'Sec-Fetch-Dest': 'document',
-      'Sec-Fetch-Mode': 'navigate',
-      'Sec-Fetch-Site': referer ? 'same-origin' : 'none',
-      ...(referer ? { Referer: referer } : {}),
-      ...headers
+  let current = new URL(url);
+  for (let hop = 0; hop <= maxRedirects; hop++) {
+    if (current.protocol !== 'https:' && !(allowHttp && current.protocol === 'http:')) {
+      throw new Error('Solo se permite HTTPS');
     }
-  });
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  const chunks = [];
-  let size = 0;
-  const reader = response.body.getReader();
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      size += value.length;
-      if (size > maxBytes) throw new Error('Respuesta excede el límite de tamaño');
-      chunks.push(Buffer.from(value));
+    if (current.username || current.password) throw new Error('URL con credenciales rechazada');
+    if (current.port && !['80', '443'].includes(current.port)) throw new Error('Puerto no permitido');
+    const addresses = await lookupImpl(current.hostname, { all: true, family: 4 });
+    if (!addresses || !addresses.length || addresses.some(({ address }) => !publicAddress(address))) {
+      throw new Error('Destino no público bloqueado');
     }
-  } finally {
-    await reader.cancel().catch(() => {});
+    const response = await fetchImpl(current.href, {
+      redirect: 'manual',
+      signal: AbortSignal.timeout(timeoutMs),
+      headers: {
+        'User-Agent': BROWSER_UA,
+        Accept: accept,
+        'Accept-Language': 'es-ES,es;q=0.9,en;q=0.6',
+        'Accept-Encoding': 'gzip, deflate',
+        'Upgrade-Insecure-Requests': '1',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': referer ? 'same-origin' : 'none',
+        ...(referer ? { Referer: referer } : {}),
+        ...headers
+      }
+    });
+    if (response.status >= 300 && response.status < 400) {
+      const location = response.headers.get('location');
+      if (!location) throw new Error(`HTTP ${response.status} sin Location`);
+      current = new URL(location, current);
+      continue;
+    }
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const chunks = [];
+    let size = 0;
+    const reader = response.body.getReader();
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        size += value.length;
+        if (size > maxBytes) throw new Error('Respuesta excede el límite de tamaño');
+        chunks.push(Buffer.from(value));
+      }
+    } finally {
+      await reader.cancel().catch(() => {});
+    }
+    return {
+      status: response.status,
+      url: current.href,
+      contentType: response.headers.get('content-type') || '',
+      text: decodeBody(Buffer.concat(chunks))
+    };
   }
-  return {
-    status: response.status,
-    url: parsed.href,
-    contentType: response.headers.get('content-type') || '',
-    text: decodeBody(Buffer.concat(chunks))
-  };
+  throw new Error('Demasiadas redirecciones');
 }
 
 module.exports = { get, publicFetch, publicAddress, createPublicLookup, BROWSER_UA };

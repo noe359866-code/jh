@@ -69,7 +69,7 @@ function createCatalog({
       const sourceStarted = now();
       try {
         const entries = await source.collect({
-          get: (url, options) => fetchGet(url, options),
+          get: (url, options) => fetchGet(url, { allowHttp: true, ...options }),
           onSource: detail => { status[source.id] = { ...(status[source.id] || {}), ...detail }; }
         });
         results.push({ id: source.id, entries });
