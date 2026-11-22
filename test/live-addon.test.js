@@ -215,6 +215,23 @@ test('catálogo Stremio: solo canales publicables, paginado y filtros', () => {
   assert.equal(addon.catalog(CHANNELS, 'todos', '', 1).metas.length, 1);
 });
 
+test('m3u: dos canales con el mismo tvg-id no se pisan, pero las señales sí lo comparten', async () => {
+  const mismoCanal = await buildM3u([{
+    id: 'es-la1', name: 'La 1', country: 'ES', origin: 'ES', category: 'Generalista', sources: ['x'], epgId: 'La1.TV',
+    streams: [{ url: 'https://x/a.m3u8', kind: 'hls' }, { url: 'https://x/b.m3u8', kind: 'hls' }]
+  }], {});
+  const ids = parseM3u(mismoCanal.body).map(item => item.attrs['tvg-id']);
+  assert.equal(new Set(ids).size, 1, 'las señales del mismo canal comparten id');
+
+  const dosCanales = await buildM3u([
+    { id: 'cl-13c', name: '13C', country: 'CL', origin: 'CL', category: 'Generalista', sources: ['x'], epgId: '13C.cl', streams: [{ url: 'https://x/a.m3u8', kind: 'hls' }] },
+    { id: 'cl-cultura', name: '13 Cultura', country: 'CL', origin: 'CL', category: 'Generalista', sources: ['x'], epgId: '13C.cl', streams: [{ url: 'https://x/b.m3u8', kind: 'hls' }] }
+  ], {});
+  const ids2 = parseM3u(dosCanales.body).map(item => item.attrs['tvg-id']);
+  assert.equal(new Set(ids2).size, 2, 'dos canales distintos no pueden compartir tvg-id');
+  assert.ok(ids2.every(id => id.startsWith('13C.cl-')), 'conservan el id de EPG como prefijo');
+});
+
 test('buildM3u resuelve las páginas en paralelo y conserva el orden', async () => {
   const channels = Array.from({ length: 24 }, (_, i) => ({
     id: `mx-c-${i}`, name: `Canal ${i}`, country: 'LATAM', origin: 'MX', category: 'Generalista', sources: ['x'],

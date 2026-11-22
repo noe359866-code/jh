@@ -48,6 +48,19 @@ async function buildM3u(channels, {
     })
     : channels.map(() => []);
 
+  // Un `tvg-id` puede venir de la EPG de la fuente y estar repetido entre
+  // canales distintos ("13 Cultura" y "13C" comparten `13C.cl`). El id interno
+  // del addon sí es único, así que solo se desambigua cuando el choque es real:
+  // las señales del mismo canal conservan su id.
+  const duenos = new Map();
+  for (const channel of channels) {
+    const base = channel.epgId || channel.id;
+    if (!base) continue;
+    const dueno = duenos.get(base);
+    if (!dueno) duenos.set(base, channel.id);
+    else if (dueno !== channel.id) duenos.set(base, null);
+  }
+
   // Fase 2: escribir en orden, que es lo que hace determinista el archivo.
   for (const [index, channel] of channels.entries()) {
     const streams = [];
@@ -60,7 +73,8 @@ async function buildM3u(channels, {
     for (const stream of streams) {
       // Si la lista de origen trae `tvg-id` (el que usa la EPG), se publica ese;
       // si no, el id interno del addon.
-      const tvgId = channel.epgId || channel.id;
+      const base = channel.epgId || channel.id;
+      const tvgId = duenos.get(base) || `${base}-${channel.id}`;
       lines.push(
         `#EXTINF:-1 tvg-id="${escapeAttr(tvgId)}" tvg-name="${escapeAttr(channel.name)}"` +
         // El grupo y el `tvg-country` usan el país real cuando se conoce
