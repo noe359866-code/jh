@@ -28,6 +28,9 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Verificar señales
+        # Un fallo de red del runner no debe tumbar el workflow: el informe y los
+        # recuentos quedan igualmente en el artefacto y en el resumen.
+        continue-on-error: true
         env:
           LIMIT: ${{ inputs.limit }}
         run: node scripts/verify.js

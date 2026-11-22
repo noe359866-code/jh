@@ -48,6 +48,9 @@ Con Docker:
 ```bash
 docker build -t tv-espanol .
 docker run --rm -p 8080:8080 tv-espanol
+
+# conservar el informe del verificador entre reinicios
+docker run --rm -p 8080:8080 -v "$PWD/reports:/app/reports" tv-espanol
 ```
 
 ## Stremio
