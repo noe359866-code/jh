@@ -1,5 +1,5 @@
 // Generación y lectura de listas M3U con atributos IPTV.
-const { groupFor } = require('./text');
+const { groupFor, slug } = require('./text');
 const { mapLimit } = require('./limit');
 const { isCountry } = require('./countries');
 
@@ -52,14 +52,19 @@ async function buildM3u(channels, {
   // canales distintos ("13 Cultura" y "13C" comparten `13C.cl`). El id interno
   // del addon sí es único, así que solo se desambigua cuando el choque es real:
   // las señales del mismo canal conservan su id.
-  const duenos = new Map();
+  //
+  // El dueño se identifica por nombre: dos variantes del mismo canal pueden
+  // compartir el id interno del addon ("us-axn" para AXN Andes y AXN South)
+  // pero siguen siendo canales distintos.
+  const nombres = new Map();
   for (const channel of channels) {
     const base = channel.epgId || channel.id;
     if (!base) continue;
-    const dueno = duenos.get(base);
-    if (!dueno) duenos.set(base, channel.id);
-    else if (dueno !== channel.id) duenos.set(base, null);
+    const vistos = nombres.get(base) || new Set();
+    vistos.add(channel.name || channel.id);
+    nombres.set(base, vistos);
   }
+  const compartido = base => (nombres.get(base) || new Set()).size > 1;
 
   // Fase 2: escribir en orden, que es lo que hace determinista el archivo.
   for (const [index, channel] of channels.entries()) {
@@ -74,7 +79,7 @@ async function buildM3u(channels, {
       // Si la lista de origen trae `tvg-id` (el que usa la EPG), se publica ese;
       // si no, el id interno del addon.
       const base = channel.epgId || channel.id;
-      const tvgId = duenos.get(base) || `${base}-${channel.id}`;
+      const tvgId = compartido(base) ? `${base}-${slug(channel.name || channel.id, 'canal')}` : base;
       lines.push(
         `#EXTINF:-1 tvg-id="${escapeAttr(tvgId)}" tvg-name="${escapeAttr(channel.name)}"` +
         // El grupo y el `tvg-country` usan el país real cuando se conoce
