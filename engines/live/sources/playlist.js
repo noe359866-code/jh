@@ -33,6 +33,11 @@ const FLAG_PATTERN = /[\u{1F1E6}-\u{1F1FF}]{2}/gu;
 // Idiomas que no son español: si la entrada lo declara, se descarta.
 const OTHER_LANGUAGES = new Set(['por', 'pt', 'pt-br', 'eng', 'en', 'fra', 'fr', 'deu', 'de', 'ita', 'it']);
 
+// Acortadores/redireccionadores que sirven un HLS aunque la URL no acabe en
+// `.m3u8`. Se tratan como medio directo: `http.js` sigue el 302 y el
+// verificador comprueba la firma `#EXTM3U` en el destino final.
+const REDIRECTORS = /^https?:\/\/(jmp2\.uk|s\.id|bit\.ly|tinyurl\.com|is\.gd|rb\.gy|t\.co)\//i;
+
 function countryFromText(text) {
   const value = String(text || '');
   // Algunas listas ponen emoji delante: "🌍 Mexico", "🏙️ Buenos Aires".
@@ -62,16 +67,17 @@ function parsePlaylist(text, { source, defaultCountry = null } = {}) {
   for (const item of parseM3u(text)) {
     const url = String(item.url || '').trim();
     if (!/^https?:\/\//i.test(url)) continue;
-    // Los `.m3u8`/`.mp4`/`.ts` son medio directo; el resto se guarda como
-    // página por si un extractor puede resolverlo más adelante.
-    const kind = /\.(m3u8|mp4|ts|m3u)(\?|$)/i.test(url) ? 'hls' : 'page';
+    // Los `.m3u8`/`.mp4`/`.ts` y los redirectores conocidos son medio directo;
+    // el resto se guarda como página por si un extractor puede resolverlo.
+    const kind = /\.(m3u8|mp4|ts|m3u)(\?|$)/i.test(url) || REDIRECTORS.test(url) ? 'hls' : 'page';
     const rawName = item.name || item.attrs['tvg-name'] || '';
     // El país se busca en el nombre ORIGINAL: `cleanChannelName` recorta los
     // sufijos entre corchetes (`Mega [CL]` → `Mega`).
     const country = countryFromText(rawName)
       || countryFromText(item.attrs['tvg-country'])
       || countryFromText(item.attrs['group-title'])
-      || (/(^|[_-])es$/i.test(item.attrs['tvg-id'] || '') ? 'ES' : null);
+      || (/(^|[_-])es$/i.test(item.attrs['tvg-id'] || '') ? 'ES' : null)
+      || defaultCountry;
     // `cleanChannelName` no toca emojis: se quitan aquí para que el nombre quede
     // limpio en Stremio (`Azteca 🇲🇽` → `Azteca`).
     const name = cleanChannelName(rawName)

@@ -55,9 +55,27 @@ test('lista chilena real: 23 canales LATAM, 22 HLS y 1 sin extensión', () => {
 test('lista Samsung ES real: canales españoles aunque la URL sea un redirector', () => {
   const entries = parsePlaylist(fixture('samsungtvplus_es.m3u'), { source: 'Samsung TV Plus ES', defaultCountry: 'ES' });
   assert.ok(entries.length > 100);
-  assert.ok(entries.every(entry => entry.url === undefined));
   assert.ok(entries.every(entry => entry.streams[0].url.startsWith('https://jmp2.uk/')));
   assert.ok(entries.every(entry => entry.country === 'ES'), 'la lista es de España');
+  // `jmp2.uk/stvp-…` no acaba en `.m3u8` pero redirige a un HLS: no es una página.
+  assert.ok(entries.every(entry => entry.streams[0].kind === 'hls'));
+});
+
+test('los redirectores conocidos se marcan como HLS, no como página', () => {
+  const entries = parsePlaylist([
+    '#EXTM3U',
+    '#EXTINF:-1 tvg-country="ES",La 1',
+    'https://jmp2.uk/stvp-abc123',
+    '#EXTINF:-1,Documental',
+    'https://ejemplo.example/ver/canal',
+    '#EXTINF:-1,Acortado',
+    'https://s.id/xyz'
+  ].join('\n'), { source: 'prueba' });
+  const kindOf = name => entries.find(entry => entry.name === name).streams[0].kind;
+  assert.equal(kindOf('La 1'), 'hls');
+  assert.equal(kindOf('Acortado'), 'hls');
+  // Una URL normal sin extensión de medio sigue siendo página.
+  assert.equal(kindOf('Documental'), 'page');
 });
 
 test('lista Pluto real: descarta el catálogo no hispano', () => {

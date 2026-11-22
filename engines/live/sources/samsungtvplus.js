@@ -9,5 +9,7 @@ module.exports = createPlaylistSource({
   name: 'Samsung TV Plus ES',
   urls: [
     'https://raw.githubusercontent.com/BuddyChewChew/app-m3u-generator/main/playlists/samsungtvplus_es.m3u'
-  ]
+  ],
+  // La lista es de España: el nombre del canal no siempre trae la bandera.
+  defaultCountry: 'ES'
 });
