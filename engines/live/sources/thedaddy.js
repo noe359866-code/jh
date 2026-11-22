@@ -18,7 +18,7 @@ const SPANISH_SIGNALS = [
   /^movistar/i, /^m\+\s/i, /^dazn/i, /^gol(\s|$)/i, /^laliga/i, /^vamos(\s|$)/i, /^real\s*madrid/i,
   /^barca\s*tv/i, /^betis/i, /^sevilla\s*fc/i, /^canal\s*sur/i, /^tv3(\s|$)/i, /^etb/i,
   /^a\s*punt/i, /^aragon\s*tv/i, /^telemadrid/i, /^castilla/i, /^extremadura/i, /^andalucia/i,
-  /^canarias/i, /^galicia/i, /^tv\s*galicia/i, /^c\s*tv(\s|$)/i, /^canal\s*33/i, /^canal\s*7/i,
+  /^canarias/i, /^galicia/i, /^tv\s*galicia/i, /^canal\s*33/i,
   /^iberalia/i, /^caza\s*y\s*pesca/i, /^toros/i, /^tenis/i, /^esport3/i, /^sport3/i
 ];
 
@@ -42,8 +42,13 @@ function parseList(html) {
   return items;
 }
 
+// Señales de otros países que comparten nombre con las españolas.
+const FOREIGN = /\b(canada|usa|u\.s\.|united states|uk|ireland|india|pakistan|bangladesh|arab|turkey|france|germany|italy|portugal|brazil|brasil|netherlands|belgium|sweden|norway|poland|romania|greece|russia|ukraine|china|japan|korea|australia|south africa|nigeria|kenya|egypt|morocco)\b/i;
+
 function isSpanishSignal(name) {
-  return SPANISH_SIGNALS.some(pattern => pattern.test(name.replace(/\s+/g, ' ').trim()));
+  const clean = name.replace(/\s+/g, ' ').trim();
+  if (FOREIGN.test(clean)) return false;
+  return SPANISH_SIGNALS.some(pattern => pattern.test(clean));
 }
 
 function iframeUrl(html) {

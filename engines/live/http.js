@@ -46,16 +46,18 @@ const BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
 
 // `redirect: 'error'` evita saltos a hosts no validados. El cuerpo se lee
 // completo pero con límite estricto de bytes.
-function publicFetch(url, options) {
+function publicFetch(url, { allowHttp: allowHttpOption = false, ...options } = {}) {
   let parsed;
   try {
     parsed = new URL(url);
   } catch {
     throw new Error('URL inválida');
   }
-  if (parsed.protocol !== 'https:') throw new Error('Solo se permite HTTPS');
+  if (parsed.protocol !== 'https:' && !(allowHttpOption && parsed.protocol === 'http:')) {
+    throw new Error('Solo se permite HTTPS');
+  }
   if (parsed.username || parsed.password) throw new Error('URL con credenciales rechazada');
-  if (parsed.port && parsed.port !== '443') throw new Error('Puerto no permitido');
+  if (parsed.port && !['80', '443'].includes(parsed.port)) throw new Error('Puerto no permitido');
   const host = parsed.hostname.replace(/^\[|\]$/g, '');
   if (isIP(host) && !publicAddress(host)) throw new Error('Destino no público bloqueado');
   return fetch(parsed, { ...options, dispatcher, redirect: 'manual' });
@@ -104,6 +106,7 @@ async function get(url, {
       throw new Error('Destino no público bloqueado');
     }
     const response = await fetchImpl(current.href, {
+      allowHttp: current.protocol === 'http:',
       redirect: 'manual',
       signal: AbortSignal.timeout(timeoutMs),
       headers: {
