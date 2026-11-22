@@ -461,5 +461,10 @@ async function faseApi2() {
     }
   } else {
     console.log('api: no hay URL=...apistream... en la página');
+    // Respaldo: contexto crudo alrededor de 'apistream' con la estructura
+    // (puntuación intacta, palabras como x<largo>).
+    for (const m of cuerpo.matchAll(/[^\n]{0,120}apistream[^\n]{0,160}/g)) {
+      console.log(`crudo: ${estructura(m[0])}`);
+    }
   }
 }
