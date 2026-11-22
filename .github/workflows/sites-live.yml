@@ -61,7 +61,9 @@ jobs:
                 ? ' [' + Object.entries(t.stages).map(([etapa, hosts]) => etapa + ':' + hosts.join('+')).join(' ') + ']'
                 : '')
               + (t.error ? ' ERROR=' + t.error : '')).join(' | ');
-            const diag = (r.events || []).filter(e => e.stage === 'servidores')
+            // Solo los reproductores de Embed69 (FlixLatam): un sitio sin esa
+            // etapa no debe imprimir una fila de 'undefined'.
+            const diag = (r.events || []).filter(e => e.stage === 'servidores' && e.dataLink !== undefined)
               .map(e => 'dataLink=' + e.dataLink + ' challenge=' + e.challenge + ' salt=' + e.salt
                 + ' anubisPendiente=' + e.anubisPendiente + ' anubisPasado=' + e.anubisPasado
                 + ' bytes=' + e.bytes + ' captcha=' + e.captcha + ' bloqueado=' + e.bloqueado).join(' ');
