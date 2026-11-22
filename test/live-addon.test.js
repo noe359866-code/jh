@@ -72,6 +72,21 @@ test('el catálogo nunca lanza: una fuente caída no oculta las demás', async (
   assert.equal(loaded.status.eja.ok, true);
 });
 
+test('mergeSources: unifica el país venga como venga (`cl`, `CL`, `Chile`)', () => {
+  const merged = mergeSources([
+    { id: 'a', entries: [{ name: 'Mega', country: 'LATAM', origin: 'cl', streams: [{ url: 'https://a/1.m3u8', kind: 'hls' }] }] },
+    { id: 'b', entries: [{ name: 'TVN', country: 'LATAM', origin: 'CL', streams: [{ url: 'https://a/2.m3u8', kind: 'hls' }] }] },
+    { id: 'c', entries: [{ name: 'Canal 13', country: 'LATAM', origin: 'Chile', streams: [{ url: 'https://a/3.m3u8', kind: 'hls' }] }] },
+    { id: 'd', entries: [{ name: 'La Red', country: 'LATAM', origin: 'Chile', streams: [{ url: 'https://a/4.m3u8', kind: 'hls' }] }] }
+  ]);
+  assert.ok(merged.every(channel => channel.origin === 'CL'));
+  assert.ok(merged.every(channel => channel.id.startsWith('cl-')), 'el id usa el país real');
+  assert.deepEqual(merged.map(channel => channel.country), ['LATAM', 'LATAM', 'LATAM', 'LATAM']);
+  // Un canal sin país en la fuente pero con bandera en el nombre también se etiqueta.
+  const flagged = mergeSources([{ id: 'e', entries: [{ name: 'Azteca 🇲🇽', country: 'LATAM', streams: [{ url: 'https://a/5.m3u8', kind: 'hls' }] }] }]);
+  assert.equal(flagged[0].origin, 'MX');
+});
+
 test('manifest: tipo tv, un catálogo por país y prefijos de país', () => {
   const manifest = addon.manifest();
   assert.deepEqual(manifest.types, ['tv']);

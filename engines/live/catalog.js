@@ -3,7 +3,8 @@
 const { get } = require('./http');
 const { MODE } = require('./sources');
 const { slug } = require('./text');
-const { isCountry } = require('./countries');
+const { isCountry, countryOf, regionOf } = require('./countries');
+const { countryFromText } = require('./sources/playlist');
 const { applyReport, summarize } = require('./checker');
 
 const TTL_MS = 30 * 60 * 1000;
@@ -14,7 +15,13 @@ function mergeSources(results) {
   for (const result of results) {
     if (!result || !Array.isArray(result.entries)) continue;
     for (const entry of result.entries) {
-      const key = entry.key || `${entry.country}:${slug(entry.name)}`;
+      // Cada fuente nombra el país a su manera (`cl`, `CL`, `Chile`, `Mexico`).
+      // Se normaliza aquí, en el único punto por el que pasan todas, para que
+      // las categorías por país no se fragmenten. Si la fuente no da país, se
+      // intenta deducir del nombre del canal.
+      const origin = countryOf(entry.origin) || countryFromText(entry.name) || null;
+      const region = origin ? regionOf(origin) : (entry.country || 'LATAM');
+      const key = entry.key || `${region}:${slug(entry.name)}`;
       const existing = byKey.get(key);
       if (existing) {
         const seen = new Set(existing.streams.map(stream => stream.url));
@@ -30,13 +37,13 @@ function mergeSources(results) {
       }
       // El prefijo del id es el país real cuando se conoce (`mx-canal-5`); si
       // no, la región (`latam-…`). Stremio valida `idPrefixes` sobre esto.
-      const scope = isCountry(entry.origin) ? entry.origin.toLowerCase() : String(entry.country || 'LATAM').toLowerCase();
+      const scope = origin ? origin.toLowerCase() : String(region).toLowerCase();
       byKey.set(key, {
         id: `${scope}-${slug(entry.name)}`,
         key,
         name: entry.name,
-        country: entry.country || 'LATAM',
-        origin: entry.origin || null,
+        country: region,
+        origin: origin || 'Internacional',
         category: entry.category || 'Generalista',
         logo: entry.logo || null,
         geoBlocked: Boolean(entry.geoBlocked),
