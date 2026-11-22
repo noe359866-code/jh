@@ -1,8 +1,7 @@
 name: Sonda de listas temporal
 on:
   push:
-    paths:
-      - '.github/workflows/pl-probe-tmp.yml'
+  workflow_dispatch:
 
 permissions:
   contents: write
