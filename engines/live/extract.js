@@ -81,10 +81,19 @@ async function extractChannel(channel, {
         await wait(Math.max(pauseMs * 4, 1000));
         continue;
       }
+      // La cadena propia puede haberse quedado corta (reproductor nuevo,
+      // iframe anidado): se prueba el extractor genérico antes de rendirse.
+      resolved = await genericResolve(page.url, { get });
+      if (resolved) break;
       return note(`cadena de embed: ${String(error.message).slice(0, 60)}`);
     }
   }
-  if (!resolved || !/^https?:\/\//i.test(resolved.url || '')) return note('la cadena no expone m3u8');
+  if (!resolved || !/^https?:\/\//i.test(resolved.url || '')) {
+    // Fallback: el HTML de la página puede esconder el m3u8 en un JSON/base64
+    // aunque la cadena documentada ya no funcione.
+    resolved = await genericResolve(page.url, { get });
+    if (!resolved) return note('la cadena no expone m3u8');
+  }
 
   // Sin firma HLS no se publica: sería anunciar un medio que no reproduce (el CDN
   // de DaddyLive devuelve 403 a cualquier cliente que no sea un navegador real).
@@ -264,7 +273,15 @@ async function genericResolve(pageUrl, { get, maxHops = 3 } = {}) {
     seen.add(current);
     let response;
     try {
-      response = await get(current, { referer, allowHttp: true, maxBytes: 512 * 1024 });
+      response = await get(current, {
+        referer,
+        allowHttp: true,
+        maxBytes: 1024 * 1024,
+        // Muchos embeds solo responden como iframe de terceros.
+        headers: referer
+          ? { Origin: referer.replace(/\/$/, ''), 'Sec-Fetch-Dest': 'iframe', 'Sec-Fetch-Site': 'cross-site' }
+          : {}
+      });
     } catch {
       return null;
     }
@@ -275,6 +292,12 @@ async function genericResolve(pageUrl, { get, maxHops = 3 } = {}) {
     const url = findHlsDeep(text, { base: current });
     if (url) {
       return { url, referer: new URL(current).origin + '/' };
+    }
+
+    // 1b) `<video>`/`<source>` con el m3u8 (a veces en `data-src`).
+    const mediaTag = text.match(/<(?:source|video)[^>]+\b(?:data-)?src=["']([^"']*\.m3u8[^"']*)["']/i);
+    if (mediaTag) {
+      return { url: absolutize(mediaTag[1], current), referer: new URL(current).origin + '/' };
     }
 
     // 2) Siguiente iframe del reproductor. Algunos usan `data-src` o van en un
