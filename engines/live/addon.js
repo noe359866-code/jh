@@ -46,6 +46,8 @@ function toMeta(channel) {
     genres: genres.filter(Boolean),
     description: [
       channel.country === 'ES' ? 'España' : 'Latinoamérica',
+      channel.origin && channel.origin !== channel.country && !/^[a-z]{2}$/i.test(channel.origin)
+        ? `origen: ${channel.origin}` : null,
       channel.category,
       channel.geoBlocked ? 'puede estar geobloqueado' : null,
       `fuentes: ${channel.sources.join(', ')}`

@@ -58,7 +58,9 @@ function parseRows(html) {
     const name = cleanChannelName(channelName(row));
     const url = (row.match(/data-clipboard-text="([^"]+)"/) || [])[1] || '';
     if (!name || !/^https:\/\/list\.iptvcat\.net\//.test(url)) continue;
-    const countryTitle = (row.match(/<img[^>]+title="([^"]+)"/) || [])[1] || '';
+    // El primer `img` con `title` es la bandera del país; los logos de canal van después.
+    const cell = row.slice(0, row.indexOf('data-clipboard-text'));
+    const countryTitle = (cell.match(/<img[^>]+title="([^"]+)"/) || [])[1] || '';
     const geo = /geo-blocked/i.test(row);
     entries.push({
       name,
