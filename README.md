@@ -157,6 +157,7 @@ SITES_TEST_URLS=https://flixlatam.com/pelicula/patton npm run test:sites-live
 | Sitio | Cadena recorrida | Medios verificados | Resultado |
 | --- | --- | --- | --- |
 | flixlatam.com | ficha → `embed69.org/f/<id>` → 6 servidores descifrados (LAT/SUB) | — | la extracción pasa Anubis y descifra los servidores; los players externos devuelven un interstitial que exige ejecutar su JavaScript |
+| ww3.gnulahd.nu | ficha → `_gnrdPid`/`_gnrdTok` → API del tema → base64+XOR → **8 servidores en 2 idiomas** | — | la cadena completa del sitio se recorre desde una IP de datacenter (no la del usuario); los players externos no entregan media |
 
 Estado medido honesto (última ejecución en vivo): la cadena propia de FlixLatam **se recorre completa** — ficha, reproductor de Embed69, prueba de trabajo de Anubis, descifrado de los servidores (LAT/SUB) y normalización de dominios. Pero los players externos cierran con barreras que **este extractor no cruza por diseño**:
 
@@ -166,7 +167,18 @@ Estado medido honesto (última ejecución en vivo): la cadena propia de FlixLata
 | Voe | redirector JS a su mirror y, tras seguirlo, un **formulario POST con CSRF**: "Confirme que es humano para iniciar el vídeo" | resolver un captcha |
 | Vidhide | 302 a un mirror que **no resuelve por DNS** | nada: el servidor está roto |
 
+Y en Gnula, medido en el runner (los ocho enlaces salen ya descifrados):
+
+| Servidor de Gnula | Qué responde en vivo | Qué haría falta |
+| --- | --- | --- |
+| Voe (`voe.sx`) | **HTTP 404** en los enlaces que publica el sitio | que el sitio publique enlaces válidos de Voe |
+| SaveFiles (`savefiles.com`) | **HTTP 403** al pedir el enlace con el Referer de la ficha | que el player acepte el Referer del sitio |
+| Bysevepoin (`bysevepoin.com`) | página inerte de 2 KB ("Byse Frontend"), sin player ni media | su JavaScript |
+| Vidara (`vidara.to`, `vidaraa.cc`) | 34-44 KB con su reproductor y `file` en JSON, pero el JS está **ofuscado y firma sus peticiones con token** | ejecutar su JavaScript |
+
 Cada barrera se comprueba en el propio flujo, no se supone: el extractor sigue el 302 entre dominios del mismo player, sigue el redirector JS de Voe leyendo su destino (nunca ejecutándolo y solo hacia mirrors declarados en el código), lee el loader del player para buscar una API de media y detecta el captcha cuando aparece. Solo cuando todo eso falla se declara el player como no resoluble.
+
+Ninguno de los cuatro players de Gnula se puede resolver sin ejecutar su JavaScript o sin que el sitio publique enlaces válidos; eso se mide, no se supone: cada uno se pide con el Referer correcto y se informa su estado (`resolver-failed`, `mirror-muerto`), nunca como éxito.
 
 Las tres barreras se detectan y se informan con su nombre (`loader-ofuscado`, `verificacion-humana`, `redirect-bloqueado`) en el reporte en vivo, etapa por etapa. **No hay medios verificados** mientras esto siga así, y el resumen nunca lo presenta como éxito. Lo que sí queda resuelto: toda la parte del sitio, que es donde el extractor anterior no llegaba ni a empezar.
 
