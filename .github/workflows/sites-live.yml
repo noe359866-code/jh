@@ -18,18 +18,14 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Ejecutar verificación en vivo
-        run: node scripts/live-check.js || true
-      - name: Volcar resumen al registro
+      - run: node scripts/live-check.js || true
+      - name: Publicar salida
         if: always()
         run: |
-          ls -la reports || true
-          cat reports/live-check-summary.txt || true
-      - name: Publicar resumen en la rama
-        if: always()
-        run: |
+          mkdir -p reports
+          node -e "const fs=require('fs');const f='reports/live-check.json';const s=fs.existsSync(f)?JSON.parse(fs.readFileSync(f,'utf8')):{missing:true};fs.writeFileSync('reports/live-check-summary.txt',JSON.stringify(s,null,1));"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -f reports/live-check-summary.txt reports/live-check.json || true
-          git diff --cached --quiet || git commit -m "Resumen de verificación en vivo (generado)"
+          git add -f reports/live-check-summary.txt
+          git diff --cached --quiet && echo sin-cambios || git commit -m "Salida de verificación en vivo (generado)"
           git push
