@@ -123,7 +123,7 @@ GET /stream/site?url=https://flixlatam.com/pelicula/patton
 SITES_TEST_URLS=https://flixlatam.com/pelicula/patton npm run test:sites-live
 ```
 
-`scripts/sites-live.js` valida cada URL antes de hacer peticiones, resuelve la página y **falla si ningún sitio de la lista devuelve al menos un medio con firma válida**. Por defecto prueba FlixLatam; puedes indicar URLs concretas con `SITES_TEST_URLS` (separadas por comas). Escribe un reporte sanitizado en `reports/sites-live.json` con el resultado por sitio (disponible, hosts encontrados/bloqueados y conteos; **no URLs, queries, HTML ni tokens**), y imprime por consola cuáles devolvieron HLS/MP4. Si aparecen eventos `blocked-frame`/`blocked-host`, revisa ese dominio antes de autorizarlo en `SITES_ALLOWED_HOSTS`; nunca habilites dominios automáticamente. Los reportes locales quedan en `reports/`, fuera de Git. Las pruebas de `npm test` son deterministas y mockadas, y no sustituyen esta comprobación.
+`scripts/sites-live.js` valida cada URL antes de hacer peticiones, resuelve la página y **falla si ningún sitio de la lista devuelve al menos un medio con firma válida**. El presupuesto total se ajusta con `SITES_LIVE_BUDGET_MS` (180 s por defecto; el test de contrato usa 6 s para no depender de la red real). Por defecto prueba FlixLatam; puedes indicar URLs concretas con `SITES_TEST_URLS` (separadas por comas). Escribe un reporte sanitizado en `reports/sites-live.json` con el resultado por sitio (disponible, hosts encontrados/bloqueados y conteos; **no URLs, queries, HTML ni tokens**), y imprime por consola cuáles devolvieron HLS/MP4. Si aparecen eventos `blocked-frame`/`blocked-host`, revisa ese dominio antes de autorizarlo en `SITES_ALLOWED_HOSTS`; nunca habilites dominios automáticamente. Los reportes locales quedan en `reports/`, fuera de Git. Las pruebas de `npm test` son deterministas y mockadas, y no sustituyen esta comprobación.
 
 **Resultado medido** (GitHub Actions, IP de datacenter, 2026-11-21, página de detalle real):
 
@@ -137,7 +137,9 @@ Estado medido honesto (última ejecución en vivo): la cadena propia de FlixLata
 | --- | --- | --- |
 | Streamwish | spinner de 819 B que carga `main.js?v=1.1.9`, un JS **ofuscado de 71 KB** (array de cadenas rotado) | ejecutar su JavaScript (o un navegador) |
 | Voe | redirector JS a su mirror y, tras seguirlo, un **formulario POST con CSRF**: "Confirme que es humano para iniciar el vídeo" | resolver un captcha |
-| Vidhide | 302 a `vidhidefast.com`, un mirror que **no resuelve por DNS** | nada: el servidor está roto |
+| Vidhide | 302 a un mirror que **no resuelve por DNS** | nada: el servidor está roto |
+
+Cada barrera se comprueba en el propio flujo, no se supone: el extractor sigue el 302 entre dominios del mismo player, sigue el redirector JS de Voe leyendo su destino (nunca ejecutándolo y solo hacia mirrors declarados en el código), lee el loader del player para buscar una API de media y detecta el captcha cuando aparece. Solo cuando todo eso falla se declara el player como no resoluble.
 
 Las tres barreras se detectan y se informan con su nombre (`loader-ofuscado`, `verificacion-humana`, `redirect-bloqueado`) en el reporte en vivo, etapa por etapa. **No hay medios verificados** mientras esto siga así, y el resumen nunca lo presenta como éxito. Lo que sí queda resuelto: toda la parte del sitio, que es donde el extractor anterior no llegaba ni a empezar.
 
