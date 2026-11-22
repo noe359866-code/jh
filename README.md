@@ -1,7 +1,8 @@
 # TV en Español · Addon de Stremio y listas M3U
 
 Canales de **televisión en directo en español** (España y Latinoamérica), recopilados
-en vivo desde siete webs públicas. El proyecto expone un **addon de Stremio** y
+en vivo desde siete webs públicas y **quince listas M3U** (iptv-org, Samsung TV
+Plus, Pluto TV, CineCity…). El proyecto expone un **addon de Stremio** y
 **listas M3U** listas para VLC, Kodi, TiviMate, IPTVnator o cualquier reproductor
 compatible.
 
@@ -77,6 +78,25 @@ fuentes que lo aportan. Las señales se entregan como HLS directo; cuando el ori
 exige `Referer` o `User-Agent`, se envían como `proxyHeaders` para que el
 reproductor de Stremio los use.
 
+## Categorías en Stremio
+
+El addon expone **un catálogo por país**, además de los generales:
+
+| Catálogo | Qué muestra |
+|---|---|
+| `TV · Todos los canales` | todo el catálogo, con filtro de género por país |
+| `TV · España`, `TV · Estados Unidos`, `TV · México`… | solo ese país (21 países) |
+| `TV · España (región)`, `TV · Estados Unidos (región)`, `TV · Latinoamérica (región)` | agrupaciones amplias |
+| `TV · Deportes` | canales de deportes de todos los países |
+| `TV · Caídos (verificador)` | los que el verificador dio por caídos, con el motivo |
+
+Dentro de cada país, el filtro de género ofrece **Generalista, Deportes, Noticias,
+Infantil, Música y Cine y series** (`México · Deportes`), y solo devuelve canales
+de ese país.
+
+Los identificadores de canal empiezan por su país (`mx-canal-5`, `us-univision`),
+que es lo que Stremio usa para validar el addon.
+
 ## Fuentes
 
 Además de los siete sitios que se recorren, el catálogo incorpora seis listas M3U
@@ -92,6 +112,8 @@ cualquier otra fuente:
 | Samsung TV Plus ES | `BuddyChewChew/app-m3u-generator` (`samsungtvplus_es.m3u`) | 194 canales FAST de España, servidos vía `jmp2.uk` |
 | Pluto TV | `iprtl/m3u` (rama `live`, `Pluto.m3u`) | solo los canales hispanos de sus 850 entradas |
 | D9Kod | `s.id/d9Kod` | lo que publique el acortador, verificado antes de listarse |
+| Estados Unidos | `iptv-org/iptv` (`streams/us.m3u` + base de idiomas) | canales hispanos de EE. UU. y cadenas mayoritarias en inglés |
+| iptv-org por país | `iptv-org/iptv` (`streams/<cc>.m3u`) | rellena los países con pocas fuentes (Cuba, Uruguay, Nicaragua, Panamá…) |
 
 Detalles de la normalización:
 
@@ -100,8 +122,10 @@ Detalles de la normalización:
   sin país identificable se queda como internacional, no se elimina.
 - **País por tres vías**, en este orden: bandera o sufijo del nombre (`Mega [CL]`,
   `La 1 (ES)`), `tvg-country`/`group-title` (`🌍 Mexico`, `🏙️ Buenos Aires`) y
-  lista de procedencia (Samsung ES → España). España va a la lista `es` y el resto
-  de países hispanos a `latam`; ambos entran también en `all`.
+  lista de procedencia (Samsung ES → España). El catálogo normaliza el resultado
+  (`cl`, `CL`, `Chile` → `CL`) antes de agrupar, así que cada país tiene una sola
+  categoría. España va a la lista `es`, Estados Unidos a `us` y el resto a `latam`;
+  todos entran también en `all` y en su lista de país.
 - **Redirectores.** `jmp2.uk` y `s.id` sirven un `#EXTM3U` aunque la URL no acabe
   en `.m3u8`: se tratan como medio directo y el verificador sigue el 302 y
   comprueba la firma del destino final. Si el destino no responde, el canal queda
@@ -110,9 +134,35 @@ Detalles de la normalización:
   se ignoran sin romper la lista. Una lista que no responde no tumba el catálogo:
   las demás siguen aportando canales.
 
-Medición en CI (última pasada): catálogo **3803 canales, 3388 con medio directo**;
-listas `all` **4210**, `es` **516**, `latam` **3694**, `deportes` **170**. Las seis
-listas dominan el catálogo (solas eran 1860 canales antes de incorporarlas).
+### Estados Unidos
+
+`us.m3u` de iptv-org trae más de mil canales y **no dice el idioma**. Su base de
+datos sí (`data/feeds.csv`, una fila por emisión con `languages` e `is_main`), y la
+fuente cruza las dos:
+
+- **Feed principal en español** → se publica (`language: 'es'`). Son 324 canales.
+- **Cadenas mayoritarias en inglés** (ABC, CBS, NBC, FOX, CNN, MSNBC, Bloomberg,
+  ESPN, NBA TV, NFL Network…) → 74 canales, marcados `language: 'en'` y con
+  «emite en inglés» en la descripción de Stremio.
+- El resto (canales locales en inglés) se descarta.
+
+El idioma se mira en la emisión **principal** porque `ABC.us` tiene cientos de
+repetidoras locales: casi todas en inglés y alguna en español. Con «tiene algún
+feed en español» entraban ABC, CNN y compañía como si fueran canales en español.
+Univision, Telemundo y otros 24 canales están en una lista de «siempre en
+español», porque la base de iptv-org los marca como `eng` por error.
+
+### Medición en CI (última pasada)
+
+Catálogo **3661 canales, 3123 con medio directo**. Listas: `all` **5576**, `es`
+**516**, `latam` **4660**, `deportes` **176**.
+
+Canales vivos por país: Internacional 1276 · AR 505 · ES 369 · US 290 · CL 250 ·
+DO 238 · MX 234 · PE 192 · CO 136 · VE 81 · EC 80 · BO 75 · PY 72 · HN 69 ·
+CR 68 · GT 53 · SV 43 · PR 43 · PA 22 · NI 18 · UY 8 · CU 4.
+
+**Internacional** son los canales cuya fuente no dice el país (la mayoría de Pluto
+TV, CineCity y D9Kod). Se quedan así en lugar de asignarles un país inventado.
 
 ## Listas M3U
 
@@ -120,8 +170,10 @@ listas dominan el catálogo (solas eran 1860 canales antes de incorporarlas).
 |---|---|---|
 | Todo | `/playlist/all.m3u` (alias `/playlist.m3u`) | todos los canales |
 | España | `/playlist/es.m3u` | solo España |
+| Estados Unidos | `/playlist/us.m3u` | solo Estados Unidos |
 | Latinoamérica | `/playlist/latam.m3u` | solo Latinoamérica |
 | Deportes | `/playlist/deportes.m3u` | solo deportes |
+| Un país | `/playlist/<cc>.m3u` | solo ese país (`mx`, `ar`, `co`, `cl`, `pe`, `ve`, `ec`, `gt`, `hn`, `sv`, `ni`, `cr`, `pa`, `cu`, `do`, `pr`, `uy`, `py`, `bo`) |
 
 Los canales caídos (según el verificador) se excluyen de todas ellas; añade
 `?dead=1` para incluirlos.
@@ -274,7 +326,7 @@ español de EE. UU. Todos los canales se etiquetan con su país de origen.
 ## Verificación
 
 ```bash
-npm test        # 53 pruebas unitarias (parser + addon + rutas + verificador + extracción), sin red
+npm test        # 60 pruebas unitarias (parser + addon + rutas + verificador + extracción), sin red
 npm run check   # node --check sobre todo el motor
 npm run test:live   # comprobación real contra las 13 fuentes (necesita red)
 SOURCE=eja,tvgarden npm run test:live   # solo algunas fuentes

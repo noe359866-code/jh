@@ -1,7 +1,0 @@
-Catálogo: 4669 canales (4205 con medio directo)
-Extracción de embeds: 0 HLS extraídos de 464 canales con página (fallidos 106, omitidos 358, 113 s)
-  por fuente: {"cinecity":{"extraidos":0,"fallidos":0,"omitidos":59},"D9Kod":{"extraidos":0,"fallidos":0,"omitidos":120},"Estados Unidos (iptv-org)":{"extraidos":0,"fallidos":0,"omitidos":9},"Pluto TV":{"extraidos":0,"fallidos":0,"omitidos":4},"thedaddy.li":{"extraidos":0,"fallidos":15,"omitidos":0},"iptv-chile":{"extraidos":0,"fallidos":0,"omitidos":1},"iptv-org AR":{"extraidos":0,"fallidos":0,"omitidos":1},"livelive24.com":{"extraidos":0,"fallidos":21,"omitidos":0},"tvenvivo.org":{"extraidos":0,"fallidos":70,"omitidos":0},"telechancho":{"extraidos":0,"fallidos":0,"omitidos":1},"iptv-org NI":{"extraidos":0,"fallidos":0,"omitidos":1}}
-  motivos: {"sin resolutor para la fuente":196,"cadena de embed: HTTP 403":9,"la cadena no expone m3u8":91,"cadena de embed: fetch failed":6}
-Verificación: 3661 canales en 196 s · vivos 3123 · caídos 538 · bloqueados 574 · tiempo agotado 469 · sin verificar 0 · omitidos 895
-Listas escritas en reports/: all (5576), es (516), latam (4660), deportes (176)
-Países con canales vivos: Internacional 1276 · AR 505 · ES 369 · US 290 · CL 250 · DO 238 · MX 234 · PE 192 · CO 136 · VE 81 · EC 80 · BO 75 · PY 72 · HN 69 · CR 68 · GT 53 · SV 43 · PR 43 · PA 22 · NI 18 · UY 8 · CU 4
