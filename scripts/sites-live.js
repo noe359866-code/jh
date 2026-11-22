@@ -53,7 +53,9 @@ const CAMPOS_SANEADOS = [
   'proveedor', 'formulario',
   // Diagnóstico de sitios que inyectan el reproductor (Gnula)
   'idiomas', 'servidores', 'etiquetas', 'formularios', 'campos', 'endpoints',
-  'acciones', 'ids', 'propio', 'otrosFrames'
+  'acciones', 'ids', 'propio', 'otrosFrames',
+  // Gnula: estado del player y hosts de sus servidores (nunca sus rutas)
+  'pid', 'token', 'descifrado', 'idiomas', 'hosts'
 ];
 // Eventos permitidos en el reporte: solo etapa y host. Nunca paths, queries,
 // HTML, cuerpos ni tokens.
@@ -97,6 +99,15 @@ function eventoSanitizado(evento) {
   }
   if (Number.isFinite(evento.total)) limpio.total = evento.total;
   if (Number.isFinite(evento.otrosFrames)) limpio.otrosFrames = evento.otrosFrames;
+  // Gnula: qué partes del flujo funcionaron y qué hosts publica su API.
+  if (evento.stage === 'gnula') {
+    for (const clave of ['pid', 'token']) if (typeof evento[clave] === 'boolean') limpio[clave] = evento[clave];
+  }
+  if (evento.stage === 'servidores') {
+    if (typeof evento.descifrado === 'boolean') limpio.descifrado = evento.descifrado;
+    if (Number.isFinite(evento.idiomas)) limpio.idiomas = evento.idiomas;
+    if (Array.isArray(evento.hosts)) limpio.hosts = evento.hosts.slice(0, 12).map(h => String(h).slice(0, 60));
+  }
   // Pistas y modal: solo los nombres (idiomas y números de servidor), no URLs.
   if (evento.stage === 'pistas') {
     for (const clave of ['idiomas', 'servidores']) {

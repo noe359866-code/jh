@@ -90,6 +90,13 @@ jobs:
               .map(e => e.host).join(' , ');
             // Sitios que inyectan el reproductor (Gnula): cuántas pistas
             // legibles hay y, si no hay ninguna, la forma de la página.
+            const gnula = (r.events || []).filter(e => e.stage === 'gnula')
+              .map(e => e.host + ' pid=' + e.pid + ' token=' + e.token).join(' , ');
+            const servidoresApi = (r.events || []).filter(e => e.stage === 'servidores' && e.descifrado !== undefined)
+              .map(e => e.host + ' total=' + e.total + ' descifrado=' + e.descifrado + ' idiomas=' + e.idiomas
+                + ' hosts=' + JSON.stringify(e.hosts || [])).join(' , ');
+            const playerFailed = (r.events || []).filter(e => e.stage === 'player-failed')
+              .map(e => e.host + ':' + e.error).join(' , ');
             const pistas = (r.events || []).filter(e => e.stage === 'pistas')
               .map(e => e.host + ' pistas=' + e.total + ' idiomas=' + JSON.stringify(e.idiomas || [])
                 + ' servidores=' + JSON.stringify(e.servidores || [])
@@ -102,7 +109,7 @@ jobs:
             const etapas = {};
             for (const e of r.events || []) etapas[e.stage] = (etapas[e.stage] || 0) + 1;
             const resumen = 'success=' + r.success + ' :: ' + porSitio + (diag ? ' :: ' + diag : '') + (anubisIntentos ? ' :: anubis=' + anubisIntentos : '')
-              + (sinMedia ? ' :: sinMedia=' + sinMedia : '') + (loaders ? ' :: loader=' + loaders : '') + (formas ? ' :: loaderForma=' + formas : '') + (pistas ? ' :: pistas=' + pistas : '') + (sinPistas ? ' :: sin-pistas=' + sinPistas : '') + (humanos ? ' :: verificacion-humana=' + humanos : '') + (muertos ? ' :: mirror-muerto=' + muertos : '') + (fallos ? ' :: fallos=' + fallos : '') + ' :: etapas=' + JSON.stringify(etapas);
+              + (sinMedia ? ' :: sinMedia=' + sinMedia : '') + (loaders ? ' :: loader=' + loaders : '') + (formas ? ' :: loaderForma=' + formas : '') + (gnula ? ' :: gnula=' + gnula : '') + (servidoresApi ? ' :: api=' + servidoresApi : '') + (playerFailed ? ' :: player-failed=' + playerFailed : '') + (pistas ? ' :: pistas=' + pistas : '') + (sinPistas ? ' :: sin-pistas=' + sinPistas : '') + (humanos ? ' :: verificacion-humana=' + humanos : '') + (muertos ? ' :: mirror-muerto=' + muertos : '') + (fallos ? ' :: fallos=' + fallos : '') + ' :: etapas=' + JSON.stringify(etapas);
             fs.appendFileSync(process.env.GITHUB_OUTPUT || '/dev/null', 'resumen=' + resumen + '\n');
             console.log(resumen);
             if (r.hosts) console.log('hosts:', r.hosts.join(', '));

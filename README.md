@@ -104,18 +104,30 @@ Si el reproductor está detrás de **Anubis** (`<script id="anubis_challenge">`)
 
 ### Gnula (`ww3.gnulahd.nu`)
 
-Es un WordPress con tema propio. Su ficha (`/ver/<slug>/`) **no lleva el reproductor en el HTML**: el tema lo inyecta al pulsar "Reproducir", con un modal que ofrece **Audio** (Latino/Subtitulado) y **Servidor** (1..4). Al no ejecutar JavaScript, el proveedor `generico` recoge las pistas que sí son legibles:
+Es un WordPress con tema propio. Su ficha (`/ver/<slug>/`) **no lleva el reproductor en el HTML**: el tema pide la lista de servidores a su propia API REST y la descifra en el navegador. El flujo se leyó de su código público (sin ejecutarlo) y se replica en Node:
 
-- `<iframe src>`, `data-src` y `data-embed`/`data-player` de la ficha;
-- enlaces a hosts de reproductor conocidos (Streamwish, Vidhide, Filemoon, Uqload, Voe...), dentro del HTML o de JSON/JS escapado;
-- idiomas y números de servidor declarados en el texto del modal.
+```
+ww3.gnulahd.nu/ver/<slug>/
+  → var _gnrdPid=<id>,_gnrdTok="<token>"           (en la ficha)
+  → fetch(<prefijo> + _gnrdPid + <sufijo> + token)  (prefijo y sufijo son
+                                                     literales del propio tema)
+  → { "p": "<base64>" }
+  → gnrdUnpack: base64 → XOR con la clave de 4 bytes [103,78,55,100] → JSON
+  → { t, langs: [ { label, flag, servers: [ { title, src } ] } ], dl: [...] }
+  → cada src es un embed externo (Voe, SaveFiles, Vidara...) que resuelve el
+    registry; la etiqueta es "idioma · servidor"
+```
 
-Cada pista se pasa al registry como cualquier otra. Si la ficha no publica **ninguna** pista legible, el reporte en vivo emite la etapa `sin-pistas` con la **forma** de la página (nombres de etiqueta, `admin-ajax.php`, `action` del tema, ids del modal y nombres de campo), nunca su contenido. Así se puede ajustar el parser con datos reales en vez de adivinar el HTML.
+- El decodificador tiene 215 B en el tema; aquí son un `Buffer.from(base64)` y un XOR de un byte por índice. **No se ejecuta nada del sitio**: ni `atob`, ni `eval`, ni el JS del player.
+- La clave del XOR está en su JS público; si el sitio la rota, se cambia sin tocar código con `GNULA_XOR=103,78,55,100`.
+- Los hosts que publica esa API (`vidara.to`, `vidaraa.cc`, `savefiles.com`, `bysevepoin.com`) están autorizados explícitamente en `hostsPermitidos()`, no descubiertos del HTML.
+- Si el tema cambia (no hay `_gnrdPid`/`_gnrdTok`, la respuesta no trae `p` o no descifra), no se inventa nada: se emite `player-failed`, se intentan las pistas legibles del HTML (iframes de players; los tráilers de YouTube se excluyen) y, si tampoco hay, la **forma** de la página (`sin-pistas`: etiquetas, `wp-json`, `action` del tema, ids del modal y nombres de campo).
 
 ```
 GET /stream/site?url=https://ww3.gnulahd.nu/ver/godzilla-minus-zero/
-→ { "streams": [] }   # mientras los players de la ficha no sean resolubles sin JS
+→ { "streams": [ { "name": "Gnula", "title": "Latino · Servidor 4", "url": "https://…" } ] }
 ```
+
 
 ```
 GET /stream/site?url=https://flixlatam.com/pelicula/patton
@@ -128,7 +140,7 @@ GET /stream/site?url=https://flixlatam.com/pelicula/patton
 - Solo se aceptan URLs HTTPS sin credenciales y con hostname de un sitio soportado (FlixLatam con o sin `www`; Gnula en `ww3`, `www` y dominio raíz). Otros hosts, HTTP claro, credenciales y URLs malformadas devuelven 400 sin hacer peticiones.
 - Cada ficha se resuelve por el camino real del sitio (arriba). Además se recogen los medios literales que aparezcan en la ficha o en el reproductor y se verifican por firma: una playlist HLS con `#EXT-X-STREAM-INF` o `#EXTINF`/`#EXT-X-TARGETDURATION`, o una caja `ftyp` para MP4. Una cabecera `#EXTM3U` suelta no se acepta. **Esto no prueba reproducción completa**, codecs, audio latino ni CORS.
 - **No se ejecuta JavaScript del sitio**: el cifrado de Embed69 se descifra con AES y P.A.C.K.E.R. se desempaqueta por texto. Sí se usan cookies (las del propio reproductor y la cookie de Anubis) y el `Referer` del reproductor que incrusta al player, porque los players los exigen. No se resuelven CAPTCHAs de terceros ni se evade DRM.
-- Los hosts confiables son los tres dominios del sitio más los dominios de reproductor conocidos del registry (VOE, Streamtape, Vidsrc, Doodstream, Filemoon, Vidhide, Streamwish...). Si un medio se sirve desde un CDN, añade sus hosts explícitamente con `SITES_ALLOWED_HOSTS=cdn.example.com,...` **después de comprobar que son confiables**; el HTML de la página nunca autoriza un host por sí solo. Los hosts no permitidos se omiten (la lista resultante puede quedar vacía) y se registra un evento `blocked-host`/`blocked-frame`.
+- Los hosts confiables son los dominios de los sitios soportados más los dominios de reproductor conocidos del registry (VOE, Streamtape, Vidsrc, Doodstream, Filemoon, Vidhide, Streamwish...). Si un medio se sirve desde un CDN, añade sus hosts explícitamente con `SITES_ALLOWED_HOSTS=cdn.example.com,...` **después de comprobar que son confiables**; el HTML de la página nunca autoriza un host por sí solo. Los hosts no permitidos se omiten (la lista resultante puede quedar vacía) y se registra un evento `blocked-host`/`blocked-frame`.
 - Transporte seguro: IPv4 público validado en el socket, sin redirecciones automáticas (solo se siguen 302 hacia hosts de la allowlist, y la petición `get_video` de Streamtape se inspecciona explícitamente), sin IPv6 ni direcciones privadas. El `lookup` inyectable se aplica también al transporte, así que la dirección validada es la que se conecta. Los mismos límites del extractor HLS/MP4 se aplican (tamaño de página, tiempo por petición, diez candidatos, dos verificaciones concurrentes) y hay caché por URL (30 s con medios, 5 s sin ellos).
 - **Presupuesto de tiempo total**: además del tiempo por petición, cada extracción tiene un `deadlineMs` (20 s por defecto). Antes, diez candidatos en serie con un tiempo por petición de 10 s podían dejar la respuesta colgada durante minutos.
 - Fallos del extractor: 400 para solicitudes inválidas, 502 si la extracción falla, 503 (`Retry-After: 10`) si hay saturación.
@@ -172,6 +184,8 @@ En GitHub Actions, el workflow **Sites live extraction** se ejecuta al hacer pus
 | `VOE_KEY` / `VOE_IV` | Sobreescriben las claves AES-128-CBC del player VOE. |
 | `VIDSRC_KEYS` | Clave RC4 de Vidsrc con formato `encrypt:decrypt`. |
 | `SITES_TEST_URLS` | URLs de página para `npm run test:sites-live`. |
+| `SITES_LIVE_BUDGET_MS` | Presupuesto total de la extracción en vivo (180000 por defecto, mínimo 2000). |
+| `GNULA_XOR` | Clave del decodificador de Gnula (`103,78,55,100` por defecto), por si el sitio la rota. |
 
 ## Caché y diagnósticos
 

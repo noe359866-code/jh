@@ -1,6 +1,6 @@
 const { createFetcher } = require('./extractor');
 const { crearProveedorFlixLatam } = require('./flixlatam');
-const { crearProveedorGenerico } = require('./generico');
+const { crearProveedorGnula } = require('./gnula');
 const { crearRegistry, hostsReproductores } = require('../resolvers');
 
 // Proveedores de sitios: cada proveedor conoce el flujo real de su sitio y
@@ -12,8 +12,10 @@ const { crearRegistry, hostsReproductores } = require('../resolvers');
 //
 // `flujo` decide qué descubridor se usa:
 //   - 'embed69': el sitio incrusta Embed69 (lista de servidores cifrada + Anubis).
-//   - 'generico': WordPress con modal de reproducción; las pistas legibles del
-//     HTML (iframes, enlaces a players, data-*) se pasan al registry.
+//   - 'gnula': WordPress con API propia (`/wp-json/gnrd/v1/...`); los
+//     servidores llegan cifrados y se descifran en memoria (base64 + XOR).
+//   - 'generico' (previsto): WordPress con modal sin API, donde solo las pistas
+//     legibles del HTML se pueden pasar al registry.
 const PROVEEDORES = [
   {
     clave: 'flixlatam',
@@ -26,7 +28,7 @@ const PROVEEDORES = [
     clave: 'gnula',
     nombre: 'Gnula',
     titulo: 'HLS / MP4',
-    flujo: 'generico',
+    flujo: 'gnula',
     hosts: ['ww3.gnulahd.nu', 'gnulahd.nu', 'www.gnulahd.nu']
   }
 ];
@@ -35,12 +37,18 @@ const PROVEEDORES = [
 // los dominios de reproductor conocidos del registry. Son destinos legítimos
 // del flujo de resolución, no se descubren desde el HTML. Los medios servidos
 // desde CDN deben añadirse explícitamente con SITES_ALLOWED_HOSTS.
+// Hosts de reproductor que el payload de Gnula declara y el registry resuelve
+// (Voe ya está por `hostsReproductores`; los demás se añaden explícitamente).
+// No se toman del HTML: son destinos declarados de este flujo.
+const HOSTS_GNULA = ['savefiles.com', 'bysevepoin.com', 'vidara.to', 'vidaraa.cc'];
+
 function hostsPermitidos(entorno = process.env) {
   const extras = (entorno.SITES_ALLOWED_HOSTS || '')
     .split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
   return [...new Set([
     ...PROVEEDORES.flatMap(p => p.hosts.map(h => h.toLowerCase())),
     'embed69.org',
+    ...HOSTS_GNULA,
     ...hostsReproductores(),
     ...extras
   ])];
@@ -99,8 +107,8 @@ async function resolver(request, options = {}) {
 
   // Cada sitio tiene su propio flujo; el resto (registry, presupuesto,
   // etiquetas) es común.
-  const descubridor = proveedor.flujo === 'generico'
-    ? crearProveedorGenerico(configuracion)
+  const descubridor = proveedor.flujo === 'gnula'
+    ? crearProveedorGnula({ ...configuracion, entorno: options.entorno })
     : crearProveedorFlixLatam(configuracion);
   const { media, servidores, reproductor } = await descubridor.descubrir(url.href);
 

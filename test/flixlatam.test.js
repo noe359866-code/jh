@@ -298,3 +298,124 @@ test('Gnula: los idiomas y servidores del modal se leen del texto visible', () =
   assert.deepEqual(idiomas, ['Latino', 'Subtitulado']);
   assert.deepEqual(servidores, [1, 2]);
 });
+
+// ---------------------------------------------------------------------------
+// Gnula: API del tema (base64 + XOR) descifrada sin ejecutar JavaScript
+// ---------------------------------------------------------------------------
+// Payload con la MISMA forma que el real (verificado en vivo):
+//   { t, langs: [{ label, flag, servers: [{ title, src }] }], dl: [...] }
+// y cifrado igual que `gnrdUnpack` lo descifra.
+function empaquetarGnula(datos, clave = [103, 78, 55, 100]) {
+  const claro = Buffer.from(JSON.stringify(datos), 'utf8');
+  const cifrado = Buffer.alloc(claro.length);
+  for (let i = 0; i < claro.length; i++) cifrado[i] = claro[i] ^ clave[i % clave.length];
+  return cifrado.toString('base64');
+}
+
+const FICHA_GNULA_API = `<html><head><script>
+var _gnrdPid=520864,_gnrdTok="tok-de-prueba-0123456789abcdef";
+</script><script>
+function _gdLoad(){ fetch('/wp-json/gnrd/v1/player?id='+_gnrdPid+'&t='+encodeURIComponent(_gnrdTok))
+  .then(function(r){return r.json();}).then(function(raw){ _gdApply(gnrdUnpack(raw.p)); }); }
+function gnrdUnpack(s){try{var b=atob(s),k=[103,78,55,100];/*…*/return JSON.parse(b);}catch(e){return [];}}
+</script></head><body><div id="gnrd-player-modal"></div></body></html>`;
+
+const PAYLOAD_GNULA = {
+  t: 'Godzilla Minus Zero',
+  langs: [
+    { label: 'Latino', flag: 'MX', servers: [
+      { title: 'Servidor 1', src: 'https://vidara.to/e/abc123#xyz' },
+      { title: 'Servidor 2', src: 'https://savefiles.com/e/def456' }
+    ] },
+    { label: 'Subtitulado', flag: 'US', servers: [
+      { title: 'Servidor 1', src: 'https://vidaraa.cc/e/ghi789#xyz' }
+    ] }
+  ],
+  dl: [{ name: '01', lang: 'Latino', qual: 'HD-CAM', url: 'https://1cloudfile.com/x' }]
+};
+
+test('Gnula descifra el payload del tema: base64 + XOR de 4 bytes, sin ejecutar JS', () => {
+  const { desempacar, CLAVE_XOR } = require('../engines/sites/gnula');
+  const datos = desempacar(empaquetarGnula(PAYLOAD_GNULA));
+  assert.equal(datos.t, 'Godzilla Minus Zero');
+  assert.equal(datos.langs.length, 2);
+  // Un payload corrupto no lanza: devuelve null y el flujo no inventa nada.
+  assert.equal(desempacar('no-es-base64-@@'), null);
+  assert.equal(desempacar(''), null);
+  assert.equal(desempacar(empaquetarGnula({ a: 1 }, [1, 2, 3, 4]), CLAVE_XOR), null);
+});
+
+test('Gnula lee id, token y la URL del player del código del tema', () => {
+  const { leerPlayer } = require('../engines/sites/gnula');
+  const player = leerPlayer(FICHA_GNULA_API);
+  assert.equal(player.id, '520864');
+  assert.equal(player.token, 'tok-de-prueba-0123456789abcdef');
+  assert.equal(player.prefijo, '/wp-json/gnrd/v1/player?id=');
+  assert.equal(player.sufijo, '&t=');
+  // Si el tema cambia y no hay construcción reconocible, no se inventa.
+  assert.equal(leerPlayer('<html>sin player</html>'), null);
+});
+
+test('Gnula resuelve la ficha por su API y etiqueta idioma y servidor', async () => {
+  const payload = empaquetarGnula(PAYLOAD_GNULA);
+  const pedidos = [];
+  const eventos = [];
+  const HLS_GNULA = '#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=900000\n720p.m3u8\n';
+  const fetchImpl = async (destino) => {
+    const url = String(destino);
+    pedidos.push(url);
+    // 1) ficha  2) API del player (respuesta {p})  3) cada player de la lista
+    if (url.includes('/ver/godzilla-minus-zero/')) return new Response(FICHA_GNULA_API);
+    if (url.includes('/wp-json/gnrd/v1/player')) return new Response(JSON.stringify({ p: payload }));
+    if (url.endsWith('.m3u8')) return new Response(HLS_GNULA);
+    // Uno de los players publica la fuente en claro; los demás no.
+    if (url.includes('vidara.to')) {
+      return new Response('<html><script>var src="https://cdn.example/stream.m3u8";</script></html>');
+    }
+    return new Response('<html><body>Loading...</body></html>');
+  };
+  const streams = await resolver({ url: 'https://ww3.gnulahd.nu/ver/godzilla-minus-zero/' }, {
+    lookupImpl, fetchImpl,
+    allowedHosts: [...hostsPermitidos({}), 'cdn.example'],
+    onEvent: evento => eventos.push(evento)
+  });
+
+  // La API se pidió con el id y el token del propio tema.
+  assert.ok(pedidos.some(p => p.includes('/wp-json/gnrd/v1/player?id=520864')));
+  assert.ok(pedidos.some(p => p.includes('t=tok-de-prueba')));
+  // Los tres servidores del payload se intentan.
+  for (const host of ['vidara.to', 'savefiles.com', 'vidaraa.cc']) {
+    assert.ok(pedidos.some(p => p.includes(host)), `${host} debe intentarse`);
+  }
+  const servidores = eventos.find(e => e.stage === 'servidores');
+  assert.equal(servidores.total, 3);
+  assert.equal(servidores.descifrado, true);
+  assert.deepEqual(servidores.hosts, ['vidara.to', 'savefiles.com', 'vidaraa.cc']);
+  // Los enlaces con #fragmento del player se resuelven (no se descartan).
+  assert.ok(streams.length >= 1);
+  for (const stream of streams) {
+    assert.equal(stream.name, 'Gnula');
+    assert.match(stream.title, /^(Latino|Subtitulado) · Servidor \d$/);
+  }
+});
+
+test('Gnula: si la API no descifra, cae a las pistas del HTML y lo informa', async () => {
+  const eventos = [];
+  const streams = await resolver({ url: 'https://ww3.gnulahd.nu/ver/bleach-2004/' }, {
+    lookupImpl,
+    fetchImpl: async (destino) => {
+      const url = String(destino);
+      if (url.endsWith('/ver/bleach-2004/')) {
+        return new Response(FICHA_GNULA_API.replace('</body>',
+          '<iframe src="https://streamwish.to/e/zzz"></iframe></body>'));
+      }
+      if (url.includes('/wp-json/gnrd/v1/player')) return new Response(JSON.stringify({ p: 'AAAA' }));
+      return new Response('<html><body>Loading...</body></html>');
+    },
+    onEvent: evento => eventos.push(evento)
+  });
+  assert.ok(eventos.some(e => e.stage === 'player-failed'), 'debe informar el fallo del player');
+  const pistas = eventos.find(e => e.stage === 'pistas');
+  assert.equal(pistas.total, 1);
+  assert.deepEqual(streams, []);
+});
