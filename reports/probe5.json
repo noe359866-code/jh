@@ -1,0 +1,198 @@
+{
+ "eja:limit=48": {
+  "status": 200,
+  "cards": 6,
+  "total": "144"
+ },
+ "eja:limit=100": {
+  "status": 200,
+  "cards": 6,
+  "total": "144"
+ },
+ "eja:limit=500": {
+  "status": 200,
+  "cards": 6,
+  "total": "144"
+ },
+ "eja:per_page=100": {
+  "status": 200,
+  "cards": 6,
+  "total": "144"
+ },
+ "eja:page=2": {
+  "status": 200,
+  "cards": 6,
+  "total": "144"
+ },
+ "eja:limit=0&offset=0": {
+  "status": 200,
+  "cards": 6,
+  "total": "144"
+ },
+ "eja:api.php": {
+  "status": 200,
+  "ctype": "text/html; charset=utf-8",
+  "sample": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n\t<meta charset=\"UTF-8\">\n\t<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n\t<title></title>\n\t<link rel=\"icon\" type=\"image/png\" href=\"/static/"
+ },
+ "tvgardenMetadata": {
+  "status": 200,
+  "sample": "{\"AD\":{\"country\":\"Andorra\",\"capital\":\"Andorra la Vella\",\"timeZone\":\"Europe/Andorra\",\"hasChannels\":true,\"channelCount\":2},\"AE\":{\"country\":\"United Arab Emirates\",\"capital\":\"Abu Dhabi\",\"timeZone\":\"Asia/Dubai\",\"hasChannels\":true,\"channelCount\":32},\"AF\":{\"country\":\"Afghanistan\",\"capital\":\"Kabul\",\"timeZone\":\"Asia/Kabul\",\"hasChannels\":true,\"channelCount\":14},\"AG\":{\"country\":\"Antigua and Barbuda\",\"capital\":\"St. John's\",\"timeZone\":\"America/Antigua\",\"hasChannels\":true,\"channelCount\":1},\"AI\":{\"country\":\"Anguilla\",\"capital\":\"The Valley\",\"timeZone\":\"America/Anguilla\",\"hasChannels\":false,\"channelCount\":0},\""
+ },
+ "tvgardenBundle": {
+  "status": 200,
+  "length": 226416,
+  "apiPaths": [],
+  "countriesRef": [
+   "https://tvgarden.world/api/tv/countries_metadata.json",
+   "https://tvgarden.world/api/radio/countries_metadata.json",
+   "https://tvgarden.world/api/webcams/countries_metadata.json",
+   "${i.DATA_ROOT}${mr(e)}/countries_metadata.json"
+  ]
+ },
+ "tvgardenApiProbes": {},
+ "tvenvivo/live/core.php?canal=tudn": {
+  "status": 200,
+  "finalUrl": "https://www.tvenvivo.org/live/core.php?canal=tudn",
+  "len": 9315,
+  "iframes": [
+   "https://deportes.ksdjugfssddeports.com/stream.php?canal=tudn&amp;target=1&amp;sig=c65018d3c902212b93e9b6f051759987310f12a42616a8582d5b2b79a76cf69e"
+  ],
+  "hls": []
+ },
+ "tvenvivo/live2/core.php?canal=tudn": {
+  "status": 200,
+  "finalUrl": "https://www.tvenvivo.org/live2/core.php?canal=tudn",
+  "len": 9315,
+  "iframes": [
+   "https://deportes.ksdjugfssddeports.com/stream.php?canal=tudn&amp;target=2&amp;sig=ec1321721bf0108bec43a86c0d3f81f2bc518d9399d0ac9334c9672c60007264"
+  ],
+  "hls": []
+ },
+ "tvenvivo/live3/core.php?canal=tudn": {
+  "status": 200,
+  "finalUrl": "https://www.tvenvivo.org/live3/core.php?canal=tudn",
+  "len": 9315,
+  "iframes": [
+   "https://deportes.ksdjugfssddeports.com/stream.php?canal=tudn&amp;target=3&amp;sig=f0ce47cd5f88b462e7bbd1132cea713cfaf43519e069a2abb6cc66ec1e092733"
+  ],
+  "hls": []
+ },
+ "liv24/test/ntv/ntv.json": {
+  "status": 200,
+  "ctype": "application/json",
+  "sample": "[\n  {\n    \"id\": \"dallas_mavericks_vs_los_angeles_clippers\",\n    \"title\": \"Dallas Mavericks vs Los Angeles Clippers\",\n    \"category\": \"Basketball\",\n    \"tournament\": \"NBA\",\n    \"date\": 1795305600000,\n    \"popular\": true,\n    \"live\": true,\n    \"status\": \"live\",\n    \"sources\": [\n      {\n        \"source\": \"falcon\",\n        \"id\": \"dallas_mavericks_vs_los_angeles_clippers-ch1\",\n        \"url\": \"https://livelive24.st/live24.html?url=dallas-mavericks-vs-los-angeles-clippers-stream-1\",\n        \"channelName\": \"HQ Stream 1 [en]\"\n      },\n      {\n        \"source\": \"falcon\",\n        \"id\": \"dallas_mavericks_vs_los_angeles_clippers-ch2\",\n        \"url\": \"https://livelive24.st/live24.html?url=dallas-mavericks"
+ },
+ "liv24/test/ntv/ntv_channels.json": {
+  "status": 404,
+  "ctype": "text/html",
+  "sample": "<!DOCTYPE html>\n<html style=\"height:100%\">\n<head>\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\">\n<title> 404 Not Found\r\n</title><style>@media (prefers-color-scheme:dark){body{background-color:#000!important}}</style></head>\n<body style=\"color: #444; margin:0;font: normal 14px/20px Arial, Helvetica, sans-serif; height:100%; background-color: #fff;\">\n<div style=\"height:auto; min-height:100%; \">     <div style=\"text-align: center; width:800px; margin-left: -400px; position:absolute; top: 30%; left:50%;\">\n        <h1 style=\"margin:0; font-size:150px; line-height:150px; font-weight:bold;\">404</h1>\n<h2 style=\"margin-top:20px;font-size: 30px;\">Not Found\r\n</h2"
+ },
+ "liv24/ntv.json": {
+  "status": 404,
+  "ctype": "text/html",
+  "sample": "<!DOCTYPE html>\n<html style=\"height:100%\">\n<head>\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\">\n<title> 404 Not Found\r\n</title><style>@media (prefers-color-scheme:dark){body{background-color:#000!important}}</style></head>\n<body style=\"color: #444; margin:0;font: normal 14px/20px Arial, Helvetica, sans-serif; height:100%; background-color: #fff;\">\n<div style=\"height:auto; min-height:100%; \">     <div style=\"text-align: center; width:800px; margin-left: -400px; position:absolute; top: 30%; left:50%;\">\n        <h1 style=\"margin:0; font-size:150px; line-height:150px; font-weight:bold;\">404</h1>\n<h2 style=\"margin-top:20px;font-size: 30px;\">Not Found\r\n</h2"
+ },
+ "liv24Home": {
+  "ntvRefs": [
+   "https://livelive24.com/test/ntv/ntv.json"
+  ],
+  "playerRefs": [
+   ".watch-btn",
+   ".watch-btn:hover",
+   ".watch-link",
+   ".watch-link:hover",
+   ".watch-link:disabled",
+   "WATCH",
+   "WATCH_PAGE",
+   "watch.html",
+   "buildWatchUrl(name,",
+   "trackMatchWatch(matchId,",
+   "watch",
+   "watchButton"
+  ]
+ },
+ "daddy": {
+  "status": 200,
+  "len": 657585,
+  "m3u8": [
+   "https://edge.wedd48c.top/premium1/index.m3u8"
+  ],
+  "literalM3u8": true,
+  "keys": [
+   "src='https://llvpn.com/tag.min.js",
+   "src=\"https://cdn.jsdelivr.net/npm/pako@2/dist/pako.min.js",
+   "src=\"KB5zFt7A.js?v=85113",
+   "src=\"p2p-engine.min.js?v=2.18.0",
+   "SRC = \"https://edge.wedd48c.top/premium1/index.m3u8",
+   "src=\"https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit",
+   "src=\"daddy.min.js?v=1795242731"
+  ]
+ },
+ "iptvcatSlugs": [
+  "argentina__6",
+  "bolivia__4",
+  "chile__6",
+  "colombia__3",
+  "costa_rica__3",
+  "cuba__2",
+  "dominican_republic__6",
+  "ecuador__4",
+  "el_salvador__4",
+  "guatemala__1",
+  "honduras__5",
+  "mexico__6",
+  "nicaragua__3",
+  "panama__10",
+  "paraguay__2",
+  "peru__7",
+  "puerto_rico__3",
+  "uruguay__3",
+  "venezuela__3",
+  "spain__9",
+  "united_states_of_america__11"
+ ],
+ "iptvcatRowSample": "<tr class=\"border-solid belongs_to_2740463\"> <!-- <td>1</td>",
+ "gftvSlugs": [
+  "argentina",
+  "australia",
+  "austria",
+  "brazil",
+  "canada",
+  "chile",
+  "colombia",
+  "dominican-republic",
+  "france",
+  "germany",
+  "greece",
+  "india",
+  "iraq",
+  "italy",
+  "mexico",
+  "netherlands",
+  "peru",
+  "romania",
+  "russia",
+  "south-korea",
+  "spain",
+  "turkey",
+  "united-kingdom",
+  "united-states"
+ ],
+ "gftvEsPage2": {
+  "status": 200,
+  "channels": [
+   "CanalTaronjaAnoia.es",
+   "CanalTaronjaComarquesCentrals.es",
+   "CanalTaronjaOsonaiMoianes.es",
+   "CanalTerrassa.es",
+   "CanalTerresdelEbre.es",
+   "CetelmonTV.es"
+  ],
+  "count": 48
+ },
+ "ejaMediaCheck": {
+  "host": "rtvelivestream.rtve.es",
+  "status": 200,
+  "prefix": "#EXTM3U\n## Created with Golumi Video Pla"
+ }
+}
