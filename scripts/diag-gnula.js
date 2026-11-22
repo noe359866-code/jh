@@ -17,7 +17,7 @@ const FICHA = `${BASE}/ver/godzilla-minus-zero/`;
 // Forma de una cadena: se conserva la puntuación y cada letra/dígito pasa a x.
 // Sirve para ver la estructura de una URL sin publicar sus valores.
 function formaCadena(cadena) {
-  return String(cadena).replace(/[A-Za-z0-9]/g, 'x').replace(/(x)\1{3,}/g, '$1..');
+  return String(cadena).replace(/[A-Za-z0-9]/g, 'x');
 }
 
 // Redacción: fuera literales de cadena, tokens y valores largos.
@@ -161,13 +161,16 @@ async function faseUnpack() {
   }
 
   if (!pid || !tok) return;
-  // La URL se arma en el tema con dos literales; se muestra su forma (sin
-  // valores) para no adivinar la ruta.
-  for (const llamada of html.matchAll(/fetch\((['"])([^'"]*)\1\s*\+\s*_gnrdPid\s*\+\s*(['"])([^'"]*)\3/g)) {
-    console.log(`url-forma: ${formaCadena(llamada[2])} + <pid> + ${formaCadena(llamada[4])} + <tok>`);
+  // La URL se arma en el tema con dos literales alrededor del id. Se usan esos
+  // literales tal cual (en vez de adivinar la ruta) y se muestra solo su forma.
+  const llamada = /fetch\((['"])([^'"]*)\1\s*\+\s*_gnrdPid\s*\+\s*(['"])([^'"]*)\3/.exec(html);
+  if (!llamada) {
+    console.log('url del player: no se encontró la construcción en el tema');
+    return;
   }
-  // Sondeo real del endpoint con los parámetros que usa el cliente.
-  const url = `${BASE}/wp-json/gnrd/v1/${pid.valor}?tok=${encodeURIComponent(tok.valor)}`;
+  const [prefijo, sufijo] = [llamada[2], llamada[4]];
+  console.log(`url-forma: ${formaCadena(prefijo)} + <pid> + ${formaCadena(sufijo)} + <tok>`);
+  const url = new URL(`${prefijo}${pid.valor}${sufijo}${encodeURIComponent(tok.valor)}`, FICHA).href;
   try {
     const texto = await fetcher.getText(url, { Accept: 'application/json', Referer: FICHA, 'X-Requested-With': 'XMLHttpRequest' });
     let json;
