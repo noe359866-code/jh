@@ -418,53 +418,44 @@ async function faseApi2() {
   const datos = desempacar(JSON.parse(await fetcher.getText(url, { Accept: 'application/json', Referer: FICHA })).p);
   const destino = datos.langs[0].servers.find(s => /vidara/.test(s.src)).src;
   const cuerpo = await fetcher.getText(destino, { Referer: FICHA });
+  console.log(`vidara bytes=${cuerpo.length}`);
 
-  // Estructura: se conserva la puntuación y se sustituye cada palabra por x.
-  const estructura = (texto) => String(texto).replace(/[A-Za-z0-9_]+/g, s => `x${s.length}`);
-  for (const m of cuerpo.matchAll(/[^\n;]{0,160}apistream[^\n;]{0,240}/g)) {
-    console.log(`estructura: ${estructura(m[0])}`);
-  }
-  // La ruta relativa que aparece como URL=... se resuelve contra la página y se
-  // pide como haría el player (con su Referer). Solo se informa la forma.
-  // La página asigna la ruta por concatenación (URL=apistream); se prueban
-  // varias formas: comillas, sin comillas y base64.
-  const relativa = /URL\s*=\s*(?:["']([^"']*apistream[^"']*)["']|([A-Za-z0-9\/._?=&%:-]*apistream[A-Za-z0-9\/._?=&%:-]*))/i.exec(cuerpo);
-  const rutaAsignada = relativa ? (relativa[1] || relativa[2]) : null;
-  if (rutaAsignada) {
-    console.log(`ruta-asignada-forma: ${rutaAsignada.replace(/[A-Za-z0-9]/g, 'x')}`);
-    // ¿Hay literales cercanos que se concatenen? Se muestran redactados.
-    const indice = cuerpo.indexOf(rutaAsignada);
-    console.log(`contexto-asignacion: ${redactar(cuerpo.slice(Math.max(0, indice - 240), indice + 240))}`);
-  }
-  if (relativa) {
-    const objetivo = new URL(relativa[1], destino).href;
-    console.log(`api-ruta-forma: ${new URL(objetivo).pathname.replace(/[A-Za-z0-9]/g, 'x')}${new URL(objetivo).search ? '?query' : ''}`);
-    for (const [nombre, cabeceras] of [['referer-ficha', { Referer: FICHA }], ['referer-player', { Referer: destino }]]) {
-      try {
-        const respuesta = await fetcher.getText(objetivo, { ...cabeceras, Accept: 'application/json, text/plain, */*' });
-        const señales = [
-          /\.m3u8/.test(respuesta) ? 'm3u8' : '',
-          /"file"|'file'/.test(respuesta) ? 'file' : '',
-          /"source"|"src"/.test(respuesta) ? 'src' : '',
-          /^\s*[[{]/.test(respuesta) ? 'json' : ''
-        ].filter(Boolean).join('+');
-        let claves = '';
+  // Estructura: puntuación intacta y cada palabra como x<largo>.
+  const estructura = (texto) => String(texto).replace(/[A-Za-z0-9_]+/g, t => `x${t.length}`);
+  const apariciones = [...cuerpo.matchAll(/[^\n]{0,140}apistream[^\n]{0,200}/g)];
+  console.log(`apariciones=${apariciones.length}`);
+  for (const m of apariciones.slice(0, 3)) console.log(`estructura: ${estructura(m[0])}`);
+
+  // Cómo se asigna la ruta: con comillas, sin comillas o por concatenación.
+  for (const patron of [
+    /URL\s*=\s*["']([^"']*apistream[^"']*)["']/i,
+    /URL\s*=\s*([A-Za-z0-9/._?=&%:-]*apistream[A-Za-z0-9/._?=&%:-]*)/i,
+    /(?:var|let|const)\s+(\w*url\w*)\s*=\s*["']([^"']*apistream[^"']*)["']/i
+  ]) {
+    const m = patron.exec(cuerpo);
+    if (m) {
+      const ruta = m[m.length - 1];
+      console.log(`asignacion-forma: ${estructura(ruta)}`);
+      console.log(`contexto: ${redactar(cuerpo.slice(Math.max(0, m.index - 200), m.index + 220))}`);
+      // Se pide la ruta como la resolvería el player y se describe la respuesta.
+      for (const [nombre, cabeceras] of [['referer-ficha', { Referer: FICHA }], ['referer-player', { Referer: destino }]]) {
         try {
-          const json = JSON.parse(respuesta);
-          claves = Array.isArray(json) ? `array(${json.length})` : Object.keys(json).sort().join(',');
-        } catch { /* no es JSON */ }
-        const hosts = [...new Set([...respuesta.matchAll(/https?:\/\/([a-z0-9.-]+)\/[^\s"'<>]*\.m3u8/gi)].map(m => m[1]))];
-        console.log(`api ${nombre} -> bytes=${respuesta.length} claves=[${claves}] señales=${señales || '-'} hosts-m3u8=[${hosts.join(',')}]`);
-      } catch (error) {
-        console.log(`api ${nombre} -> ${error.message.slice(0, 100)}`);
+          const objetivo = new URL(ruta, destino).href;
+          const respuesta = await fetcher.getText(objetivo, { ...cabeceras, Accept: 'application/json, text/plain, */*' });
+          const hosts = [...new Set([...respuesta.matchAll(/https?:\/\/([a-z0-9.-]+)\/[^\s"'<>]*\.m3u8/gi)].map(x => x[1]))];
+          let claves = '';
+          try {
+            const json = JSON.parse(respuesta);
+            claves = Array.isArray(json) ? `array(${json.length})` : Object.keys(json).sort().join(',');
+          } catch { /* no es JSON */ }
+          console.log(`api ${nombre} -> bytes=${respuesta.length} claves=[${claves}]`
+            + ` señales=${[/\.m3u8/.test(respuesta) ? 'm3u8' : '', /"file"|'file'/.test(respuesta) ? 'file' : ''].filter(Boolean).join('+') || '-'}`
+            + ` hosts-m3u8=[${hosts.join(',')}]`);
+        } catch (error) {
+          console.log(`api ${nombre} -> ${error.message.slice(0, 100)}`);
+        }
       }
-    }
-  } else {
-    console.log('api: no hay URL=...apistream... en la página');
-    // Respaldo: contexto crudo alrededor de 'apistream' con la estructura
-    // (puntuación intacta, palabras como x<largo>).
-    for (const m of cuerpo.matchAll(/[^\n]{0,120}apistream[^\n]{0,160}/g)) {
-      console.log(`crudo: ${estructura(m[0])}`);
+      break;
     }
   }
 }
