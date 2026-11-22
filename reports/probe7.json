@@ -1,0 +1,156 @@
+{
+ "iptvcat": {
+  "status": 200,
+  "rowCount": 129,
+  "firstRowLength": 189,
+  "firstRowClean": "Spain",
+  "tailOfRow": "<tr class=\"border-solid\"> <th colspan=\"3\" class=\"text-center\"><span class=\"flag mr-10\"><img src=\"assets/images/flags/es.png\" alt=\"Spain\" title=\"Spain\"></span>Spain</th> </tr>"
+ },
+ "tvgarden": {
+  "/api/tv/channels/es.json": {
+   "status": 404,
+   "ctype": "text/html",
+   "sample": "<!DOCTYPE html>\n<html style=\"height:100%\">\n<head>\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\">\n<title> 404 Not Found\r\n</title><style>@media (prefers-color-scheme:dark){body{backg"
+  },
+  "/api/tv/es/channels.json": {
+   "status": 404,
+   "ctype": "text/html",
+   "sample": "<!DOCTYPE html>\n<html style=\"height:100%\">\n<head>\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\">\n<title> 404 Not Found\r\n</title><style>@media (prefers-color-scheme:dark){body{backg"
+  },
+  "/api/tv/countries/es.json": {
+   "status": 200,
+   "ctype": "application/json",
+   "sample": "\u001f�\b\u0000\u0000\u0000\u0000\u0000\u0002\u0003�}Yr�̳�V���\u0001���� �y�\u001b7\u001c%�4��\u0002M\f7z\u0015��~�^�c]%�-O\u0018c�;\u0011>\u0016PJ�U����L�����l���?�Ƒ�Z�+\u001d�a\u0003��\u0007�B�>#eV�\u0003\u000e�o\u0005�\u000f��\u0014�N������p\u001d���o۞�c���\u001c����\u0004�C�e#����g��0R����\u001d\u0007xf\u0004L���7�Q\u001a�������o���\u000e�\u0010\u0015\u001d�� ��\u0000N\u0000��?)�\u001b�1\u0014=�Y��p��4[\u0002a�"
+  },
+  "/api/tv/spain.json": {
+   "status": 404,
+   "ctype": "text/html",
+   "sample": "<!DOCTYPE html>\n<html style=\"height:100%\">\n<head>\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\">\n<title> 404 Not Found\r\n</title><style>@media (prefers-color-scheme:dark){body{backg"
+  },
+  "/api/tv/es.json": {
+   "status": 404,
+   "ctype": "text/html",
+   "sample": "<!DOCTYPE html>\n<html style=\"height:100%\">\n<head>\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\">\n<title> 404 Not Found\r\n</title><style>@media (prefers-color-scheme:dark){body{backg"
+  },
+  "/api/tv/channels/spain.json": {
+   "status": 404,
+   "ctype": "text/html",
+   "sample": "<!DOCTYPE html>\n<html style=\"height:100%\">\n<head>\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\">\n<title> 404 Not Found\r\n</title><style>@media (prefers-color-scheme:dark){body{backg"
+  },
+  "/api/tv/mx/channels.json": {
+   "status": 404,
+   "ctype": "text/html",
+   "sample": "<!DOCTYPE html>\n<html style=\"height:100%\">\n<head>\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\">\n<title> 404 Not Found\r\n</title><style>@media (prefers-color-scheme:dark){body{backg"
+  }
+ },
+ "liv24": {
+  "status": 200,
+  "tvDefs": [
+   " if (tvChannels.length === 0) loadTVData()",
+   " async function loadTVData(forceRefresh = false) ",
+   " loadTVData(true)",
+   " loadTVData(true)"
+  ],
+  "jsonRefs": [
+   "https://livelive24.com/test/ntv/ntv.json",
+   ");\r\n      const data = await response.json();\r\n      if (!data.items || data.items.length === 0) {\r\n        container.innerHTML = ",
+   "https://livelive24.com/tv.json",
+   "tv.json load error:",
+   "t load tv.json</strong><br>check file path</div>",
+   " + response.status);\r\n      const data = await response.json();\r\n      CacheManager.set(cacheKey, data);\r\n      return data;\r\n    } catch(error) {\r\n      const fallback = localStorage.getItem(cacheKey);\r\n      if (fallback) { try { return JSON.parse(fallback).value; } catch(e) {} }\r\n      throw error;\r\n    }\r\n  }\r\n\r\n  function updateBadges() {\r\n    liveTvBadge.textContent = tvChannels.length;\r\n    sportLegacyBadge.textContent = sportLegacyItems.length;\r\n    sportPlusBadge.textContent = allMatches.length || 0;\r\n  }\r\n\r\n  // ===== SPORT LEGACY SOURCES =====\r\n  const LEGACY_SOURCES = [\r\n   { name: ",
+   "https://livelive24.com/buff/output/Football.json",
+   "https://livelive24.com/buff/output/Basketball.json"
+  ],
+  "ntv": {
+   "status": 200,
+   "ctype": "application/json",
+   "length": 33531,
+   "sample": "[\n  {\n    \"id\": \"dallas_mavericks_vs_los_angeles_clippers\",\n    \"title\": \"Dallas Mavericks vs Los Angeles Clippers\",\n    \"category\": \"Basketball\",\n    \"tournament\": \"NBA\",\n    \"date\": 1795305600000,\n    \"popular\": true,\n    \"live\": true,\n    \"status\": \"live\",\n    \"sources\": [\n      {\n        \"source\": \"falcon\",\n        \"id\": \"dallas_mavericks_vs_los_angeles_clippers-ch1\",\n        \"url\": \"https://livelive24.st/live24.html?url=dallas-mavericks-vs-los-angeles-clippers-stream-1\",\n        \"channelName\": \"HQ Stream 1 [en]\"\n      },\n      {\n        \"source\": \"falcon\",\n        \"id\": \"dallas_mavericks_vs_los_angeles_clippers-ch2\",\n        \"url\": \"https://livelive24.st/live24.html?url=dallas-mavericks"
+  },
+  "ntvSummary": {
+   "count": 34,
+   "cats": [
+    "Basketball",
+    "Football",
+    "Wrestling Stream",
+    "Hockey",
+    "American Football",
+    "Tennis",
+    "Moto Sport",
+    "Golf",
+    "Baseball",
+    "Others"
+   ],
+   "channels": 0
+  }
+ },
+ "gftv24Horas.es": {
+  "status": 200,
+  "block": "streams:$R[16]=[$R[17]={id:13067,channel_id:\"24Horas.es\",url:\"https://rtvelivestream-clnx.rtve.es/rtvesec/24h/24h_main_dvr.m3u8\",timeshift:null,http_referrer:null,user_agent:null},$R[18]={id:13068,channel_id:\"24Horas.es\",url:\"https://ztnr.rtve.es/ztnr/1694255.m3u8\",timeshift:null,http_referrer:null,user_agent:null}],streamStatus",
+  "urls": [
+   "https://rtvelivestream-clnx.rtve.es/rtvesec/24h/24h_main_dvr.m3u8",
+   "https://ztnr.rtve.es/ztnr/1694255.m3u8"
+  ],
+  "refs": [],
+  "agents": []
+ },
+ "gftvLa1.es": {
+  "status": 200,
+  "block": "streams:$R[16]=[$R[17]={id:30104,channel_id:\"La1.es\",url:\"https://rtvelivestream.rtve.es/rtvesec/la1/la1_main.m3u8\",timeshift:null,http_referrer:null,user_agent:null}],streamStatus",
+  "urls": [
+   "https://rtvelivestream.rtve.es/rtvesec/la1/la1_main.m3u8"
+  ],
+  "refs": [],
+  "agents": []
+ },
+ "gftvCanalSur2.es": {
+  "status": 200,
+  "block": "streams:$R[16]=[$R[17]={id:14921,channel_id:\"CanalSur2.es\",url:\"https://cdnlive.codev8.net/rtvalive/smil:channel22.smil/playlist.m3u8\",timeshift:null,http_referrer:null,user_agent:null}],streamStatus",
+  "urls": [
+   "https://cdnlive.codev8.net/rtvalive/smil:channel22.smil/playlist.m3u8"
+  ],
+  "refs": [],
+  "agents": []
+ },
+ "tvenvivo": {
+  "embedUrl": "https://deportes.ksdjugfssddeports.com/stream.php",
+  "status": 200,
+  "obfVar": "ZpQw9XkLmN8c3vR3",
+  "obfLength": 3376,
+  "obfPrefix": "A3BYEDFXAjpTA3MiGjcMFnADVjhBHjxeAlghHz4VDicXAydQAyVCFBVhVSUAFAJYACoQSm4ZFQRjBz4VWn4bFSZQJilEAl4iGXRfWmEUFyZcUmAUFVIuGC8h",
+  "base64Attempt": "\u0003pX\u00101W\u0002:S\u0003s\"\u001a7\f\u0016p\u0003V8A\u001e<^\u0002X!\u001f>\u0015\u000e'\u0017\u0003'P\u0003%B\u0014\u0015aU%\u0000\u0014\u0002X\u0000*\u0010Jn\u0019\u0015\u0004c\u0007>\u0015Z~\u001b\u0015&P&)D\u0002^\"\u0019t_Za\u0014\u0017&\\R`\u0014\u0015R.\u0018/!\u0017?X\u001d,\u0010JnF\u001dB5\u00072\u001f\u0017'N\u0001 X^?F\u0010T(UzG\u001c7Z\u001b;v\u001f!W\u0018Y\u0017\u00188\u0000\u000bp\u0003\u000f`\u0000At\u0007D\u0005~Ul>Zc\u000bFl\u0000E~\u0018@\u0002xYdPHpdX`\u0000B{\u000eE\u0006xUl>Zc\u000bFl\u0000E~\u0018@\u0002xYdPHpdX`",
+  "longScripts": 2,
+  "m3u8Anywhere": true,
+  "hlsKeywords": [
+   "https:\\/\\/deportes.ksdjugfssddeports.com\\/playlist\\/1\\/index.m3u8?token=8cfd35bdefec26ad6901bc1fdc34ba6bbd5b7325-d006318efb67d30f17e8718b2f495157",
+   "// Solo pasamos a CARGANDO SEÑAL cuando HLS confirma que la playlist volvió.\n    // Si sigue caída, permanece STREAM OFFLINE durante los siguientes ",
+   "\n\n    // Dar tiempo a HLS.js para actualizar la playlist al volver.\n    setTimeout(()=>"
+  ]
+ },
+ "daddy": {
+  "id51": {
+   "iframe1": [
+    "https://thedaddy.li/stream/stream-51.php"
+   ],
+   "iframe2": [
+    "https://dembed.st/premiumtv/daddy.php?id=51"
+   ],
+   "src": "https://edge.wedd48c.top/premium51/index.m3u8",
+   "m3u8": [
+    "https://edge.wedd48c.top/premium51/index.m3u8"
+   ]
+  },
+  "id206": {
+   "iframe1": [
+    "https://thedaddy.li/stream/stream-206.php"
+   ],
+   "iframe2": [
+    "https://dembed.st/premiumtv/daddy.php?id=206"
+   ],
+   "src": "https://edge.wedd48c.top/premium206/index.m3u8",
+   "m3u8": [
+    "https://edge.wedd48c.top/premium206/index.m3u8"
+   ]
+  }
+ }
+}
