@@ -127,7 +127,8 @@ async function faseUnpack() {
 
   // El id va sin comillas (var _gnrdPid=520864) y el token entrecomillado.
   const valor = (nombre) => {
-    const m = new RegExp(`(?:var|let|const)\\s+${nombre}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|(\\d+))`).exec(html);
+    // El token se declara tras una coma (var _gnrdPid=520864,_gnrdTok="...").
+    const m = new RegExp(`\\b${nombre}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|(\\d+))`).exec(html);
     if (!m) return null;
     const v = m[1] ?? m[2] ?? m[3];
     return { valor: v, largo: v.length };
@@ -214,7 +215,7 @@ async function faseVariables() {
     if (/^[a-z0-9]+$/i.test(valor)) return `alfanum(${valor.length})`;
     return `otro(${valor.length})`;
   };
-  for (const match of html.matchAll(/(?:var|let|const)\s+(\w*(?:gnrd|gn|tok|pid|player)\w*)\s*=\s*(["'])([^"']{1,200})\2/gi)) {
+  for (const match of html.matchAll(/\b(\w*(?:gnrd|tok|pid|player)\w*)\s*=\s*(["'])([^"']{1,200})\2/gi)) {
     console.log(`var ${match[1]} = <${tipo(match[3])}>`);
   }
   // También el uso exacto de _gnrdPid / _gnrdTok para ver de dónde salen.
