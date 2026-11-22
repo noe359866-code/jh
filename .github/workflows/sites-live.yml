@@ -2,8 +2,6 @@ name: Sites live extraction
 on:
   push:
     paths:
-      - 'engines/live/**'
-      - 'scripts/live-check.js'
       - '.github/workflows/sites-live.yml'
 
 permissions:
@@ -12,23 +10,42 @@ permissions:
 jobs:
   live:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
-      - name: Verificación en vivo
-        run: node scripts/live-check.js || true
-      - name: Publicar salida
+      - name: Diagnóstico de red hacia eja e iptvcat
+        run: |
+          node -e '
+            const dns = require("dns").promises;
+            const run = async (url) => {
+              const out = { url };
+              try {
+                const u = new URL(url);
+                out.addresses = await dns.lookup(u.hostname, { all: true, family: 4 });
+              } catch (e) { out.dnsError = e.code || e.message; }
+              try {
+                const r = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36", "Accept-Language": "es-ES,es;q=0.9" }, redirect: "follow" });
+                out.status = r.status;
+                out.len = (await r.text()).length;
+              } catch (e) { out.fetchError = (e.cause && (e.cause.code || e.cause.message)) || e.message; }
+              console.log(JSON.stringify(out));
+            };
+            (async () => {
+              await run("https://eja.tv/?country=es");
+              await run("https://www.eja.tv/?country=es");
+              await run("https://iptvcat.net/");
+              await run("https://www.iptvcat.net/");
+            })();
+          ' > reports/network-diag.txt 2>&1 || true
+          cat reports/network-diag.txt
+      - name: Publicar diagnóstico
         if: always()
         run: |
-          mkdir -p reports
-          node -e "const fs=require('fs');const f='reports/live-check.json';const s=fs.existsSync(f)?JSON.parse(fs.readFileSync(f,'utf8')):{missing:true};fs.writeFileSync('reports/live-check-summary.txt',JSON.stringify(s,null,1));"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -f reports/live-check-summary.txt
-          git diff --cached --quiet && echo sin-cambios || git commit -m "Salida de verificación en vivo (generado)"
+          git add -f reports/network-diag.txt
+          git diff --cached --quiet && echo sin-cambios || git commit -m "Diagnóstico de red (generado)"
           git push
