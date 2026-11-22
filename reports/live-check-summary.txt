@@ -1,0 +1,9 @@
+{
+ "startedAt": "2026-11-22T03:57:05.401Z",
+ "ok": false,
+ "sources": {},
+ "totals": {},
+ "checks": [],
+ "error": "La recolección del catálogo tardó demasiado",
+ "finishedAt": "2026-11-22T03:57:50.406Z"
+}
