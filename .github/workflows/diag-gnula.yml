@@ -27,7 +27,7 @@ jobs:
           node scripts/diag-gnula.js 2>&1 | tee /tmp/diag.log
           {
             echo 'salida<<EOF'
-            head -c 20000 /tmp/diag.log
+            head -c 48000 /tmp/diag.log
             echo 'EOF'
           } >> "$GITHUB_OUTPUT"
       - name: Publicar resultado como comentario del commit

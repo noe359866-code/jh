@@ -114,7 +114,7 @@ const ejecutar = fase === 'unpack' ? faseUnpack
     : fase === 'vars' ? faseVariables
       : fase === 'players' ? fasePlayers
         : fase === 'vidara' ? faseVidara
-      : async () => { await faseVariables(); await faseUnpack(); await fasePlayers(); };
+      : async () => { await faseVidara(); await faseVariables(); await faseUnpack(); await fasePlayers(); };
 
 ejecutar().catch(error => {
   console.error(`diagnóstico falló: ${error.message}`);
