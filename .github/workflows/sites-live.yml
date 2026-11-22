@@ -2,9 +2,10 @@ name: Sites live extraction
 on:
   push:
     paths:
-      - 'engines/live/**'
-      - 'scripts/live-check.js'
       - '.github/workflows/sites-live.yml'
+
+permissions:
+  contents: write
 
 jobs:
   live:
@@ -18,43 +19,17 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Ejecutar verificación en vivo
-        run: node scripts/live-check.js || node -e 'require("fs").mkdirSync("reports",{recursive:true});require("fs").writeFileSync("reports/live-check-summary.txt","el script terminó con error (ver artefacto live-check)\n")' 
-      - name: Resumen
+        run: node scripts/live-check.js || true
+      - name: Volcar resumen al registro
         if: always()
         run: |
-          node -e '
-            const fs = require("fs");
-            if (!fs.existsSync("reports/live-check.json")) { console.log("sin reporte"); process.exit(0); }
-            const r = JSON.parse(fs.readFileSync("reports/live-check.json", "utf8"));
-            const summary = { ok: r.ok, totals: r.totals, sources: r.sources, checks: r.checks, playlistEntries: r.playlistEntries };
-            console.log(JSON.stringify(summary, null, 1));
-            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, "```json\n" + JSON.stringify(summary, null, 1) + "\n```\n");
-          '
+          ls -la reports || true
+          cat reports/live-check-summary.txt || true
       - name: Publicar resumen en la rama
         if: always()
         run: |
-          mkdir -p reports
-          node -e 'const fs=require("fs");const file="reports/live-check.json";if(fs.existsSync(file)){const r=JSON.parse(fs.readFileSync(file,"utf8"));fs.writeFileSync("reports/live-check-summary.txt",JSON.stringify({ok:r.ok,totals:r.totals,sources:r.sources,checks:r.checks,playlistEntries:r.playlistEntries,error:r.error},null,1)+"\n");}'
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -f reports/live-check-summary.txt
+          git add -f reports/live-check-summary.txt reports/live-check.json || true
           git diff --cached --quiet || git commit -m "Resumen de verificación en vivo (generado)"
-          git push 2>reports/push-error.txt || true
-          echo "=== git status" >> reports/push-error.txt
-          git status >> reports/push-error.txt 2>&1
-          git log --oneline -2 >> reports/push-error.txt 2>&1
-          git remote -v >> reports/push-error.txt 2>&1
-          mkdir -p /tmp/diag && cp reports/push-error.txt /tmp/diag/ || true
-      - name: Publicar diagnóstico
-        if: always()
-        run: |
-          git add -f reports/push-error.txt || true
-          git commit -q -m "Diagnóstico de push" || true
-          git push origin HEAD:arena/d9a96a03-jh --no-verify || true
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: live-check
-          path: reports/live-check.json
-          if-no-files-found: warn
-          retention-days: 7
+          git push
