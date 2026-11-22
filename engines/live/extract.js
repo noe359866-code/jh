@@ -28,9 +28,13 @@ function resolveSource(byId, sourceName) {
 }
 
 const DEFAULTS = {
-  concurrency: 10,
-  budgetMs: 60000,
-  probeTimeoutMs: 6000
+  // Bajo a propósito: los orígenes con embeds (DaddyLive, TVEnVivo) devuelven
+  // 403 si se les piden decenas de cadenas a la vez.
+  concurrency: 3,
+  budgetMs: 120000,
+  probeTimeoutMs: 6000,
+  // Pausa entre canales del mismo origen para no disparar su limitador.
+  pauseMs: 250
 };
 
 function hasDirect(channel) {
@@ -48,7 +52,10 @@ function extractable(channels) {
  * Devuelve `'extracted' | 'failed' | 'skipped'`; el motivo detallado se escribe
  * en `diag.reason` (para diagnóstico, nunca en el resultado público).
  */
-async function extractChannel(channel, { get, byId, probe = probeMedia, probeTimeoutMs = DEFAULTS.probeTimeoutMs, diag = null } = {}) {
+async function extractChannel(channel, {
+  get, byId, probe = probeMedia, timeoutMs = DEFAULTS.probeTimeoutMs, diag = null,
+  pauseMs = DEFAULTS.pauseMs, wait = ms => new Promise(resolve => setTimeout(resolve, ms))
+} = {}) {
   // El estado público es siempre 'failed'/'skipped'; el motivo va a `diag`.
   const note = (reason, outcome = 'failed') => {
     if (diag) diag.reason = reason;
@@ -62,10 +69,20 @@ async function extractChannel(channel, { get, byId, probe = probeMedia, probeTim
   if (!source || typeof source.resolve !== 'function') return note('sin resolutor para la fuente', 'skipped');
 
   let resolved = null;
-  try {
-    resolved = await source.resolve(page.url, { get });
-  } catch (error) {
-    return note(`cadena de embed: ${String(error.message).slice(0, 60)}`);
+  // Un 403/429 en la cadena suele ser el limitador del origen: se espera y se
+  // reintenta una vez antes de dar el canal por fallido.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      resolved = await source.resolve(page.url, { get });
+      break;
+    } catch (error) {
+      const temporal = /HTTP (403|429|503)/.test(String(error.message));
+      if (temporal && attempt === 0 && pauseMs) {
+        await wait(Math.max(pauseMs * 4, 1000));
+        continue;
+      }
+      return note(`cadena de embed: ${String(error.message).slice(0, 60)}`);
+    }
   }
   if (!resolved || !/^https?:\/\//i.test(resolved.url || '')) return note('la cadena no expone m3u8');
 
@@ -73,7 +90,7 @@ async function extractChannel(channel, { get, byId, probe = probeMedia, probeTim
   // de DaddyLive devuelve 403 a cualquier cliente que no sea un navegador real).
   let result;
   try {
-    result = await probe(resolved.url, { get, referer: resolved.referer, timeoutMs: probeTimeoutMs, retries: 0 });
+    result = await probe(resolved.url, { get, referer: resolved.referer, timeoutMs, retries: 0 });
   } catch (error) {
     return note(`sondeo: ${String(error.message).slice(0, 60)}`);
   }
@@ -101,6 +118,8 @@ async function enrich(channels, {
   budgetMs = DEFAULTS.budgetMs,
   probe = probeMedia,
   probeTimeoutMs = DEFAULTS.probeTimeoutMs,
+  pauseMs = DEFAULTS.pauseMs,
+  wait = ms => new Promise(resolve => setTimeout(resolve, ms)),
   now = Date.now,
   status = null
 } = {}) {
@@ -109,7 +128,10 @@ async function enrich(channels, {
   if (!targets.length) return counts;
   const startedAt = now();
 
+  let progress = 0;
   await mapLimit(targets, concurrency, async channel => {
+    progress++;
+    if (progress > 0 && pauseMs) await wait(pauseMs);
     if (now() - startedAt > budgetMs) {
       counts.skipped++;
       return;
@@ -117,7 +139,7 @@ async function enrich(channels, {
     let outcome;
     const diag = {};
     try {
-      outcome = await extractChannel(channel, { get, byId, probe, probeTimeoutMs, diag });
+      outcome = await extractChannel(channel, { get, byId, probe, timeoutMs: probeTimeoutMs, diag, pauseMs, wait });
     } catch (error) {
       outcome = 'failed';
       diag.reason = `excepción: ${String(error.message).slice(0, 60)}`;
