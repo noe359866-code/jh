@@ -25,6 +25,6 @@ jobs:
           tail -c 6000 pl.log > reports/pl-log.txt 2>/dev/null || true
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -f reports/pl-log.txt
+          git add -f reports/pl-log.txt reports/countries.json
           git diff --cached --quiet && echo sin-cambios || git commit -m "Sonda (generado)"
           git push

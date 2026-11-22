@@ -125,6 +125,21 @@ async function main() {
   }
   console.log(`Listas escritas en reports/: ${Object.entries(written).map(([id, count]) => `${id} (${count})`).join(', ')}`);
 
+  // Desglose por país: solo los que tienen canales vivos, de mayor a menor. Es
+  // lo que alimenta las categorías de Stremio, así que se deja en el informe.
+  const byCountry = new Map();
+  for (const channel of channels) {
+    if (channel.dead) continue;
+    const key = channel.origin || channel.country || '??';
+    byCountry.set(key, (byCountry.get(key) || 0) + 1);
+  }
+  const ordered = [...byCountry.entries()].sort((a, b) => b[1] - a[1]);
+  console.log(`Países con canales vivos: ${ordered.map(([code, count]) => `${code} ${count}`).join(' · ')}`);
+  fs.writeFileSync(
+    path.join('reports', 'countries.json'),
+    JSON.stringify(Object.fromEntries(ordered), null, 2) + '\n'
+  );
+
   const failOnDead = process.env.FAIL_ON_DEAD === '1';
   process.exitCode = report.selfCheck.inconclusive ? 2 : failOnDead && dead.length ? 1 : 0;
 }
