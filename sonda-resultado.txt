@@ -1,21 +1,21 @@
-bytes: 2981870 | entradas: 6404
+bytes: 3008910 | entradas: 6381
 sin URL http: 0
 sin tvg-country: 0
 sin group-title: 0
 sin tvg-id: 0
-senales con id repetido: 2731
-ids compartidos por canales distintos: 126
-ejemplos: [["4677",["Runtime Comedia","Runtime Família"]],["OPA.cr",["¡OPA!","¡OPA! (1080i)"]],["101Malaga.TV",["101TV Málaga","101TV Málaga Cofrade"]],["13C.cl",["13 Cultura","13C"]],["Live.Event.us",["17: Argentina Sub-17 vs Mozambique Sub-17 1 (STRMX723)","17: Argentina Sub-17 vs Mozambique Sub-17 2 (STRMX723)","17: Argentina Sub-17 vs Mozambique Sub-17 3 (STRMX723)"]],["C33.TV",["33 GEO","33 GEO CAT"]]]
-grupos: [["Latinoamérica · Generalista",1070],["España · Generalista",865],["Argentina · Generalista",407],["Chile · Generalista",395],["Perú · Generalista",389],["Colombia · Generalista",385],["México · Generalista",356],["Estados Unidos · Generalista",318],["República Dominicana · Generalista",249],["Bolivia · Generalista",181],["Costa Rica · Generalista",166],["Paraguay · Generalista",164]]
-paises: {"ES":1046,"CR":166,"AR":609,"DO":251,"VE":137,"CL":396,"MX":382,"LATAM":1305,"PE":390,"US":390,"PY":164,"CO":385,"PA":34,"BO":181,"SV":58,"HN":127,"EC":158,"PR":81,"GT":98,"NI":24,"UY":16,"CU":6}
+senales con id repetido: 2543
+ids compartidos por canales distintos: 25
+ejemplos: [["latam-west-ham-united-vs-arsenal-english-strmgate",["17: Argentina Sub-17 vs Mozambique Sub-17 1 (STRMX723)","17: Argentina Sub-17 vs Mozambique Sub-17 2 (STRMX723)","17: Argentina Sub-17 vs Mozambique Sub-17 3 (STRMX723)"]],["es-3catinfo-geo-cat",["3CatInfo","3CatInfo GEO","3CatInfo GEO CAT"]],["latam-wolverhampton-vs-leicester-city-english-strmgate",["Ajax vs ADO Den Haag | Disney + (STRMXHD)","Ajax vs ADO Den Haag | Disney+ (TVF90)","Ajax vs ADO Den Haag | ESPN 3 (STRMXHD)"]],["latam-tennis-atp-finalsn-fawa",["ATP Challenger – Uruguay Open – Final | ESPN 6 (TVF90)","ATP Challenger – Uruguay Open – Final | ESPN 6 | OP2 (TVF90)","ATP Challenger – Uruguay Open – Final | ESPN 6 | OP3 (TVF90)"]],["us-axn-latin-america-south",["AXN Latin America","AXN Latin America Andes","AXN Latin America South"]],["latam-sabres-vs-lightning-webcast",["Carolina Hurricanes vs New York Rangers | English (STRMGATE)","Edmonton Oilers vs St. Louis Blues | Disney + (STRMXHD)"]]]
+grupos: [["Latinoamérica · Generalista",1061],["España · Generalista",851],["Argentina · Generalista",403],["Chile · Generalista",394],["Perú · Generalista",389],["Colombia · Generalista",383],["México · Generalista",354],["Estados Unidos · Generalista",316],["República Dominicana · Generalista",248],["Bolivia · Generalista",178],["Costa Rica · Generalista",166],["Paraguay · Generalista",165]]
+paises: {"ES":1047,"CR":166,"AR":606,"DO":250,"VE":136,"CL":397,"MX":380,"LATAM":1293,"PE":390,"US":388,"PY":165,"CO":383,"PA":34,"BO":178,"SV":58,"HN":127,"EC":158,"PR":81,"GT":98,"NI":24,"UY":16,"CU":6}
 cabecera: #EXTM3U
-ejemplo: #EXTINF:-1 tvg-id="ES26000025M" tvg-name="¡Hola! Play" tvg-logo="https://tvpnlogopeu.samsungcloud.tv/platform/image/sourcelogo/vc/00/02/34/ES26000025M_20241210T052650SQUARE.png" group-title="España · Generalista" tvg-country="ES" source="Samsung TV Plus ES",¡Hola! Play ~ #EXTVLCOPT:http-user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 ~ https://jmp2.uk/stvp-ES26000025M
+ejemplo: #EXTINF:-1 tvg-id="es-hola-play" tvg-name="¡Hola! Play" tvg-logo="https://tvpnlogopeu.samsungcloud.tv/platform/image/sourcelogo/vc/00/02/34/ES26000025M_20241210T052650SQUARE.png" group-title="España · Generalista" tvg-country="ES" source="Samsung TV Plus ES",¡Hola! Play ~ #EXTVLCOPT:http-user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 ~ https://jmp2.uk/stvp-ES26000025M
 
 === RESUMEN ===
-Extracción de embeds: 0 HLS extraídos de 432 canales con página (fallidos 106, omitidos 326, 106 s)
-  por fuente: {"cinecity":{"extraidos":0,"fallidos":0,"omitidos":43},"D9Kod":{"extraidos":0,"fallidos":0,"omitidos":122},"Free-TV":{"extraidos":0,"fallidos":0,"omitidos":10},"Estados Unidos (iptv-org)":{"extraidos":0,"fallidos":0,"omitidos":8},"Pluto TV":{"extraidos":0,"fallidos":0,"omitidos":4},"thedaddy.li":{"extraidos":0,"fallidos":13,"omitidos":0},"iptv-org AR":{"extraidos":0,"fallidos":0,"omitidos":1},"livelive24.com":{"extraidos":0,"fallidos":23,"omitidos":0},"tvenvivo.org":{"extraidos":0,"fallidos":70,"omitidos":0},"telechancho":{"extraidos":0,"fallidos":0,"omitidos":1},"iptv-org NI":{"extraidos":0,"fallidos":0,"omitidos":2}}
-  motivos: {"sin resolutor para la fuente":191,"cadena de embed: HTTP 403":7,"la cadena no expone m3u8":93,"cadena de embed: fetch failed":6}
-Verificación: 3979 canales en 189 s · vivos 3456 · caídos 523 · bloqueados 861 · tiempo agotado 446 · sin verificar 0 · omitidos 1392
-Listas escritas en reports/: all (6404), es (1012), latam (4968), deportes (191), us (390), mx (382), ar (609), co (385), cl (396), pe (390), ve (137), ec (158), gt (98), hn (127), sv (58), ni (24), cr (166), pa (34), cu (6), do (251), pr (81), uy (16), py (164), bo (181)
-Países con canales vivos: Internacional 1594 · ES 766 · AR 507 · US 280 · CL 254 · MX 238 · DO 236 · PE 201 · CO 130 · BO 81 · PY 76 · HN 75 · EC 75 · VE 73 · CR 70 · GT 50 · PR 43 · SV 42 · PA 24 · NI 21 · UY 8 · CU 4
+Extracción de embeds: 0 HLS extraídos de 432 canales con página (fallidos 106, omitidos 326, 103 s)
+  por fuente: {"cinecity":{"extraidos":0,"fallidos":0,"omitidos":43},"D9Kod":{"extraidos":0,"fallidos":0,"omitidos":122},"Free-TV":{"extraidos":0,"fallidos":0,"omitidos":10},"Estados Unidos (iptv-org)":{"extraidos":0,"fallidos":0,"omitidos":8},"Pluto TV":{"extraidos":0,"fallidos":0,"omitidos":4},"thedaddy.li":{"extraidos":0,"fallidos":15,"omitidos":0},"iptv-org AR":{"extraidos":0,"fallidos":0,"omitidos":1},"livelive24.com":{"extraidos":0,"fallidos":21,"omitidos":0},"tvenvivo.org":{"extraidos":0,"fallidos":70,"omitidos":0},"telechancho":{"extraidos":0,"fallidos":0,"omitidos":1},"iptv-org NI":{"extraidos":0,"fallidos":0,"omitidos":2}}
+  motivos: {"sin resolutor para la fuente":191,"cadena de embed: HTTP 403":9,"la cadena no expone m3u8":91,"cadena de embed: fetch failed":6}
+Verificación: 4253 canales en 198 s · vivos 3707 · caídos 546 · bloqueados 936 · tiempo agotado 477 · sin verificar 0 · omitidos 1117
+Listas escritas en reports/: all (6381), es (1013), latam (4946), deportes (189), us (388), mx (380), ar (606), co (383), cl (397), pe (390), ve (136), ec (158), gt (98), hn (127), sv (58), ni (24), cr (166), pa (34), cu (6), do (250), pr (81), uy (16), py (165), bo (178)
+Países con canales vivos: Internacional 1581 · ES 767 · AR 504 · US 277 · CL 255 · MX 236 · DO 235 · PE 201 · CO 129 · BO 79 · PY 76 · HN 75 · EC 75 · VE 72 · CR 70 · GT 50 · PR 43 · SV 42 · PA 24 · NI 21 · UY 8 · CU 4
 
