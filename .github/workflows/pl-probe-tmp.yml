@@ -57,8 +57,15 @@ jobs:
       - name: Imprimir auditoría
         if: always()
         run: |
-          echo "=== AUDITORIA-M3U ==="
-          cat m3u-audit.txt 2>/dev/null || echo "sin auditoria"
-          echo "=== FIN-AUDITORIA ==="
-          echo "=== RESUMEN ==="
-          tail -6 pl.log 2>/dev/null || true
+          {
+            echo "### Auditoría del M3U"
+            echo '```'
+            cat m3u-audit.txt 2>/dev/null || echo "sin auditoria"
+            echo '```'
+            echo "### Resumen"
+            echo '```'
+            tail -6 pl.log 2>/dev/null || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "auditoria publicada en el summary"
+
