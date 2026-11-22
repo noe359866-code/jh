@@ -1,0 +1,78 @@
+{
+ "daddy": {
+  "src": "https://edge.wedd48c.top/premium51/index.m3u8",
+  "edge": "https://edge.wedd48c.top",
+  "channel": "premium51",
+  "tokenCalls": [],
+  "token/api/playlist-token?slug=premium51": {
+   "status": 403,
+   "ctype": "text/plain; charset=utf-8",
+   "sample": "forbidden\n"
+  },
+  "token/api/playlist-token?slug=premium51&id=51": {
+   "status": 403,
+   "ctype": "text/plain; charset=utf-8",
+   "sample": "forbidden\n"
+  },
+  "media": {
+   "status": 403,
+   "prefix": "forbidden\n"
+  }
+ },
+ "liv24": {
+  "spainCount": 13,
+  "sampleSpain": [
+   {
+    "channel_name": "DAZN F1 ES",
+    "image": "https://raw.githubusercontent.com/tv-logo/tv-logos/refs/heads/main/countries/spain/dazn-f1-es.png",
+    "url": "https://hesgoalsss.blogspot.com/p/ntv.html?id=DAZNF1ES",
+    "country": "Spain",
+    "category": "Sports"
+   },
+   {
+    "channel_name": "DAZN 1 ES",
+    "image": "https://raw.githubusercontent.com/tv-logo/tv-logos/refs/heads/main/countries/spain/dazn-1-es.png",
+    "url": "https://hesgoalsss.blogspot.com/p/ntv.html?id=DAZN1ES",
+    "country": "Spain",
+    "category": "Sports"
+   },
+   {
+    "channel_name": "DAZN 2 ES",
+    "image": "https://raw.githubusercontent.com/tv-logo/tv-logos/refs/heads/main/countries/spain/dazn-2-es.png",
+    "url": "https://hesgoalsss.blogspot.com/p/ntv.html?id=DAZN2ES",
+    "country": "Spain",
+    "category": "Sports"
+   }
+  ],
+  "categories": [
+   "Sports",
+   "Entertainment",
+   "News",
+   "General"
+  ],
+  "hop": {
+   "status": 429,
+   "finalUrl": "https://www.google.com/sorry/index?continue=https://hesgoalsss.blogspot.com/p/ntv.html%3Fid%3DDAZNF1ES&q=EgSshBtVGNK_idgGIi1_wr42XTZYr9jSxcuMlXFaoWJtava0wIOSPaoPv4EOt7BMIenNmLRVg1vFkagyAnJSWgFDYMrg4JzO6fb6VQ",
+   "len": 3392,
+   "iframes": [],
+   "hls": [],
+   "vars": []
+  }
+ },
+ "tvenvivo": {
+  "coreStatus": 200,
+  "iframe": "https://www.tvporinternet.org/chat.php",
+  "embed": {
+   "status": 200,
+   "hasLiteral": false
+  },
+  "home": {
+   "anchors": []
+  }
+ },
+ "eja": {
+  "status": 200,
+  "cards": 6,
+  "end": false
+ }
+}
