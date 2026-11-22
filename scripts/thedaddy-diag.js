@@ -47,6 +47,37 @@ async function main() {
       currentUrl = new URL(iframe, currentUrl).href;
     }
     out.push({ step: 'hops', hops });
+    // Variantes de cabeceras contra el embed para descubrir la combinación válida.
+    const embedUrl = 'https://dembed.st/premiumtv/daddy.php?id=' + first.id;
+    const variants = [
+      { name: 'sin-referer', options: {} },
+      { name: 'referer-thedaddy', options: { referer: 'https://thedaddy.li/' } },
+      { name: 'referer-stream', options: { referer: 'https://thedaddy.li/stream/stream-' + first.id + '.php' } },
+      { name: 'referer-self', options: { referer: 'https://dembed.st/' } },
+      { name: 'referer-plus-origin', options: { referer: 'https://thedaddy.li/', headers: { Origin: 'https://thedaddy.li', 'Sec-Fetch-Dest': 'iframe' } } }
+    ];
+    const attempts = [];
+    for (const variant of variants) {
+      try {
+        const response = await get(embedUrl, variant.options);
+        attempts.push({ variant: variant.name, status: response.status, length: response.text.length, hasSrc: /SRC\s*=/.test(response.text) });
+      } catch (error) {
+        attempts.push({ variant: variant.name, error: error.message });
+      }
+    }
+    out.push({ step: 'embed-variants', attempts });
+    // Rutas alternativas dentro de thedaddy que pueden servir el reproductor real.
+    const alternates = ['https://thedaddy.li/cast/stream-' + first.id + '.php', 'https://thedaddy.li/watch/stream-' + first.id + '.php', 'https://thedaddy.li/plus/stream-' + first.id + '.php'];
+    const alt = [];
+    for (const url of alternates) {
+      try {
+        const response = await get(url, { referer: watchUrl, allowHttp: true });
+        alt.push({ url, status: response.status, length: response.text.length, iframe: (response.text.match(/<iframe[^>]*\bsrc="([^"]+)"/i) || [])[1] || null, src: (response.text.match(/(?:const|var|let)\s+SRC\s*=\s*["']([^"']+)/i) || [])[1] || null });
+      } catch (error) {
+        alt.push({ url, error: error.message });
+      }
+    }
+    out.push({ step: 'alternates', alt });
   }
   fs.mkdirSync('reports', { recursive: true });
   return out;
