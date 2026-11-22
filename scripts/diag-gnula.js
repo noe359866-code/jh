@@ -104,7 +104,8 @@ async function principal() {
 const fase = (process.argv[2] || 'todo');
 const ejecutar = fase === 'unpack' ? faseUnpack
   : fase === 'rutas' ? principal
-    : async () => { await principal(); await faseUnpack(); };
+    : fase === 'vars' ? faseVariables
+      : async () => { await principal(); await faseVariables(); await faseUnpack(); };
 
 ejecutar().catch(error => {
   console.error(`diagnóstico falló: ${error.message}`);
@@ -169,5 +170,30 @@ async function faseUnpack() {
     }
   } catch (error) {
     console.log(`player: ${error.message.slice(0, 140)}`);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Fase 3: dónde están el id y el token del player
+// ---------------------------------------------------------------------------
+// El cliente los tiene en variables globales; aquí se listan las que empiezan
+// por "gn" y solo se informa su forma (numérico, alfanumérico, largo), nunca su
+// valor.
+async function faseVariables() {
+  const fetcher = createFetcher({ allowedHosts: [...hostsPermitidos({})], maxBytes: 4 * 1024 * 1024 });
+  const html = await fetcher.getText(FICHA);
+  const tipo = (valor) => {
+    if (/^\d+$/.test(valor)) return `numerico(${valor.length})`;
+    if (/^[a-z0-9]+$/i.test(valor)) return `alfanum(${valor.length})`;
+    return `otro(${valor.length})`;
+  };
+  for (const match of html.matchAll(/(?:var|let|const)\s+(\w*(?:gnrd|gn|tok|pid|player)\w*)\s*=\s*(["'])([^"']{1,200})\2/gi)) {
+    console.log(`var ${match[1]} = <${tipo(match[3])}>`);
+  }
+  // También el uso exacto de _gnrdPid / _gnrdTok para ver de dónde salen.
+  for (const nombre of ['_gnrdPid', '_gnrdTok', 'gnrdPid', 'gnrdTok']) {
+    for (const match of html.matchAll(new RegExp(`.{0,120}${nombre}.{0,120}`, 'g'))) {
+      console.log(`uso ${nombre}: ${redactar(match[0])}`);
+    }
   }
 }
