@@ -16,28 +16,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
+      - run: npm ci
       - name: Traza de resolución thedaddy
-        run: |
-          node -e '
-            const { get } = require("./engines/live/http");
-            const td = require("./engines/live/sources/thedaddy");
-            (async () => {
-              const html = await get(td.listUrl ? td.listUrl() : "https://thedaddy.li/24-7-channels.php").then(r => r.text);
-              const items = td.parseList(html).filter(i => td.isSpanishSignal(i.name));
-              const out = [{ step: "list", items: items.length, sample: items.slice(0, 5) }];
-              const first = items[0];
-              if (first) {
-                const watchUrl = "https://thedaddy.li/watch.php?id=" + first.id;
-                const watch = await get(watchUrl, { referer: "https://thedaddy.li/" });
-                out.push({ step: "watch", status: watch.status, len: watch.text.length, iframes: [...watch.text.matchAll(/<iframe[^>]*src="([^"]+)"/gi)].map(m => m[1]).slice(0, 3) });
-                const resolved = await td.resolve(watchUrl, { get }).catch(e => ({ error: e.message }));
-                out.push({ step: "resolve", resolved });
-              }
-              require("fs").mkdirSync("reports", { recursive: true });
-              require("fs").writeFileSync("reports/thedaddy-diag.json", JSON.stringify(out, null, 1));
-              console.log(JSON.stringify(out, null, 1).slice(0, 4000));
-            })().catch(e => { console.error(e); process.exit(1); });
-          '
+        run: node scripts/thedaddy-diag.js || true
       - name: Publicar diagnóstico
         if: always()
         run: |
