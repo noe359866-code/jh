@@ -115,7 +115,8 @@ const ejecutar = fase === 'unpack' ? faseUnpack
       : fase === 'players' ? fasePlayers
         : fase === 'vidara' ? faseVidara
           : fase === 'apividara' ? faseApiVidara
-      : async () => { await faseApiVidara(); await faseVidara(); };
+            : fase === 'api2' ? faseApi2
+      : async () => { await faseApi2(); };
 
 ejecutar().catch(error => {
   console.error(`diagnóstico falló: ${error.message}`);
@@ -402,5 +403,54 @@ async function faseApiVidara() {
   // Parámetros con los que se llama (nombres y de dónde salen).
   for (const m of cuerpo.matchAll(/(?:fetch|open|src\s*=|href\s*=)\s*[(=]?\s*([^;]{0,180}apistream[^;]{0,180})/g)) {
     console.log(`llamada: ${redactar(m[1])}`);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Fase 7: estructura de la llamada 'apistream' de vidara y su respuesta
+// ---------------------------------------------------------------------------
+async function faseApi2() {
+  const { desempacar, leerPlayer } = require('../engines/sites/gnula');
+  const fetcher = createFetcher({ allowedHosts: [...hostsPermitidos({})], maxBytes: 4 * 1024 * 1024 });
+  const html = await fetcher.getText(FICHA);
+  const player = leerPlayer(html);
+  const url = new URL(`${player.prefijo}${player.id}${player.sufijo}${encodeURIComponent(player.token)}`, FICHA).href;
+  const datos = desempacar(JSON.parse(await fetcher.getText(url, { Accept: 'application/json', Referer: FICHA })).p);
+  const destino = datos.langs[0].servers.find(s => /vidara/.test(s.src)).src;
+  const cuerpo = await fetcher.getText(destino, { Referer: FICHA });
+
+  // Estructura: se conserva la puntuación y se sustituye cada palabra por x.
+  const estructura = (texto) => String(texto).replace(/[A-Za-z0-9_]+/g, s => `x${s.length}`);
+  for (const m of cuerpo.matchAll(/[^\n;]{0,160}apistream[^\n;]{0,240}/g)) {
+    console.log(`estructura: ${estructura(m[0])}`);
+  }
+  // La ruta relativa que aparece como URL=... se resuelve contra la página y se
+  // pide como haría el player (con su Referer). Solo se informa la forma.
+  const relativa = /URL\s*=\s*["']([^"']*apistream[^"']*)["']/i.exec(cuerpo);
+  if (relativa) {
+    const objetivo = new URL(relativa[1], destino).href;
+    console.log(`api-ruta-forma: ${new URL(objetivo).pathname.replace(/[A-Za-z0-9]/g, 'x')}${new URL(objetivo).search ? '?query' : ''}`);
+    for (const [nombre, cabeceras] of [['referer-ficha', { Referer: FICHA }], ['referer-player', { Referer: destino }]]) {
+      try {
+        const respuesta = await fetcher.getText(objetivo, { ...cabeceras, Accept: 'application/json, text/plain, */*' });
+        const señales = [
+          /\.m3u8/.test(respuesta) ? 'm3u8' : '',
+          /"file"|'file'/.test(respuesta) ? 'file' : '',
+          /"source"|"src"/.test(respuesta) ? 'src' : '',
+          /^\s*[[{]/.test(respuesta) ? 'json' : ''
+        ].filter(Boolean).join('+');
+        let claves = '';
+        try {
+          const json = JSON.parse(respuesta);
+          claves = Array.isArray(json) ? `array(${json.length})` : Object.keys(json).sort().join(',');
+        } catch { /* no es JSON */ }
+        const hosts = [...new Set([...respuesta.matchAll(/https?:\/\/([a-z0-9.-]+)\/[^\s"'<>]*\.m3u8/gi)].map(m => m[1]))];
+        console.log(`api ${nombre} -> bytes=${respuesta.length} claves=[${claves}] señales=${señales || '-'} hosts-m3u8=[${hosts.join(',')}]`);
+      } catch (error) {
+        console.log(`api ${nombre} -> ${error.message.slice(0, 100)}`);
+      }
+    }
+  } else {
+    console.log('api: no hay URL=...apistream... en la página');
   }
 }
