@@ -125,9 +125,12 @@ async function faseUnpack() {
   const fetcher = createFetcher({ allowedHosts: [...hostsPermitidos({})], maxBytes: 4 * 1024 * 1024 });
   const html = await fetcher.getText(FICHA);
 
+  // El id va sin comillas (var _gnrdPid=520864) y el token entrecomillado.
   const valor = (nombre) => {
-    const m = new RegExp(`(?:var|let|const)\\s+${nombre}\\s*=\\s*(["'])(.*?)\\1`).exec(html);
-    return m ? { valor: m[2], largo: m[2].length } : null;
+    const m = new RegExp(`(?:var|let|const)\\s+${nombre}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|(\\d+))`).exec(html);
+    if (!m) return null;
+    const v = m[1] ?? m[2] ?? m[3];
+    return { valor: v, largo: v.length };
   };
   const pid = valor('_gnrdPid');
   const tok = valor('_gnrdTok');
@@ -168,6 +171,29 @@ async function faseUnpack() {
         conLlaves: /[{}[\]]/.test(p)
       };
       console.log(`p: largo=${p.length} ${JSON.stringify(clases)}`);
+      // El decodificador observado en el tema: base64 + XOR con clave de 4 B,
+      // luego JSON. Se aplica en memoria y solo se informa la forma, no los
+      // enlaces (el reporte no debe publicar URLs de media).
+      const CLAVE = [103, 78, 55, 100];
+      const crudo = Buffer.from(p, 'base64');
+      const claro = Buffer.from(crudo.map((b, i) => b ^ CLAVE[i & 3])).toString('utf8');
+      let datos;
+      try { datos = JSON.parse(claro); } catch { datos = null; }
+      console.log(`p decodificado: json=${datos ? 'si' : 'no'} bytes=${claro.length}`);
+      if (datos) {
+        const forma = (v, nivel = 0) => {
+          if (Array.isArray(v)) return `[${v.length}x ${v.length ? forma(v[0], nivel + 1) : ''}]`;
+          if (v && typeof v === 'object') {
+            return `{${Object.keys(v).map(k => `${k}:${forma(v[k], nivel + 1)}`).join(', ')}}`;
+          }
+          if (typeof v === 'string') {
+            // Un enlace: solo esquema y host (nunca la ruta ni la query).
+            try { const u = new URL(v); return `url(${u.protocol}//${u.hostname})`; } catch { return `str(${v.length})`; }
+          }
+          return typeof v;
+        };
+        console.log(`forma: ${forma(datos).slice(0, 2500)}`);
+      }
     }
   } catch (error) {
     console.log(`player: ${error.message.slice(0, 140)}`);
