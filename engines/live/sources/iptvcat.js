@@ -6,6 +6,7 @@
 // y una minilista M3U firmada en `data-clipboard-text`. Esa minilista ya es un
 // HLS válido que apunta al medio real, así que se puede entregar tal cual.
 const { stripTags, cleanChannelName, channelKey } = require('../text');
+const { mapLimit } = require('../limit');
 
 const BASE = 'https://iptvcat.net';
 // Incluye tanto España como los países hispanohablantes de América.
@@ -74,8 +75,8 @@ function parseRows(html) {
 async function collect({ get, maxPages = 6, onSource }) {
   const home = await get(BASE + '/').then(r => r.text);
   const slugs = countrySlugs(home);
-  const entries = [];
-  for (const slug of slugs) {
+  const perCountry = await mapLimit(slugs, 8, async slug => {
+    const entries = [];
     const region = regionOf(slug);
     let rows = 0;
     for (let page = 1; page <= maxPages; page++) {
@@ -90,8 +91,9 @@ async function collect({ get, maxPages = 6, onSource }) {
       if (!new RegExp(`href="/${slug}/${page + 1}"`).test(html)) break;
     }
     if (onSource) onSource({ country: slug, rows });
-  }
-  return entries;
+    return entries;
+  });
+  return perCountry.flat();
 }
 
 module.exports = { id: 'iptvcat', name: 'iptvcat.net', collect, parseRows, countrySlugs, COUNTRY_PATTERN };

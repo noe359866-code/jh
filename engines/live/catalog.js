@@ -56,8 +56,7 @@ function createCatalog({
   sources,
   ttlMs = TTL_MS,
   now = Date.now,
-  concurrency = 3,
-  timeoutMs = 45000
+  timeoutMs = 90000
 } = {}) {
   let cache = null;
   let pending = null;
@@ -66,34 +65,30 @@ function createCatalog({
     const startedAt = now();
     const results = [];
     const status = {};
-    const queue = [...sources];
-    const workers = Array.from({ length: Math.min(concurrency, queue.length) }, async () => {
-      while (queue.length) {
-        const source = queue.shift();
-        const sourceStarted = now();
-        try {
-          const entries = await source.collect({
-            get: (url, options) => fetchGet(url, options),
-            onSource: detail => { status[source.id] = { ...(status[source.id] || {}), ...detail }; }
-          });
-          results.push({ id: source.id, entries });
-          status[source.id] = {
-            ...(status[source.id] || {}),
-            mode: MODE[source.id] || 'direct',
-            ok: true,
-            entries: entries.length,
-            ms: now() - sourceStarted
-          };
-        } catch (error) {
-          status[source.id] = {
-            ...(status[source.id] || {}),
-            mode: MODE[source.id] || 'direct',
-            ok: false,
-            entries: 0,
-            error: error.message,
-            ms: now() - sourceStarted
-          };
-        }
+    const workers = sources.map(async source => {
+      const sourceStarted = now();
+      try {
+        const entries = await source.collect({
+          get: (url, options) => fetchGet(url, options),
+          onSource: detail => { status[source.id] = { ...(status[source.id] || {}), ...detail }; }
+        });
+        results.push({ id: source.id, entries });
+        status[source.id] = {
+          ...(status[source.id] || {}),
+          mode: MODE[source.id] || 'direct',
+          ok: true,
+          entries: entries.length,
+          ms: now() - sourceStarted
+        };
+      } catch (error) {
+        status[source.id] = {
+          ...(status[source.id] || {}),
+          mode: MODE[source.id] || 'direct',
+          ok: false,
+          entries: 0,
+          error: error.message,
+          ms: now() - sourceStarted
+        };
       }
     });
     await Promise.all(workers);

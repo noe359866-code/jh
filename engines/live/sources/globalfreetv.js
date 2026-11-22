@@ -5,6 +5,7 @@
 // url:"https://….m3u8",http_referrer:null,user_agent:null},…]`) y el nombre en
 // `channel:{…,name:"La 1",country:"ES",…}`. Las páginas de país usan `?page=N`.
 const { cleanChannelName, channelKey, decodeHtml } = require('../text');
+const { mapLimit } = require('../limit');
 
 const BASE = 'https://www.globalfreetv.com';
 const COUNTRIES = [
@@ -79,9 +80,9 @@ function parseChannel(html) {
   return { name: cleanChannelName(name), country, logo: logo || null, streams, status };
 }
 
-async function collect({ get, onSource }) {
-  const entries = [];
-  for (const [code, region] of COUNTRIES) {
+async function collect({ get, onSource, maxChannelsPerCountry = 60 }) {
+  const perCountry = await mapLimit(COUNTRIES, 6, async ([code, region]) => {
+    const entries = [];
     const ids = new Set();
     for (let page = 1; page <= MAX_PAGES; page++) {
       const url = `${BASE}/countries/${code}${page > 1 ? `?page=${page}` : ''}`;
@@ -96,15 +97,17 @@ async function collect({ get, onSource }) {
       for (const id of found) ids.add(id);
       if (ids.size === before || !found.length) break;
     }
-    let channels = 0;
-    for (const id of ids) {
-      let info;
+    const wanted = [...ids].slice(0, maxChannelsPerCountry);
+    const parsed = await mapLimit(wanted, 6, async id => {
       try {
-        info = parseChannel(await get(`${BASE}/channels/${id}`).then(r => r.text));
+        return parseChannel(await get(`${BASE}/channels/${id}`).then(r => r.text));
       } catch {
-        continue;
+        return null;
       }
-      if (!info.name || !info.streams.length) continue;
+    });
+    let channels = 0;
+    for (const info of parsed) {
+      if (!info || !info.name || !info.streams.length) continue;
       channels++;
       entries.push({
         name: info.name,
@@ -118,8 +121,9 @@ async function collect({ get, onSource }) {
       });
     }
     if (onSource) onSource({ country: code, channels });
-  }
-  return entries;
+    return entries;
+  });
+  return perCountry.flat();
 }
 
 module.exports = { id: 'globalfreetv', name: 'globalfreetv.com', collect, parseChannel, channelIds, streamsBlock, sliceBalanced, COUNTRIES };

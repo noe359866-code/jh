@@ -4,6 +4,7 @@
 // pida): `/api/tv/countries/<cc>.json` devuelve una lista con
 // `{ name, stream_urls[], youtube_urls[], languages[], country, isGeoBlocked }`.
 const { cleanChannelName, channelKey } = require('../text');
+const { mapLimit } = require('../limit');
 
 const API = 'https://tvgarden.world/api/tv/countries';
 const COUNTRIES = [
@@ -30,8 +31,8 @@ function parseCountry(text) {
 }
 
 async function collect({ get, onSource }) {
-  const entries = [];
-  for (const [code, region] of COUNTRIES) {
+  const perCountry = await mapLimit(COUNTRIES, 8, async ([code, region]) => {
+    const entries = [];
     const html = await get(`${API}/${code}.json`, { accept: 'application/json' }).then(r => r.text);
     const channels = parseCountry(html);
     for (const channel of channels) {
@@ -46,8 +47,9 @@ async function collect({ get, onSource }) {
       });
     }
     if (onSource) onSource({ country: code, channels: channels.length });
-  }
-  return entries;
+    return entries;
+  });
+  return perCountry.flat();
 }
 
 module.exports = { id: 'tvgarden', name: 'tvgarden.world', collect, parseCountry, COUNTRIES };

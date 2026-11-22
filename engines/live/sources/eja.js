@@ -4,6 +4,7 @@
 // enlaces de país/idioma y un `<video>` con `<source src="...#poster">`. El
 // fragmento tras `#` es solo el nombre del snapshot, no parte del medio.
 const { decodeHtml, stripTags, cleanChannelName, channelKey } = require('../text');
+const { mapLimit } = require('../limit');
 
 const BASE = 'https://eja.tv/';
 const PER_PAGE = 6;
@@ -62,8 +63,8 @@ function totalFrom(html) {
  * devuelve canales en español. `maxPages` acota las peticiones por país.
  */
 async function collect({ get, maxPages = 8, onSource }) {
-  const entries = [];
-  for (const [code, region] of COUNTRIES) {
+  const perCountry = await mapLimit(COUNTRIES, 8, async ([code, region]) => {
+    const entries = [];
     let total = null;
     let empty = 0;
     for (let page = 0; page < maxPages; page++) {
@@ -89,8 +90,9 @@ async function collect({ get, maxPages = 8, onSource }) {
       empty += cards.length ? 0 : 1;
     }
     if (onSource) onSource({ country: code, total });
-  }
-  return entries;
+    return entries;
+  });
+  return perCountry.flat();
 }
 
 module.exports = { id: 'eja', name: 'eja.tv', collect, parseCards, listUrl, COUNTRIES };
