@@ -42,7 +42,7 @@ jobs:
             out.push('cabecera: '+t.split('\n')[0]);
             out.push('ejemplo: '+t.split('\n').slice(1,4).join(' ~ '));
             fs.writeFileSync('sonda-resultado.txt', out.join('\n')+'\n'+'\n=== RESUMEN ===\n'+fs.readFileSync('pl.log','utf8').split('\n').slice(-7).join('\n')+'\n');
-          " || true
+          " 2> sonda-error.txt || (echo "ERROR EN LA AUDITORIA" > sonda-resultado.txt; cat sonda-error.txt >> sonda-resultado.txt)
       - name: Publicar resultado
         if: always()
         run: |
@@ -50,5 +50,6 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           test -f sonda-resultado.txt || echo "sin resultado" > sonda-resultado.txt
           git add -f sonda-resultado.txt
+          test -f sonda-error.txt && git add -f sonda-error.txt || true
           git diff --cached --quiet && echo sin-cambios || git commit -m "Sonda (resultado generado)"
           git push
