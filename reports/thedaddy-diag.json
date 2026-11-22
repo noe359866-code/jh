@@ -1,0 +1,51 @@
+[
+ {
+  "step": "list",
+  "items": 42,
+  "sample": [
+   {
+    "id": 531,
+    "name": "Antena 3 Spain"
+   },
+   {
+    "id": 522,
+    "name": "Barca TV Spain"
+   },
+   {
+    "id": 535,
+    "name": "Cuatro Spain"
+   },
+   {
+    "id": 1034,
+    "name": "Nova HD CZ"
+   },
+   {
+    "id": 1060,
+    "name": "Nova Sport 3 SK"
+   }
+  ]
+ },
+ {
+  "step": "watch",
+  "status": 200,
+  "length": 25462,
+  "iframes": [
+   "https://thedaddy.li/stream/stream-531.php",
+   "https://thedaddy.li/stream/stream-531.php",
+   "' + url + '"
+  ],
+  "snippets": [
+   "https://thedaddy.li/stream/stream-531.php",
+   "https://thedaddy.li/stream/stream-531.php",
+   "https://thedaddy.li/cast/stream-531.php",
+   "https://thedaddy.li/watch/stream-531.php",
+   "https://thedaddy.li/plus/stream-531.php"
+  ]
+ },
+ {
+  "step": "resolve",
+  "resolved": {
+   "error": "HTTP 403"
+  }
+ }
+]
