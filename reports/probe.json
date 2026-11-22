@@ -5,7 +5,7 @@
   "status": 200,
   "finalUrl": "http://eja.tv/?country=es",
   "type": "text/html; charset=utf-8",
-  "length": 55614,
+  "length": 55568,
   "facts": {
    "iframes": [],
    "videoSources": [
@@ -13,8 +13,8 @@
     "https://rmtv.akamaized.net/hls/live/2043153/rmtv-es-web/master.m3u8#fb98b6bfbf1ce918044b8d0750b4a5c4ee0e72e593cae7b98698838a5761ef5e",
     "https://appletree-mytimespain-rakuten.amagi.tv/playlist.m3u8#45406ab13d156746fbb8b1450b28b011257cc4cc68aef6e1c42abadc69eb0272",
     "https://streamtv.mediasector.es/hls/activatv/index.m3u8#6e1537edd398e8a13c8caea62ca5bf52398b47331bd109f1a7a93f9a001d4a84",
-    "https://media2.streambrothers.com:1936/8140/8140/playlist.m3u8#9f108f3814b88b47f0d52cf5c24cdf5ee8115dc7215198c81bf014846af0e4fd",
-    "https://rtvelivestream.rtve.es/rtvesec/cat/la1_cat_main.m3u8#f377eb75e14ad6023683c3411765adec42706b53bdfca728535557c880375224"
+    "https://ztnr.rtve.es/ztnr/3293681.m3u8#f909d155230aa259eb8b302e27fb5da4e8ed9f2f34e4f2c1e041b8a09f031544",
+    "https://media2.streambrothers.com:1936/8140/8140/playlist.m3u8#9f108f3814b88b47f0d52cf5c24cdf5ee8115dc7215198c81bf014846af0e4fd"
    ],
    "hls": [],
    "scriptSrc": [
@@ -135,7 +135,7 @@
   "status": 200,
   "finalUrl": "https://iptvcat.net/spain__1",
   "type": "text/html; charset=UTF-8",
-  "length": 404325,
+  "length": 404286,
   "facts": {
    "iframes": [],
    "videoSources": [],
@@ -534,7 +534,7 @@
   "status": 200,
   "finalUrl": "https://thedaddy.li/watch.php?id=1",
   "type": "text/html; charset=UTF-8",
-  "length": 25365,
+  "length": 25443,
   "facts": {
    "iframes": [
     "https://thedaddy.li/stream/stream-1.php"
