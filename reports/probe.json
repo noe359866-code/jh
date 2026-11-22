@@ -135,7 +135,7 @@
   "status": 200,
   "finalUrl": "https://iptvcat.net/spain__1",
   "type": "text/html; charset=UTF-8",
-  "length": 404286,
+  "length": 404325,
   "facts": {
    "iframes": [],
    "videoSources": [],
@@ -534,7 +534,7 @@
   "status": 200,
   "finalUrl": "https://thedaddy.li/watch.php?id=1",
   "type": "text/html; charset=UTF-8",
-  "length": 25443,
+  "length": 25262,
   "facts": {
    "iframes": [
     "https://thedaddy.li/stream/stream-1.php"

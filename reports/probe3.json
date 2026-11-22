@@ -1,0 +1,175 @@
+{
+ "eja": {
+  "status": 200,
+  "cards": 6,
+  "offsetPagination": [
+   "tion justify-content-center\"> <li class=\"page-item\"> <a class=\"page-link\" href=\"?offset=6&country=es&language=&category=&search=\"> <i class=\"bi bi-arrow-right\"></i> </a> </li"
+  ],
+  "totalText": [
+   " text-decoration: none; } </style> </head> <body> <div class=\"container\"> <h1 class=\"text-center p-4\"><a href=\"?\"><img src=\"//eja.it/logo/64.png\" alt=\"home\"></a></h1> <form method=\"POST\" action=\"?\" class=\"mb-4 mt-1\"> <div class=\"text-center mb-2\"> <small><i>remix the narrative with 144 live iptv channels from Spain</i></small> </div> <div class=\"input-group\"> <input type=\"text\" name=\"search\" class=\"form-control\" placeholder=\"Channel name to search...\" value=\"\"> <button class=\"btn btn-outline-secondary\" type=\"submit\" style=\"border-color: #ced4da;\"> <i class=\"bi bi-search\"></i> "
+  ]
+ },
+ "iptvcat": {
+  "status": 200,
+  "rowLength": 638,
+  "row": "<tr class=\"border-solid belongs_to_2741546\"> <!-- <td>1</td>--> <!--<td>2741546</td>--> <td class=\"flag\"> <a href=\"/spain__1\"><img src=\"assets/images/flags/es.png\" alt=\"Spain\" title=\"Spain\" class=\"position-left\"></a> </td> <td> <span class=\"channel_name\" data-popup=\"popover\" data-trigger=\"hover\" data-html=\"true\" data-placement=\"top\" data-content=\" <div class='popover_channel_holder'> <table style='width: 100%'> <tr> <td> <span class='titile_span checked_title'>Checked: </span><span class='minor_content'>22 Nov 2026</span> </td> </tr>",
+  "clipboards": [
+   "https://list.iptvcat.net/my_list/s/adfa227ff2725d80166b27e86197e7b5.m3u8",
+   "https://list.iptvcat.net/my_list/s/610daa802a07e87851802448722ca709.m3u8",
+   "https://list.iptvcat.net/my_list/s/2a0568ad4466caeda2be0384cd81886b.m3u8",
+   "https://list.iptvcat.net/my_list/s/fc2c8cd630657b9fdd8091dc06969e45.m3u8",
+   "https://list.iptvcat.net/my_list/s/4cc761259db4fa2864f9c5f54697595e.m3u8"
+  ],
+  "pages": [
+   "/spain__1/2"
+  ]
+ },
+ "tvenvivo": {
+  "status": 200,
+  "scripts": [
+   "https://platform-api.sharethis.com/js/sharethis.js#property=697cdea3b95445f2b2abc9d7&product=sop"
+  ],
+  "embedHost": [
+   "EPG sigue protegida // por su cache del lado del servidor. if(!chat && programFrame){ const base=programFrame.dataset.baseSrc || programFrame.src.split(\"&_epg_view=\")[0].split(\"?_epg_view=\")[0]; programFrame.dataset.baseSrc=base; programFrame.src=base + (base.includes(\"?\") ? \"&\" : \"?\") + \"_epg_view=\" + Date.now(); } } document.getElementById(\"chatTab\").onclick=()=>showTab(\"chat\"); document.getElementById(\"programTab\").onclick=()=>showTab(\"program\"); const embed='https://embed.ksdjugfssddeports.com'; document.getElementById(\"embedCode\").textContent=embed; document.getElementById(\"copy\").onclick=async()=>{ try{ await navigator.clipboard.writeText(embed); const copyBtn=document.getElementById(\"copy\"); copyBtn.textContent=\"✓ Copiado\"; setTimeout(()=>copyBtn.textContent=\"🔗 Embed disponible\",3000); }catch(e){alert(\"No se pudo copiar automáticamente.\")} }; document.getElementById(\"more\").onclick=()=>window.open(\"https://www.tvenvivo.org/\", \"_blank\", \"noopener,noreferrer\"); document.getElementById(\"close\").onclick=()=>document.getElementById(\"modal\").classList.remove(\"open\"); document.getElementById(\"modal\").onclick=e=>{if(e.target.id===\"modal\")e.currentTarget.classList.remove(\"open\")}; </script> <style id=\"mobile-header-index-match\"> @media(max-width:500px){ .site-header{ height:45px; } .header-inner{ padding:0 10px; } .brand{ font-size:13px; "
+  ],
+  "optionHits": [
+   "n directo y para mostrar de manera clara la relación entre la señal, su programación y sus principales características. La programación deportiva puede variar según el día, el torneo y los horarios de cada competencia. Consulta la información de TUDN, revisa la programación disponible y utiliza las opciones de reproducción de la página según corresponda.\"> <meta name=\"keywords\" content=\"TUDN en vivo, TUDN en vivo online, ver TUDN, TUDN online, canal TUDN, TUDN en directo, TUDN por internet, programacion TUDN, TUDN television, TUDN señal en vivo, ver TUDN online gratis, TUDN desde cualquier dispositivo, TUDN entretenimiento online, TUDN EN VIVO, resumen de TUDN, horarios TUDN, contenido TUDN, fútbol, eventos deportivos, ligas, análisis, competiciones internacionales, encuentros en directo y espacios deportivos\"> <meta name=\"author\" content=\"TV EN VIVO\"> <meta name=\"publisher\" content=\"TV EN VIVO\"> <meta name=\"content-language\" content=\"es\"> <meta name=\"category\" content=\"Television, Entretenimiento, Canales de TV\"> <meta name=\"referrer\" content=\"strict-origin-when-cross-origin\"> <meta property=\"og:site_name\" content=\"TV EN VIVO\"> <meta property=\"og:type\" content=\"website\"> <meta property",
+   "ágina reúne información de TUDN, su programación y las categorías que pueden encontrarse dentro de la señal. Puedes consultar el canal desde computadora, teléfono móvil, tablet y otros dispositivos con conexión a internet, identificar la señal, revisar referencias sobre sus horarios y encontrar las opciones disponibles para acceder a la transmisión. La propuesta de TUDN se relaciona con fútbol, eventos deportivos, ligas, análisis, competiciones internacionales, encuentros en directo y espacios deportivos. Aquí también puedes conocer mejor la identidad del canal y utilizar la información presentada como referencia para localizar TUDN online. La página está preparada para facilitar la consulta de la señal sin complicar la navegación, reuniendo en un mismo espacio los datos principales del canal, su programación y sus contenidos. Si buscas TUDN EN VIVO, esta página concentra la información específica de la señal y permite consultar sus características desde distintos dispositivos.\"> <meta name=\"twitter:image\" content=\"https://www.tvenvivo.org/imge/tudn.webp\"> <meta name=\"twitter:image:alt\" content=\"TUDN EN VIVO online\"> <script>window['ZpQw9XkLmN8c3vR3']='A3BYEDFXAjpTA3MiGjcMFnADViNeCTtFE1",
+   "crollbar-thumb{border-radius:999px;border:2px solid #080d12;background:linear-gradient(180deg,#927cff 0%,#58b8ff 45%,#5f55b8 100%);box-shadow:0 0 10px rgba(88,184,255,.28);} ::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,#fff0b8 0%,#927cff 45%,#58b8ff 100%);} </style> <style id=\"opciones-morado-cian-final\"> .source{ background:linear-gradient(135deg,#0a1017 0%,#0b1119 48%,#0d1018 100%) !important; border-color:rgba(88,184,255,.32) !important; box-shadow:inset 0 1px 0 rgba(255,255,255,.10),inset 0 -8px 18px rgba(0,0,0,.22),0 4px 14px rgba(0,0,0,.20) !important; } .source:hover{ background:radial-gradient(ellipse 110% 125% at 50% 6%,rgba(146,124,255,.20) 0%,rgba(88,184,255,.14) 24%,rgba(88,184,255,.08) 43%,rgba(4,12,16,.58) 66%,#000 100%),linear-gradient(180deg,#0a1017 0%,#070706 40%,#020406 70%,#000 100%) !important; border-color:rgba(88,184,255,.78) !important; box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 -8px 18px rgba(20,10,55,.28),0 0 15px rgba(88,184,255,.25) !important; } .source.active,.source.active:hover{ background:radial-gradient(ellipse 110% 125% at 50% 6%,rgba(146,124,255,.20) 0%,rgba(88,184,255,.14) 24%,rgba(88,184,255,.08) 43%,rg",
+   "!important; box-shadow: inset 0 1px 0 rgba(190,250,255,.13), inset 0 -10px 20px rgba(0,0,0,.58), 0 0 14px rgba(88,184,255,.22) !important; } .source.active{transform:translateY(-1px)} .source .sweep{z-index:2 !important;} .source-label{z-index:3 !important;} </style> <style id=\"FINAL-OPCIONES-NEGRO-DORADO\"> .controlbar .source, .controlbar .source:not(.active), .controlbar .more-channels{ background:linear-gradient(145deg,#101a28 0%,#0c1420 32%,#070d14 68%,#020406 100%) !important; border-color:rgba(88,184,255,.48) !important; color:#f4f7ff !important; box-shadow:inset 0 1px 0 rgba(255,255,255,.10),inset 0 -10px 20px rgba(0,0,0,.38),0 4px 14px rgba(0,0,0,.25) !important; } .controlbar .source:hover:not(.active), .controlbar .source.active, .controlbar .source.active:hover, .controlbar .more-channels:hover{ background:radial-gradient(ellipse 115% 125% at 50% 0%,rgba(255,218,130,.22) 0%,rgba(88,184,255,.15) 25%,rgba(88,184,255,.09) 45%,rgba(8,8,7,.58) 67%,#000 100%),linear-gradient(180deg,#21190b 0%,#070b10 43%,#030303 74%,#000 100%) !important; border-color:#58b8ff !important; color:#ffffff !important; box-shadow:inset 0 1px 0 rgba(255,255,255,.13),inset 0 "
+  ],
+  "phpRefs": [
+   "dmca.php",
+   "https://www.tvenvivo.org/chat.php",
+   "https://regionales.saohgdassregions.com/prom/programacion.php?pais=mx&canal=tudn",
+   "https://www.tvenvivo.org/dmca.php",
+   "https://www.tvenvivo.org/live/core.php?canal=tudn",
+   "https://www.tvenvivo.org/live2/core.php?canal=tudn",
+   "https://www.tvenvivo.org/live3/core.php?canal=tudn",
+   ",!chat);\n\n  // Cada vez que se entra a PROGRAMACION, reiniciamos solamente el iframe.\n  // Asi programacion.php vuelve a ejecutar su posicion inicial y queda\n  // directamente en el programa que esta EN VIVO. La EPG sigue protegida\n  // por su cache del lado del servidor.\n  if(!chat && programFrame){\n    const base=programFrame.dataset.baseSrc || programFrame.src.split("
+  ]
+ },
+ "tvgarden": {
+  "status": 200,
+  "scripts": [
+   "/assets/index-CBAd3Qpf.js",
+   "https://webpush.htforum.net/integration/build/105982487",
+   "/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js",
+   "https://st.chatango.com/js/gz/emb.js",
+   "/assets/tvgame.js",
+   "/assets/js/pwa-install.js",
+   "/assets/js/vast-manager.js",
+   "/assets/js/popup-garden.js",
+   "/assets/js/notifications.js",
+   "https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js",
+   "https://www.googletagmanager.com/gtag/js?id=G-LFQQHKQL5S"
+  ],
+  "inlineApi": [
+   " var dataDir = MODE_TO_DATA_DIR[mode] || mode; var link = document.createElement(\"link\"); link.rel = \"preload\"; link.href = \"/api/\" + dataDir + \"/countries_metadata.json\"; link.as = \"fetch\"; link.crossOrigin = \"anonymous\"; document.head.appendChild(link); // CLS prevention: classify layout state before first paint if (depth >= 1) root.classList.add(\"has-content-url\"); if (depth >= 2 && !isRadio) root.classList.add(\"has-video-deeplink\"); })(); </script> <meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\"> <link rel=\"preload\" href=\"/assets/fonts/Roboto-Regula",
+   "= document.createElement(\"link\"); link.rel = \"preload\"; link.href = \"/api/\" + dataDir + \"/countries_metadata.json\"; link.as = \"fetch\"; link.crossOrigin = \"anonymous\"; document.head.appendChild(link); // CLS prevention: classify layout state before first paint if (depth >= 1) root.classList.add(\"has-content-url\"); if (depth >= 2 && !isRadio) root.classList.add(\"has-video-deeplink\"); })(); </script> <meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\"> <link rel=\"preload\" href=\"/assets/fonts/Roboto-Regular.woff2\" as=\"font\" type=\"font/woff2\" crossorigin=\"anonymous\" /> <link rel=\""
+  ],
+  "appConfig": [
+   "pt async src=\"https://www.googletagmanager.com/gtag/js?id=G-LFQQHKQL5S\"></script> <script> window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', 'G-LFQQHKQL5S'); </script> </body> </html>",
+   "://www.googletagmanager.com/gtag/js?id=G-LFQQHKQL5S\"></script> <script> window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', 'G-LFQQHKQL5S'); </script> </body> </html>",
+   "?id=G-LFQQHKQL5S\"></script> <script> window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', 'G-LFQQHKQL5S'); </script> </body> </html>"
+  ]
+ },
+ "livelive24": {
+  "status": 200,
+  "scripts": [
+   "https://cdn.jsdelivr.net/npm/hls.js@0.14.17/dist/hls.min.js",
+   "https://czernik.org/22/fe639fa10b8e8f784d0a412d9b94eb6f",
+   "//st.chatango.com/js/gz/emb.js",
+   "https://capitalhospitals.org/1/33d8fc956726a1ee185005f9e567081d",
+   "https://czernik.org/14/2e1e51332562764b6f69d3d153c223c5",
+   "//solemn.deltalcherup.com/sGwPaQYNvOX7jZ/152474"
+  ],
+  "inlineApi": [
+   "style> </head> <body> <div class=\"container\" id=\"app\"> <div class=\"main-content\"> <div class=\"header\"> <div class=\"header-left\"><h1>📺 Live24·TV</h1><div class=\"sub\">free channels &amp; live sport</div></div> <div class=\"header-actions\"> <a href=\"https://discord.gg/HteyR3zf5v\" target=\"_blank\" rel=\"noopener\" class=\"discord-link\"> <svg viewBox=\"0 0 24 24\"><path d=\"M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077",
+   "injected here by JS --> </div> </div> <button class=\"filter-clear\" id=\"clearFilters\">Clear Filters</button> <span class=\"filter-stats\" id=\"filterStats\">Showing 0 channels</span> </div> <!-- SportPlus Container --> <div id=\"sportPlusContainer\" class=\"matches-grid\" style=\"display:none;\"></div> <!-- Main Grid for Live Sport and Live TV --> <div class=\"grid\" id=\"channelGrid\"></div> <!-- Pagination --> <div class=\"pagination-container\" id=\"paginationContainer\" style=\"display:none;\"> <button id=\"prevPageBtn\" disabled>◀ Prev</button> <span class=\"page-info\" id=\"pageInfo\">Page 1 of 1</span> <button id=\"nextPageBtn\" disabled>Next ▶</button> <select id=\"pageSizeSelect\"><option value=\"24\">24</option><option value=\"48\" selected>48</option><option value=\"72\">72</option><option value=\"96\">96</option>",
+   "t.getElementById('carouselTrack'); const carouselPrev = document.getElementById('carouselPrev'); const carouselNext = document.getElementById('carouselNext'); // ===== STATE ===== let tvChannels = [], sportLegacyItems = []; let currentTab = 'sport-legacy'; let filteredItems = [], selectedCountry = '', selectedCategory = ''; let currentPage = 1, pageSize = 150, totalPages = 1; let carouselItems = []; let carouselInterval; let carouselIntervals = []; let carouselMatchData = []; // ===== Helper: Check if event is live based on timestamp ===== function getEventStatus(timestamp, durationMinutes = 1200) { const now = Math.floor(Date.now() / 1000); if (!timestamp) return 'upcoming'; if (now >= timestamp && now < timestamp + (durationMinutes * 60)) return 'live'; if (now >= timestamp + (durationMinutes * 60)) return 'ended'; return 'upc",
+   "ementById('sportPlusSearchInput'); if (searchInputSp) searchInputSp.disabled = true; try { const url = `${LIST_API_BASE}${sportId}&lang=en&offset=3600`; const response = await fetch(url); if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`); const data = await response.json(); if (!data.items || data.items.length === 0) { container.innerHTML = ''; if (nav) container.appendChild(nav); const noMatches = document.createElement('div'); noMatches.className = 'no-matches'; noMatches.textContent = `No matches available for ${sportId} at the moment.`; container.appendChild(noMatches); if (searchInputSp) searchInputSp.disabled = false; sportPlusBadge.textContent = 0; return; } const tournamentMap = data.resolve?.mapTournaments || {}; a",
+   " found = this.findAndOpenMatch(route.value); if (found) this.switchToTab('sportplus'); } else if (route.type === 'channel') { found = this.findAndOpenChannel(route.value, tvChannels, 'live-tv'); if (found) this.switchToTab('live-tv'); } else if (route.type === 'legacy') { found = this.findAndOpenChannel(route.value, sportLegacyItems, 'sport-legacy'); if (found) this.switchToTab('sport-legacy'); } return found; }, findAndOpenMatch(slug) { for (const match of allMatches) { const matchSlug = (match.home?.name + '-vs-' + match.away?.name || match.name || '').toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/-+/g, '-'); if (matchSlug === slug || match.id === slug) { const matchName = `${match.home?.name || 'Home'} vs ${match.away?.name || 'Away'}`; const tournamentName",
+   "nterval); return; } let dataReady = false; if (route.type === 'match' && allMatches.length > 0) dataReady = true; else if (route.type === 'channel' && tvChannels.length > 0) dataReady = true; else if (route.type === 'legacy' && sportLegacyItems.length > 0) dataReady = true; if (dataReady) { const processed = this.processRoute(); if (processed) { clearInterval(interval); } } if (attempts >= maxAttempts) { clearInterval(interval); } }, 500); } }; // Share links now point at the watch page instead of the overlay function shareItem(item, type, event) { if (event) event.stopPropagation(); let link = ''; if (type === 'match') { const matchId = item.id; const name = (item.home?.name || 'Home') + ' vs ' + ",
+   "splay = 'flex'; document.getElementById('countryFilterGroup').style.display = 'flex'; document.getElementById('categoryFilterGroup').style.display = 'none'; if (tvChannels.length === 0) loadTVData(); else { filteredItems = tvChannels.slice(); renderItems(filteredItems, 1, pageSize); } liveTvBadge.textContent = tvChannels.length; } } // ===== RENDER ITEMS ===== function renderItems(items, page = 1, size = pageSize) { const total = items.length; totalPages = Math.ceil(total / size) || 1; if (page > totalPages) page = totalPages; if (page < 1) page = 1; currentPage = page; const start = (page - 1) * size; const end = Math.min(start + size, total); const pageItems = items.slice(start, end); grid.innerHTML = ''; if (!items || items.length === 0) { grid.innerHTML = `<div class=\"e",
+   "Group').style.display = 'flex'; document.getElementById('categoryFilterGroup').style.display = 'none'; if (tvChannels.length === 0) loadTVData(); else { filteredItems = tvChannels.slice(); renderItems(filteredItems, 1, pageSize); } liveTvBadge.textContent = tvChannels.length; } } // ===== RENDER ITEMS ===== function renderItems(items, page = 1, size = pageSize) { const total = items.length; totalPages = Math.ceil(total / size) || 1; if (page > totalPages) page = totalPages; if (page < 1) page = 1; currentPage = page; const start = (page - 1) * size; const end = Math.min(start + size, total); const pageItems = items.slice(start, end); grid.innerHTML = ''; if (!items || items.length === 0) { grid.innerHTML = `<div class=\"empty-state\"><strong>📡 nothing here</strong><br>${currentTab === 'liv"
+  ]
+ },
+ "globalfreetv": {
+  "status": 200,
+  "streamContext": [
+   "s\",\"/assets/link-C9OJFdRo.js\",\"/assets/seo-BBd74nOJ.js\",\"/assets/useMatch-B73K86WQ.js\",\"/assets/VideoPlayer-D6TTDbz5.js\",\"/assets/ChannelGuide-Dz3K7Kmd.js\",\"/assets/AdSlot-vsv5re51.js\",\"/assets/PlayerAffiliateLink-B2EWm-pU.js\",\"/assets/SponsorPlaceholder-QTbz7bZD.js\",\"/assets/_channelId-MWmqK0mp.js\",\"/assets/RouteErrorState-CxNc0ASx.js\"],css:$R[10]=[\"/assets/PlayerAffiliateLink-3UZDXr69.css\"]}}},matches:$R[11]=[$R[12]={i:\"__root__\u0000\",u:1795316933139,s:\"success\",ssr:!0},$R[13]={i:\"\u0000channels\u0000$channelId\u0000channels\u0000La1.es\",u:1795316933577,s:\"success\",l:$R[14]={channel:$R[15]={id:\"La1.es\",name:\"La 1\",network:\"RTVE\",country:\"ES\",subdivision:null,city:null,is_nsfw:0,launched:null,closed:null,replaced_by:null,website:\"https://www.rtve.es/television/la-1/\",logo:null,popular:0,likes:0,created_at:\"2026-07-13T17:55:20.941Z\",is_hidden:0},streams:$R[16]=[$R[17]={id:30104,channel_id:\"La1.es\",url:\"https://rtvelivestream.rtve.es/rtvesec/la1/la1_main.m3u8\",timeshift:null,http_referrer:null,user_agent:null}],streamStatus:\"available\",popular:$R[18]=[$R[19]={id:\"MiamiTV.us\",name:\"Miami TV\",network:null,country:\"US\",subdivision:null,city:null,is_nsfw:1,launched:null,closed:null,replaced_by:null,website:null,logo:\"https://m.media-amazon.com/images/I/61eSdW1MsgL.png\",popular:0,likes:537,created_at:\"2025-04-12T15:04:29.878Z\",is_hidden:0},$R[20]={id:\"CartoonNetwork.in\",name:\"Cartoon Network\",network:null,country:\"IN\",subdivision:null,city:null,is_nsfw:0,launched:null,closed:null,replaced_by:null,website:\"http://www.cartoonnet"
+  ],
+  "jsonScripts": [
+   "{\"@context\":\"https://schema.org\",\"@type\":\"BreadcrumbList\",\"itemListElement\":[{\"@type\":\"ListItem\",\"position\":1,\"name\":\"Channels\",\"item\":\"https://www.globalfreetv.com/channels\"},{\"@type\":\"ListItem\",\"position\":2,\"name\":\"Spain\",\"item\":\"https://www.globalfreetv.com/countries/spain\"},{\"@type\":\"ListItem\",\"position\":3,\"name\":\"La 1 Live\",\"item\":\"https://www.globalfreetv.com/channels/La1.es\"}]}"
+  ],
+  "mx": {
+   "status": 200,
+   "channelLinks": [
+    "AztecaInternacional.mx",
+    "trace-latina-mx",
+    "go-usa-mx",
+    "fashion-tv-mx",
+    "sony-novelas-mx",
+    "canela-novelas-mx",
+    "LasEstrellas.mx",
+    "ITVDeportes.mx",
+    "ConectaTV.mx",
+    "canela-cinema-mx",
+    "ADN40.mx",
+    "SuperChannel12.mx",
+    "TeleplaySureste.mx",
+    "VisionTelevision.mx",
+    "sony-comedias-mx"
+   ],
+   "count": 48
+  },
+  "countries": {
+   "status": 200,
+   "hrefs": [
+    "ar",
+    "au",
+    "br",
+    "ca",
+    "ch",
+    "co",
+    "do",
+    "fr",
+    "ge",
+    "gr",
+    "in",
+    "ir",
+    "it",
+    "me",
+    "ne",
+    "pe",
+    "ro",
+    "ru",
+    "so",
+    "sp",
+    "tu",
+    "un"
+   ]
+  }
+ },
+ "dlhd": {
+  "status": 200,
+  "iframes": [
+   "https://dembed.st/premiumtv/daddy.php?id=1"
+  ],
+  "hls": [],
+  "scriptSrcs": [
+   "https://pl29569919.profitableratecpmnetwork.com/1f/b1/b0/1fb1b0ba3934bee0fb513f60318219c8.js",
+   "//reviled.thirstacock.com/rLMKZRIGrRFNZ6/142161"
+  ],
+  "sourceTags": [],
+  "jsUrls": [
+   ", '1']); _Hasync.push(['Histats.track_hits', '']); _Hasync.push(['Histats.framed_page', '']); (function() { var hs = document.createElement('script'); hs.type = 'text/javascript'; hs.async = true; hs.src = ('//s10.histats.com/js15_as.js'); (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(hs); })();</script> <noscript><a href=\"/\" target=\"_blank\"><img src=\"//sstatic1.histats.com/0.gif?2162676&101\" alt=\"web counter free\" border=\"0\"></a></noscript> <!-- Histats.com END --> <script>window['ZpQw9XkLmN8c3vR3']='A3BYEDFXAjpTA3MiGjcMFnADViNeCTtFE1I8GDoRFDwXAydQAyVCFBVhVSUAFAJYACoQSm4ZFQRjBz4VWn4bFSZQJilEAl4iGXRfWmEUFyZcUmAUFVIuGC8hFz9YHSwQSm5GHUI1BzIfFydOASBYXj9GEFQoVXpHHDdaGzt2HyFXGFkXGDgAC3ADD2AAQXQHRAV+VWw+WmMLRmwARX4YQAJ4WWRQSHBkWGAAQnsORQZ",
+   " = ('//s10.histats.com/js15_as.js'); (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(hs); })();</script> <noscript><a href=\"/\" target=\"_blank\"><img src=\"//sstatic1.histats.com/0.gif?2162676&101\" alt=\"web counter free\" border=\"0\"></a></noscript> <!-- Histats.com END --> <script>window['ZpQw9XkLmN8c3vR3']='A3BYEDFXAjpTA3MiGjcMFnADViNeCTtFE1I8GDoRFDwXAydQAyVCFBVhVSUAFAJYACoQSm4ZFQRjBz4VWn4bFSZQJilEAl4iGXRfWmEUFyZcUmAUFVIuGC8hFz9YHSwQSm5GHUI1BzIfFydOASBYXj9GEFQoVXpHHDdaGzt2HyFXGFkXGDgAC3ADD2AAQXQHRAV+VWw+WmMLRmwARX4YQAJ4WWRQSHBkWGAAQnsORQZ4VWw+WmMLRmwARX4YQAJ4WWRQSHBkWGAARXQDRwd6VWw+WmMLRmwARX4YQAJ4WWRQSHBkWGAARnwOQwR0VWw+WmMLRmwARX4YQAJ4WWRQSHBkWGAARngFSQZ8VWw+WmMLRmwARX4YQAJ4WWRQSHBkWGAARnkCQQF+VWw+WmMLRmwARX4YQAJ4WWRQSHBkWGABRnsHQAJ4V",
+   "894e7;try{const _0x570f91={};return _0x570f91[_0x3bda0f(0x74c)]=!0x0,!0x0===new Request('',_0x570f91)[_0x3bda0f(0x74c)];}catch(_0xf1dc0f){return!0x1;}})()),_0x18733c=_0x510662=>JSON[_0x5894e7(0xdaf)](atob(_0x510662)),_0x17907e=_0x4fc7a1=>{const _0x501805=_0x5894e7;if(_0x4fc7a1['s']){const _0x18b3d8=_0x18733c(_0x4fc7a1['s']);return delete _0x4fc7a1['s'],{..._0x4fc7a1,..._0x18b3d8};}return['hp',_0x501805(0x203),_0x501805(0x42e)][_0x501805(0x1647)](_0x2fe77b=>{_0x4fc7a1[_0x2fe77b]&&(_0x4fc7a1[_0x2fe77b]=_0x18733c(_0x4fc7a1[_0x2fe77b]));}),_0x4fc7a1;},_0x1764e7=_0x4817c3=>new Promise(_0x5db34d=>{setTimeout(_0x5db34d,_0x4817c3);}),_0x4a2b0d=_0x5894e7(0x1620)+'al',_0x1bccaf=_0x5894e7(0xaef),_0x505eb3=_0x5894e7(0x1722),_0x2772d0=_0x5894e7(0x7fe),_0xbfa1cd=(_0x16dda2,_0x20d528,_0x60d567,_0x2cef6f)=>{c",
+   "a9e)](window[_0x309375])),this.#Me=this.#o[_0x4ef673(0xb4b)],delete window[_0x309375]),window[_0x5e2c79]&&(this.#o=JSON[_0x4ef673(0xdaf)](((_0x372821,_0x370645=_0x4ef673(0x7ee)+_0x4ef673(0x1b5))=>[...atob(_0x372821)][_0x4ef673(0x85c)]((_0x1046e,_0xd1ee41)=>String[_0x4ef673(0x1423)+'de'](_0x1046e[_0x4ef673(0x626)](0x0)^_0x370645[_0x4ef673(0x626)](_0xd1ee41%_0x370645[_0x4ef673(0xfb2)])))[_0x4ef673(0x104f)](''))(window[_0x5e2c79])),this.#Me=this.#o[_0x4ef673(0xb4b)],delete window[_0x5e2c79]),this.#o||(this.#Me=new URL(_0x26dc4b[_0x4ef673(0x313)])[_0x4ef673(0xa90)],_0x26dc4b[_0x4ef673(0x19b)+'te'](_0x5b81c5)&&(this.#o=JSON[_0x4ef673(0xdaf)](_0x26dc4b[_0x4ef673(0x6c5)+'te'](_0x5b81c5)),_0x26dc4b[_0x4ef673(0x1680)+_0x4ef673(0xcbc)](_0x5b81c5))),this.#o&&this.#i[_0x4ef673(0x59a)](_0x4ef673(0xda9)+_0x",
+   "{clearTimeout(r);o++;if(u[o]&&!(1821234693000<(new Date).getTime()&&1<o)){x=t.document.createElement(\"script\");x.type=\"text/javascript\";x.async=!0;var k=t.document.getElementsByTagName(\"script\")[0];x.src=\"https://\"+atob(u[o]);x.crossOrigin=\"anonymous\";x.onerror=s;x.onload=function(){clearTimeout(r);t[d.slice(0,16)+d.slice(0,16)]||s()};r=setTimeout(s,5E3);k.parentNode.insertBefore(x,k)}};if(!t[d]){try{Object.freeze(t[d]=w)}catch(e){}s()}})(); /*]]>/* */ </script> <!-- Histats.com START (aync)--> <script type=\"text/javascript\">var _Hasync= _Hasync|| []; _Hasync.push(['Histats.start', '1,2162676,4,0,0,0,00010000']); _Hasync.push(['Histats.fasi', '1']); _Hasync.push(['Histats.track_hits', '']); (function() { var hs = document.createElement('script'); hs.type = 'text/javascript'; hs.asy",
+   ");o++;if(u[o]&&!(1821234693000<(new Date).getTime()&&1<o)){x=t.document.createElement(\"script\");x.type=\"text/javascript\";x.async=!0;var k=t.document.getElementsByTagName(\"script\")[0];x.src=\"https://\"+atob(u[o]);x.crossOrigin=\"anonymous\";x.onerror=s;x.onload=function(){clearTimeout(r);t[d.slice(0,16)+d.slice(0,16)]||s()};r=setTimeout(s,5E3);k.parentNode.insertBefore(x,k)}};if(!t[d]){try{Object.freeze(t[d]=w)}catch(e){}s()}})(); /*]]>/* */ </script> <!-- Histats.com START (aync)--> <script type=\"text/javascript\">var _Hasync= _Hasync|| []; _Hasync.push(['Histats.start', '1,2162676,4,0,0,0,00010000']); _Hasync.push(['Histats.fasi', '1']); _Hasync.push(['Histats.track_hits', '']); (function() { var hs = document.createElement('script'); hs.type = 'text/javascript'; hs.async = true; hs.s"
+  ]
+ }
+}
