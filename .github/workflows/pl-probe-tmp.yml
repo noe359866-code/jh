@@ -47,6 +47,16 @@ jobs:
         if: always()
         with:
           name: sonda
+      # La auditoría se imprime en el log: es lo único que se puede leer desde
+      # fuera cuando el almacenamiento de artefactos no es accesible.
+      - name: Imprimir auditoría
+        if: always()
+        run: |
+          echo "=== AUDITORIA-M3U ==="
+          cat reports/m3u-audit.txt 2>/dev/null || echo "sin auditoría"
+          echo "=== FIN-AUDITORIA ==="
+          echo "=== RESUMEN ==="
+          tail -5 pl.log 2>/dev/null || true
           path: |
             pl.log
             reports/m3u-audit.txt
