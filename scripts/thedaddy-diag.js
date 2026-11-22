@@ -81,6 +81,28 @@ async function main() {
     out.push({ step: 'src-error', error: error.message });
   }
 
+  // El edge exige token: probar el endpoint con las cabeceras del reproductor.
+  const tokenUrls = [
+    'https://edge.wedd48c.top/api/playlist-token?slug=premium' + first.id,
+    'https://edge.wedd48c.top/api/playlist-token?slug=premium' + first.id + '&id=' + first.id
+  ];
+  const tokenVariants = [
+    ['referer-embed-origin', { referer: embedUrl, headers: { Origin: 'https://thedaddy.li', 'Sec-Fetch-Dest': 'iframe', 'Sec-Fetch-Site': 'cross-site' } }],
+    ['referer-embed', { referer: embedUrl }],
+    ['referer-self-origin', { referer: 'https://edge.wedd48c.top/', headers: { Origin: 'https://edge.wedd48c.top' } }],
+    ['sin-cabeceras', {}]
+  ];
+  for (const tokenUrl of tokenUrls) {
+    for (const [name, options] of tokenVariants) {
+      try {
+        const response = await get(tokenUrl, { ...options, maxBytes: 8192 });
+        out.push({ step: 'token', tokenUrl, variant: name, status: response.status, body: response.text.slice(0, 200) });
+      } catch (error) {
+        out.push({ step: 'token', tokenUrl, variant: name, error: error.message });
+      }
+    }
+  }
+
   for (const url of [`https://thedaddy.li/cast/stream-${first.id}.php`, `https://thedaddy.li/plus/stream-${first.id}.php`]) {
     try {
       const response = await get(url, { referer: watchUrl });
