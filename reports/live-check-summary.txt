@@ -1,42 +1,35 @@
 {
- "startedAt": "2026-11-22T04:15:56.424Z",
+ "startedAt": "2026-11-22T04:18:16.512Z",
  "ok": true,
  "sources": {
   "tvgarden": {
-   "country": "pr",
-   "channels": 28,
+   "country": "bo",
+   "channels": 46,
    "mode": "direct",
    "ok": true,
    "entries": 1211,
-   "ms": 813
+   "ms": 687
   },
   "tvenvivo": {
    "channels": 70,
    "mode": "page",
    "ok": true,
    "entries": 70,
-   "ms": 805
+   "ms": 820
   },
-  "eja": {
-   "mode": "direct",
-   "ok": false,
-   "entries": 0,
-   "error": "Solo se permite HTTPS",
-   "ms": 901
+  "thedaddy": {
+   "listed": 42,
+   "mode": "page",
+   "ok": true,
+   "entries": 42,
+   "ms": 920
   },
   "livelive24": {
    "channels": 29,
    "mode": "catalog",
    "ok": true,
    "entries": 29,
-   "ms": 991
-  },
-  "thedaddy": {
-   "listed": 59,
-   "mode": "page",
-   "ok": true,
-   "entries": 59,
-   "ms": 1053
+   "ms": 923
   },
   "iptvcat": {
    "country": "spain__9",
@@ -44,7 +37,15 @@
    "mode": "direct",
    "ok": true,
    "entries": 1170,
-   "ms": 3311
+   "ms": 2954
+  },
+  "eja": {
+   "country": "us",
+   "total": 217,
+   "mode": "direct",
+   "ok": true,
+   "entries": 699,
+   "ms": 5941
   },
   "globalfreetv": {
    "country": "ES",
@@ -52,14 +53,14 @@
    "mode": "direct",
    "ok": true,
    "entries": 243,
-   "ms": 22003
+   "ms": 23461
   }
  },
  "totals": {
-  "total": 1809,
-  "playable": 1784,
-  "es": 346,
-  "latam": 1463
+  "total": 1870,
+  "playable": 1845,
+  "es": 336,
+  "latam": 1534
  },
  "checks": [
   {
@@ -75,13 +76,13 @@
    "error": null
   },
   {
-   "channel": "es-ctv-2-canada",
+   "channel": "es-cuatro-spain",
    "source": "thedaddy.li",
    "resolved": false,
    "error": null
   },
   {
-   "channel": "es-ctv-canada",
+   "channel": "es-dazn-1-bar-de",
    "source": "thedaddy.li",
    "resolved": false,
    "error": null
@@ -117,6 +118,6 @@
    "signature": true
   }
  ],
- "playlistEntries": 2602,
- "finishedAt": "2026-11-22T04:16:19.901Z"
+ "playlistEntries": 2830,
+ "finishedAt": "2026-11-22T04:18:41.304Z"
 }
