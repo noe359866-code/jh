@@ -1,0 +1,169 @@
+{
+ "tvgarden/api/tv/es.json": {
+  "status": 404,
+  "finalUrl": "https://tvgarden.world/api/tv/es.json",
+  "ctype": "text/html",
+  "length": 1249,
+  "sample": "<!DOCTYPE html>\n<html style=\"height:100%\">\n<head>\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\">\n<title> 404 Not Found\r\n</title><style>@media (prefers-color-scheme:dark){body{background-color:#000!important}}</style></head>\n<body style=\"color: #444; margin:0;font: normal 14px/20px Arial, Helvetica, sans-serif; height:100%; background-color: #fff;\">\n<div style=\"height:auto; min-height:100%; \">     <div style=\"text-align: center; width:800px; margin-left: -400px; position:absolute; top: 30%; left:50%;\">\n        <h1 style=\"margin:0; font-size:150px; line-height:150px; font-weight:bold;\">404</h1>\n<h2 style=\"margin-top:20px;font-size: 30px;\">Not Found\r\n</h2>\n<p>The resource requested could not be found on this server!</p>\n</div></div><div style=\"color:#f0f0f0; font-size:12px;margin:auto;padding:0px 30px 0px 30px;position:relative;clear:both;height:100px;margin-top:-101px;background-color:#474747;border-top: 1px solid rgba(0,0,0,0.15);box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) inset;\">\n<br>Proudly powered by LiteSpeed Web Server<p>Please be advised that LiteSpeed Technologies Inc. is not a web hosting company and, as such, has no control over con"
+ },
+ "tvgarden/api/tv/countries_metadata.json": {
+  "status": 200,
+  "finalUrl": "https://tvgarden.world/api/tv/countries_metadata.json",
+  "ctype": "application/json",
+  "length": 5389,
+  "sample": "\u001f�\b\u0000\u0000\u0000\u0000\u0000\u0002\u0003�]K��Fv�+��8\u0001|}=��N�ӫ��z������p$V��\"Yr��\u001e�`��!A\u0010\u0004^�\"��������\")�T��\u0018A`��yX<����Σ����7���?l�Jsy���^\u001a\b)�÷\u001f���9��g^\f�\u0003�cC�yD�4u��سO�\u0011d�\bҔ�ه�s������\u0007�͇���/�~��|�S����I�x��K�Y��\u0011\u001b�\r#��6�^���Pm�S8�c��\nM�9�/�,���q\u0002\u001b\u0015;�U�/r��\u001f\r�1^���\n<H\u0003�\u000fr���b��wޭ��o2�:a�o�S9��߰���C�O{x湊��\u0000q̎]<�A-��\u0010g\u0016��\r�)�\u001ao�\n#�z�S�,\u0015$F��?\u001bf3�L&\f3��$;\u0014��w�L���\u0007���ZO�Vs��ޢ������I�%��Z≅L�~�f�W,\u0015���u�L5����u�.A�\u000b����8}7�|HD��, \u0014��W��,`˟�����K2Q�V���r�6����C�j��\u0005��p�wp�\u0018�\u001b@�a'[�\\���O�1H\u000bU�,Q?\u001a��x��9k1����´�\n�6�4��.��ٽ�Kll�Mf�Ӷ�3��E��ε��lx����|B\u0013}cR\u001b�\u0017dw��S\u000eE-\u001fӬn��f�\u0017�6\t�ѽf����\u0007\t/� �sm\u0010/�\u0000���>�-=\u0004���}Ƀ���5uokc\u0010m��C�5\rc\bX\u0016��j7�\u0003�\u001b-�_v��*��\u0007�8�*A3TYf>�Z�\u0006�2�bz�q����]�� \u0013m}Q\u0010�S�PN3ܦ�lq�y�!`C�g�C\u0015��\u0016�s��1��S��)$�ԓ�e�C��X��Ҁ#\u0017󢒍�n�֤\u0012��\u0016�N�f�\u00102\u0017\u001f�\u0002�cɲE�)$B$�^��\u0000�<z�-fɱ�~�m9\u001c�^Vz���b +�\u0011'=Ó�\t\u0006א�8\u0017�\u001e��4��}��\u0010Y�\u0011K��\fm�\u0001$���̼>\u000b��\t��D�w�����uEm%s��\u00144Fx���\u001f��������o7����L����ͲE���p]ⵅ7\u001e#�\u0007��_�N1\u0002��TL��?�P,�o\u0019\u0006m\u0004�^e\u000eY\u0006�Ͳ��l\u001e�^�H�\u0018i\u0015�d\u001f����B��\u0007�����\u0012��x���\u0019<b\u0006y�\n\b\u0004�a#�H���4��\u0018����}^ی�4�9]FE!\u0002�'�\u0017k�~��=t��j\u0000)�\u001c |�!1 [v��ښ����:�D�7�u0@��V�<7a�W���;��F�g�i��\u001b��~*�A\u0016�\u0001�Vå7\u0010i�\u0006\u001e\u0013�g�sn?� �\\�\u0000���\u000eⴙ�N�K�%۫M̷؞�X���+\u0012q�c��x���i7\u0019�n}i�I*3@��幎\u0012,\u001b�=�;(yR�uD\u0012�2�\u0010�\u0019��Wμ�����.�\u000ev5`\u0015j'ݠ����\u000b-�P��\u0004���9�w�V\u0003�\u0001�\u0012��x!�c�\u0001\u0002B���\f\u0005B\u001alX!��k���K��1M"
+ },
+ "tvgarden/api/tv/mx.json": {
+  "status": 404,
+  "finalUrl": "https://tvgarden.world/api/tv/mx.json",
+  "ctype": "text/html",
+  "length": 1249,
+  "sample": "<!DOCTYPE html>\n<html style=\"height:100%\">\n<head>\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\">\n<title> 404 Not Found\r\n</title><style>@media (prefers-color-scheme:dark){body{background-color:#000!important}}</style></head>\n<body style=\"color: #444; margin:0;font: normal 14px/20px Arial, Helvetica, sans-serif; height:100%; background-color: #fff;\">\n<div style=\"height:auto; min-height:100%; \">     <div style=\"text-align: center; width:800px; margin-left: -400px; position:absolute; top: 30%; left:50%;\">\n        <h1 style=\"margin:0; font-size:150px; line-height:150px; font-weight:bold;\">404</h1>\n<h2 style=\"margin-top:20px;font-size: 30px;\">Not Found\r\n</h2>\n<p>The resource requested could not be found on this server!</p>\n</div></div><div style=\"color:#f0f0f0; font-size:12px;margin:auto;padding:0px 30px 0px 30px;position:relative;clear:both;height:100px;margin-top:-101px;background-color:#474747;border-top: 1px solid rgba(0,0,0,0.15);box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) inset;\">\n<br>Proudly powered by LiteSpeed Web Server<p>Please be advised that LiteSpeed Technologies Inc. is not a web hosting company and, as such, has no control over con"
+ },
+ "tvgarden/api/tv/categories/metadata.json": {
+  "status": 404,
+  "finalUrl": "https://tvgarden.world/api/tv/categories/metadata.json",
+  "ctype": "text/html",
+  "length": 1249,
+  "sample": "<!DOCTYPE html>\n<html style=\"height:100%\">\n<head>\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\">\n<title> 404 Not Found\r\n</title><style>@media (prefers-color-scheme:dark){body{background-color:#000!important}}</style></head>\n<body style=\"color: #444; margin:0;font: normal 14px/20px Arial, Helvetica, sans-serif; height:100%; background-color: #fff;\">\n<div style=\"height:auto; min-height:100%; \">     <div style=\"text-align: center; width:800px; margin-left: -400px; position:absolute; top: 30%; left:50%;\">\n        <h1 style=\"margin:0; font-size:150px; line-height:150px; font-weight:bold;\">404</h1>\n<h2 style=\"margin-top:20px;font-size: 30px;\">Not Found\r\n</h2>\n<p>The resource requested could not be found on this server!</p>\n</div></div><div style=\"color:#f0f0f0; font-size:12px;margin:auto;padding:0px 30px 0px 30px;position:relative;clear:both;height:100px;margin-top:-101px;background-color:#474747;border-top: 1px solid rgba(0,0,0,0.15);box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) inset;\">\n<br>Proudly powered by LiteSpeed Web Server<p>Please be advised that LiteSpeed Technologies Inc. is not a web hosting company and, as such, has no control over con"
+ },
+ "ejaOffset": {
+  "status": 200,
+  "finalUrl": "http://eja.tv/?offset=6&country=es&language=&category=&search=",
+  "ctype": "text/html; charset=utf-8",
+  "length": 55857,
+  "sample": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n\t<meta charset=\"UTF-8\">\n\t<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n\t<title></title>\n\t<link rel=\"icon\" type=\"image/png\" href=\"/static/"
+ },
+ "ejaOffsetCards": 6,
+ "ejaSpa": {
+  "cards": 6,
+  "total": "1725",
+  "next": "6"
+ },
+ "iptvcatMini": {
+  "status": 200,
+  "finalUrl": "https://list.iptvcat.net/my_list/s/adfa227ff2725d80166b27e86197e7b5.m3u8",
+  "ctype": "application/text",
+  "length": 232,
+  "sample": "#EXTM3U\n#EXTINF:0 tvg-country=\"ES\" tvg-logo=\"https://i.imgur.com/GzI3RC4.png\" group-title=\"\",101tv Antequera (720p) [Geo-blocked]\nhttps://liveingesta318.cdnmedia.tv/101weblive/smil:antequera.smil/playlist.m3u8?checkedby:iptvcat.net\n"
+ },
+ "iptvcatMexico": {
+  "status": 200,
+  "rows": 100,
+  "clipboards": 101,
+  "pages": [
+   "/mexico__1/2"
+  ]
+ },
+ "tvenvivo/live/core.php?canal=tudn": {
+  "status": 200,
+  "finalUrl": "https://www.tvenvivo.org/",
+  "ctype": "text/html; charset=UTF-8",
+  "length": 778983,
+  "sample": "<!DOCTYPE html>\n<html lang=\"es\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover\">\n<meta name=\"theme-color\" content=\"#060809\">\n<link rel=\"shortcut icon\" href=\"https://www.tvenvivo.org/imge/favicon.png\">\n<script type=\"text/javascript\" src=\"https://platform-api.sharethis.com/js/sharethis.js#property=697cdea3b95445f2b2abc9d7&product=inline-share-buttons\" async=\"async\"></script>\n\n<title>▷ TV EN VIVO | CANALES DE TV ONLINE | VER TV GRATIS</title>\n\n<meta name=\"robots\" content=\"index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1\">\n<meta name=\"description\" content=\"Ver TV EN VIVO ✅ y encuentra una amplia selección de canales de televisión online gratis desde un solo lugar. Accede a señales deportivas, canales regionales y diferentes opciones de entretenimiento directamente desde tu navegador, sin complicaciones y con una experiencia adaptada a computadoras, celulares, tablets y Smart TV. También puedes consultar la agenda deportiva para conocer los próximos partidos, horarios y competencias disponibles. Nuestra plataforma está pensada para facilitar el acceso a tus canales favoritos y ofrecer una navegación rápida, sencilla y organizada. Mira televisión por internet en vivo, descubre nuevas señales y disfruta contenido online en alta calidad desde cualquier dispositivo con conexión a internet. TV EN VIVO reúne canales y programación en una interfaz moderna para que puedas encontrar fácilmente lo que buscas.\">\n<link rel=\"canonical\" href=\"https://www.tvenvivo.org/\">\n<link rel=\"next\" href=\"https://www.tvenvivo.org/\">\n<meta property=og:locale content=es>\n<meta property=\"og:type\" content=\"website\">\n<meta property=\"og:title\" content=\"TV EN VIVO | Canales de TV Online Gratis en Vivo\">\n<meta property=\"og:description\" content=\"Ver TV EN VIVO ✅ y encuentra una amplia selección de canales de televisión online gratis desde un solo lugar. Accede a señales deportivas, canales regionales y diferentes opciones de entretenimiento directamente desde tu navegador, sin complicaciones y con una experiencia adaptada a computadoras, celulares, tablets y Smart TV. También puedes consultar la agenda deportiva para conocer los próximos partidos, horarios y competencias disponibles. Nuestra plataforma está pensada para facilitar el acceso a tus canales favoritos y ofrecer una navegación rápida, sencilla y organizada. Mira televisión por internet en vivo, descubre nuevas s"
+ },
+ "tvenvivo/live2/core.php?canal=tudn": {
+  "status": 200,
+  "finalUrl": "https://www.tvenvivo.org/",
+  "ctype": "text/html; charset=UTF-8",
+  "length": 778983,
+  "sample": "<!DOCTYPE html>\n<html lang=\"es\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover\">\n<meta name=\"theme-color\" content=\"#060809\">\n<link rel=\"shortcut icon\" href=\"https://www.tvenvivo.org/imge/favicon.png\">\n<script type=\"text/javascript\" src=\"https://platform-api.sharethis.com/js/sharethis.js#property=697cdea3b95445f2b2abc9d7&product=inline-share-buttons\" async=\"async\"></script>\n\n<title>▷ TV EN VIVO | CANALES DE TV ONLINE | VER TV GRATIS</title>\n\n<meta name=\"robots\" content=\"index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1\">\n<meta name=\"description\" content=\"Ver TV EN VIVO ✅ y encuentra una amplia selección de canales de televisión online gratis desde un solo lugar. Accede a señales deportivas, canales regionales y diferentes opciones de entretenimiento directamente desde tu navegador, sin complicaciones y con una experiencia adaptada a computadoras, celulares, tablets y Smart TV. También puedes consultar la agenda deportiva para conocer los próximos partidos, horarios y competencias disponibles. Nuestra plataforma está pensada para facilitar el acceso a tus canales favoritos y ofrecer una navegación rápida, sencilla y organizada. Mira televisión por internet en vivo, descubre nuevas señales y disfruta contenido online en alta calidad desde cualquier dispositivo con conexión a internet. TV EN VIVO reúne canales y programación en una interfaz moderna para que puedas encontrar fácilmente lo que buscas.\">\n<link rel=\"canonical\" href=\"https://www.tvenvivo.org/\">\n<link rel=\"next\" href=\"https://www.tvenvivo.org/\">\n<meta property=og:locale content=es>\n<meta property=\"og:type\" content=\"website\">\n<meta property=\"og:title\" content=\"TV EN VIVO | Canales de TV Online Gratis en Vivo\">\n<meta property=\"og:description\" content=\"Ver TV EN VIVO ✅ y encuentra una amplia selección de canales de televisión online gratis desde un solo lugar. Accede a señales deportivas, canales regionales y diferentes opciones de entretenimiento directamente desde tu navegador, sin complicaciones y con una experiencia adaptada a computadoras, celulares, tablets y Smart TV. También puedes consultar la agenda deportiva para conocer los próximos partidos, horarios y competencias disponibles. Nuestra plataforma está pensada para facilitar el acceso a tus canales favoritos y ofrecer una navegación rápida, sencilla y organizada. Mira televisión por internet en vivo, descubre nuevas s"
+ },
+ "tvenvivo/live3/core.php?canal=tudn": {
+  "status": 200,
+  "finalUrl": "https://www.tvenvivo.org/",
+  "ctype": "text/html; charset=UTF-8",
+  "length": 778983,
+  "sample": "<!DOCTYPE html>\n<html lang=\"es\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover\">\n<meta name=\"theme-color\" content=\"#060809\">\n<link rel=\"shortcut icon\" href=\"https://www.tvenvivo.org/imge/favicon.png\">\n<script type=\"text/javascript\" src=\"https://platform-api.sharethis.com/js/sharethis.js#property=697cdea3b95445f2b2abc9d7&product=inline-share-buttons\" async=\"async\"></script>\n\n<title>▷ TV EN VIVO | CANALES DE TV ONLINE | VER TV GRATIS</title>\n\n<meta name=\"robots\" content=\"index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1\">\n<meta name=\"description\" content=\"Ver TV EN VIVO ✅ y encuentra una amplia selección de canales de televisión online gratis desde un solo lugar. Accede a señales deportivas, canales regionales y diferentes opciones de entretenimiento directamente desde tu navegador, sin complicaciones y con una experiencia adaptada a computadoras, celulares, tablets y Smart TV. También puedes consultar la agenda deportiva para conocer los próximos partidos, horarios y competencias disponibles. Nuestra plataforma está pensada para facilitar el acceso a tus canales favoritos y ofrecer una navegación rápida, sencilla y organizada. Mira televisión por internet en vivo, descubre nuevas señales y disfruta contenido online en alta calidad desde cualquier dispositivo con conexión a internet. TV EN VIVO reúne canales y programación en una interfaz moderna para que puedas encontrar fácilmente lo que buscas.\">\n<link rel=\"canonical\" href=\"https://www.tvenvivo.org/\">\n<link rel=\"next\" href=\"https://www.tvenvivo.org/\">\n<meta property=og:locale content=es>\n<meta property=\"og:type\" content=\"website\">\n<meta property=\"og:title\" content=\"TV EN VIVO | Canales de TV Online Gratis en Vivo\">\n<meta property=\"og:description\" content=\"Ver TV EN VIVO ✅ y encuentra una amplia selección de canales de televisión online gratis desde un solo lugar. Accede a señales deportivas, canales regionales y diferentes opciones de entretenimiento directamente desde tu navegador, sin complicaciones y con una experiencia adaptada a computadoras, celulares, tablets y Smart TV. También puedes consultar la agenda deportiva para conocer los próximos partidos, horarios y competencias disponibles. Nuestra plataforma está pensada para facilitar el acceso a tus canales favoritos y ofrecer una navegación rápida, sencilla y organizada. Mira televisión por internet en vivo, descubre nuevas s"
+ },
+ "tvenvivoHome": {
+  "status": 200,
+  "channelLinks": [
+   "https://www.tvenvivo.org/liga-1-en-vivo-online.php",
+   "https://www.tvenvivo.org/liga-1-max-en-vivo-online.php",
+   "https://www.tvenvivo.org/tudn-en-vivo-online.php",
+   "https://www.tvenvivo.org/sky-sports-la-liga-en-vivo-online.php",
+   "https://www.tvenvivo.org/fox-sports-premium-en-vivo-online.php",
+   "https://www.tvenvivo.org/tyc-sports-en-vivo-online.php",
+   "https://www.tvenvivo.org/movistar-la-liga-en-vivo-online.php",
+   "https://www.tvenvivo.org/movistar-liga-campeones-en-vivo-online.php",
+   "https://www.tvenvivo.org/directv-sports-en-vivo-online.php",
+   "https://www.tvenvivo.org/directv-sports-2-en-vivo-online.php",
+   "https://www.tvenvivo.org/directv-sports-plus-en-vivo-online.php",
+   "https://www.tvenvivo.org/espn-premium-latino-america-en-vivo-online.php"
+  ],
+  "totalLinks": 140
+ },
+ "livelive24": {
+  "status": 200,
+  "listApiBase": "LIST_API_BASE = 'https://api.sportplustv.live/v5/matches/index?sport_id='",
+  "apiHosts": [
+   "https://fonts.googleapis.com",
+   "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap",
+   "https://livelive24.com/test/ntv/ntv.json",
+   "https://api.sportplustv.live/v5/matches/index?sport_id=",
+   "https://api.onsport365.live/v5/matches/view?lang=en&id=",
+   "https://livelive24.com/tv.json",
+   "https://livelive24.com/buff/output/Football.json",
+   "https://livelive24.com/buff/output/Basketball.json",
+   "https://livelive24.com/buff/output/Boxing.json",
+   "https://livelive24.com/buff/output/MMA.json",
+   "https://livelive24.com/buff/output/Tennis.json",
+   "https://livelive24.com/buff/output/Formula_1.json",
+   "https://livelive24.com/buff/output/Moto_Sport.json",
+   "https://livelive24.com/buff/output/American_Football.json",
+   "https://livelive24.com/buff/output/AFL.json"
+  ],
+  "tvApi": [],
+  "channelParam": []
+ },
+ "gftvCountries": {
+  "status": 200,
+  "all": [
+   "/countries/argentina",
+   "/countries/australia",
+   "/countries/austria",
+   "/countries/brazil",
+   "/countries/canada",
+   "/countries/chile",
+   "/countries/colombia",
+   "/countries/dominican-republic",
+   "/countries/france",
+   "/countries/germany",
+   "/countries/greece",
+   "/countries/india",
+   "/countries/iraq",
+   "/countries/italy",
+   "/countries/mexico",
+   "/countries/netherlands",
+   "/countries/peru",
+   "/countries/romania",
+   "/countries/russia",
+   "/countries/south-korea",
+   "/countries/spain",
+   "/countries/turkey",
+   "/countries/united-kingdom",
+   "/countries/united-states"
+  ]
+ },
+ "gftvES": {
+  "status": 200,
+  "channels": 48
+ },
+ "gftvMX": {
+  "status": 200,
+  "channels": 48
+ },
+ "gftvAR": {
+  "status": 200,
+  "channels": 49
+ },
+ "gftvChannelPayload": "streams:$R[16]=[$R[17]={id:30104,channel_id:\"La1.es\",url:\"https://rtvelivestream.rtve.es/rtvesec/la1/la1_main.m3u8\",timeshift:null,http_referrer:null,user_agent:null}]",
+ "daddyEmbed": {
+  "status": 200,
+  "finalUrl": "https://dembed.st/premiumtv/daddy.php?id=1",
+  "ctype": "text/html; charset=utf-8",
+  "length": 657585,
+  "sample": "<!doctype html>\r\n<html lang=\"en\">\r\n<head>\r\n<meta charset=\"utf-8\">\r\n<meta name=\"viewport\" content=\"width=device-width,initial-scale=1,viewport-fit=cover\">\r\n<meta name=\"apple-mobile-web-app-capable\" content=\"yes\">\r\n<title>premium1</title>\r\n<style>\r\n  html, body {\r\n    margin: 0;\r\n    padding: 0;\r\n    width: 100%;\r\n    height: 100%;\r\n    background: #000;\r\n    overflow: hidden;\r\n  }\r\n  /* Fill the iframe, not the browser viewport. vw/vh ignore the embed size. */\r\n  #player {\r\n    position: absolute;\r\n    inset: 0;\r\n    width: 100%;\r\n    height: 100%;\r\n    background: #000;\r\n    overflow: hidden;\r\n  }\r\n  #player [data-player],\r\n  #player .player-wrapper,\r\n  #player .jwplayer,\r\n  #player .jw-wrapper,\r\n  #player .jw-aspect,\r\n  #player .jw-media,\r\n  #player .jw-preview {\r\n    position: absolute !important;\r\n    inset: 0 !important;\r\n    width: 100% !important;\r\n    height: 100% !important;\r\n    max-width: none !important;\r\n    max-height: none !important;\r\n    margin: 0 !important;\r\n    padding: 0 !important;\r\n  }\r\n  #player .jw-aspect { padding-top: 0 !important; }\r\n  #player video,\r\n  #player .jw-video { object-fit: contain !important; width: 100% !important; height: 100% !important; }\r\n  #player .media-control,\r\n  #player [data-media-control] { z-index: 20; }\r\n  #player .media-control.media-control-hide .media-control-layer[data-controls] {\r\n    bottom: -80px;\r\n  }\r\n  #player button.media-control-button,\r\n  #player .drawer-icon[data-volume] { opacity: 1; }\r\n  #player button.media"
+ }
+}
