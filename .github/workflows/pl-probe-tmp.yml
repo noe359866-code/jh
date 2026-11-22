@@ -41,7 +41,7 @@ jobs:
             out.push('países: '+JSON.stringify(paises));
             out.push('cabecera: '+t.split('\n')[0]);
             out.push('ejemplo: '+t.split('\n').slice(1,4).join(' ~ '));
-            fs.writeFileSync('reports/m3u-audit.txt', out.join('\n')+'\n');
+            fs.writeFileSync('m3u-audit.txt', out.join('\n')+'\n');
           " || true
       - uses: actions/upload-artifact@v4
         continue-on-error: true
@@ -54,12 +54,12 @@ jobs:
         if: always()
         run: |
           echo "=== AUDITORIA-M3U ==="
-          cat reports/m3u-audit.txt 2>/dev/null || echo "sin auditoría"
+          cat m3u-audit.txt 2>/dev/null || echo "sin auditoría"
           echo "=== FIN-AUDITORIA ==="
           echo "=== RESUMEN ==="
           tail -5 pl.log 2>/dev/null || true
           path: |
             pl.log
-            reports/m3u-audit.txt
+            m3u-audit.txt
             reports/countries.json
           if-no-files-found: ignore
