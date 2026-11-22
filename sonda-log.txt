@@ -1,0 +1,31 @@
+Catálogo: 5451 canales (5019 con medio directo)
+Extracción de embeds: 0 HLS extraídos de 432 canales con página (fallidos 106, omitidos 326, 116 s)
+  por fuente: {"cinecity":{"extraidos":0,"fallidos":0,"omitidos":43},"D9Kod":{"extraidos":0,"fallidos":0,"omitidos":121},"Free-TV":{"extraidos":0,"fallidos":0,"omitidos":10},"Estados Unidos (iptv-org)":{"extraidos":0,"fallidos":0,"omitidos":8},"Pluto TV":{"extraidos":0,"fallidos":0,"omitidos":4},"thedaddy.li":{"extraidos":0,"fallidos":13,"omitidos":0},"iptv-org AR":{"extraidos":0,"fallidos":0,"omitidos":1},"livelive24.com":{"extraidos":0,"fallidos":23,"omitidos":0},"tvenvivo.org":{"extraidos":0,"fallidos":70,"omitidos":0},"telechancho":{"extraidos":0,"fallidos":0,"omitidos":1},"iptv-org NI":{"extraidos":0,"fallidos":0,"omitidos":2}}
+  motivos: {"sin resolutor para la fuente":190,"cadena de embed: HTTP 403":7,"la cadena no expone m3u8":93,"cadena de embed: fetch failed":6}
+Verificación: 3354 canales en 207 s · vivos 2939 · caídos 415 · bloqueados 739 · tiempo agotado 418 · sin verificar 0 · omitidos 2097
+Lista all no generada: object is not a function
+Lista es no generada: object is not a function
+Lista latam no generada: object is not a function
+Lista deportes no generada: object is not a function
+Lista us no generada: object is not a function
+Lista mx no generada: object is not a function
+Lista ar no generada: object is not a function
+Lista co no generada: object is not a function
+Lista cl no generada: object is not a function
+Lista pe no generada: object is not a function
+Lista ve no generada: object is not a function
+Lista ec no generada: object is not a function
+Lista gt no generada: object is not a function
+Lista hn no generada: object is not a function
+Lista sv no generada: object is not a function
+Lista ni no generada: object is not a function
+Lista cr no generada: object is not a function
+Lista pa no generada: object is not a function
+Lista cu no generada: object is not a function
+Lista do no generada: object is not a function
+Lista pr no generada: object is not a function
+Lista uy no generada: object is not a function
+Lista py no generada: object is not a function
+Lista bo no generada: object is not a function
+Listas escritas en reports/: 
+Países con canales vivos: Internacional 1711 · ES 770 · AR 528 · US 281 · CL 261 · MX 243 · DO 240 · PE 206 · CO 129 · BO 90 · HN 79 · VE 76 · PY 76 · EC 76 · CR 73 · GT 52 · PR 44 · SV 42 · PA 25 · NI 22 · UY 8 · CU 4
