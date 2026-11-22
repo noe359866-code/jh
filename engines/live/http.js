@@ -42,6 +42,9 @@ const dispatcher = new Agent({
   connections: 6, pipelining: 1, headersTimeout: 12000, bodyTimeout: 20000
 });
 
+// Puertos plausibles para un CDN público (evita 22, 25, 3306, 6379…).
+const PUBLIC_PORT = /^\d{2,5}$/;
+
 const BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
 
 // `redirect: 'error'` evita saltos a hosts no validados. El cuerpo se lee
@@ -57,7 +60,10 @@ function publicFetch(url, { allowHttp: allowHttpOption = false, ...options } = {
     throw new Error('Solo se permite HTTPS');
   }
   if (parsed.username || parsed.password) throw new Error('URL con credenciales rechazada');
-  if (parsed.port && !['80', '443'].includes(parsed.port)) throw new Error('Puerto no permitido');
+  // Puertos no estándar (8080, 8443, 2095…) son habituales en los CDN de IPTV.
+  // Se aceptan siempre que el destino resuelva a una IPv4 pública y no haya
+  // credenciales; los catálogos siguen limitados abajo por el llamador.
+  if (parsed.port && !PUBLIC_PORT.test(parsed.port)) throw new Error('Puerto no permitido');
   const host = parsed.hostname.replace(/^\[|\]$/g, '');
   if (isIP(host) && !publicAddress(host)) throw new Error('Destino no público bloqueado');
   return fetch(parsed, { ...options, dispatcher, redirect: 'manual' });
@@ -100,7 +106,7 @@ async function get(url, {
       throw new Error('Solo se permite HTTPS');
     }
     if (current.username || current.password) throw new Error('URL con credenciales rechazada');
-    if (current.port && !['80', '443'].includes(current.port)) throw new Error('Puerto no permitido');
+    if (current.port && !PUBLIC_PORT.test(current.port)) throw new Error('Puerto no permitido');
     const addresses = await lookupImpl(current.hostname, { all: true, family: 4 });
     if (!addresses || !addresses.length || addresses.some(({ address }) => !publicAddress(address))) {
       throw new Error('Destino no público bloqueado');

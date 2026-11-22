@@ -15,14 +15,22 @@ const { mapLimit } = require('./limit');
 
 const DEFAULTS = {
   concurrency: 24,
-  timeoutMs: 6000,
+  timeoutMs: 9000,
+  retries: 1,
   maxBytes: 8192,
   budgetMs: 180000,
   maxAttemptsPerChannel: 2,
   resultTtlMs: 6 * 60 * 60 * 1000,
   minSuccessRatio: 0.5,
-  minSamples: 6
+  minSamples: 6,
+  throttleStatuses: [429, 403]
 };
+
+// Estados que demuestran que la señal ya no existe.
+const DEAD_STATUSES = [404, 410, 451, 'red', 'error'];
+// Estados que indican bloqueo/limite del servidor, no muerte de la señal: el
+// canal puede seguir vivo desde una IP residencial o más tarde.
+const BLOCKED_STATUSES = [401, 403, 407, 429, 503];
 
 const MEDIA_SIGNATURES = ['#extm3u', '#ext-x-', 'ftyp', 'webm', '<mpd', '<?xml', '#extinf'];
 
@@ -49,12 +57,14 @@ function statusOf(error) {
  * Sondea una URL de medio. Devuelve `{ ok, status, signature, error }` sin
  * lanzar nunca: un fallo de red es un resultado más.
  */
-async function probeMedia(url, { get, referer, timeoutMs = DEFAULTS.timeoutMs, maxBytes = DEFAULTS.maxBytes } = {}) {
+async function probeOnce(url, { get, referer, timeoutMs, maxBytes }) {
   try {
     const response = await get(url, {
       referer,
       maxBytes,
       timeoutMs,
+      // Los CDN de IPTV a veces sirven por HTTP: se permite tras validar destino.
+      allowHttp: /^http:\/\//i.test(url),
       headers: { Range: 'bytes=0-4096', Accept: '*/*' }
     });
     const playable = looksPlayable(response.text);
@@ -68,6 +78,20 @@ async function probeMedia(url, { get, referer, timeoutMs = DEFAULTS.timeoutMs, m
   } catch (error) {
     return { ok: false, status: statusOf(error), signature: false, error: error.message };
   }
+}
+
+/**
+ * Sondea un medio con un reintento cuando el fallo es de red o de tiempo (un
+ * 404/403 no se reintenta: ya es una respuesta del servidor).
+ */
+async function probeMedia(url, {
+  get, referer, timeoutMs = DEFAULTS.timeoutMs, retries = DEFAULTS.retries, maxBytes = DEFAULTS.maxBytes
+} = {}) {
+  let result = await probeOnce(url, { get, referer, timeoutMs, maxBytes });
+  for (let attempt = 0; attempt < retries && (result.status === 'timeout' || result.status === 'red'); attempt++) {
+    result = await probeOnce(url, { get, referer, timeoutMs, maxBytes });
+  }
+  return result;
 }
 
 function isDirect(stream) {
@@ -92,6 +116,16 @@ async function checkChannel(channel, {
   const direct = streams.filter(isDirect).slice(0, maxAttempts);
   const pages = streams.filter(stream => stream.kind === 'page').slice(0, maxAttempts);
   const attempts = [];
+
+  const verdict = attemptsFor => {
+    // Un canal es "caído" solo si TODOS sus intentos dieron un estado de muerte;
+    // si alguno está bloqueado o agotó el tiempo, no se puede afirmar.
+    const statuses = attemptsFor.map(attempt => attempt.status);
+    if (!attemptsFor.length) return { ok: null, reason: 'sin intentos' };
+    if (attemptsFor.every(attempt => DEAD_STATUSES.includes(attempt.status))) return { ok: false, reason: 'caído' };
+    if (statuses.some(status => BLOCKED_STATUSES.includes(status))) return { ok: true, reason: 'bloqueado', blocked: true };
+    return { ok: true, reason: 'sin confirmar', unconfirmed: true };
+  };
 
   for (const stream of direct) {
     const result = await probe(stream.url, { get, referer: stream.referer, timeoutMs, maxBytes });
@@ -119,7 +153,8 @@ async function checkChannel(channel, {
     }
   }
 
-  return { ok: false, via: direct.length ? 'direct' : 'page', attempts };
+  // Ningún intento trajo firma: decidir si es caída real o solo un bloqueo.
+  return { ...verdict(attempts), via: direct.length ? 'direct' : 'page', attempts };
 }
 
 /** Aplica un informe a los canales: `dead`, `unverified` y `health` por canal. */
@@ -154,7 +189,9 @@ function summarize(channels, report) {
   const checked = list.filter(hasResult);
   const dead = checked.filter(channel => report.results[channel.id].dead);
   const unknown = checked.filter(channel => report.results[channel.id].ok === null);
-  const alive = checked.length - dead.length - unknown.length;
+  const blocked = checked.filter(channel => report.results[channel.id].blocked);
+  const unconfirmed = checked.filter(channel => report.results[channel.id].unconfirmed);
+  const alive = checked.length - dead.length - unknown.length - blocked.length - unconfirmed.length;
   return {
     checkedAt: (report && report.checkedAt) || null,
     durationMs: (report && report.durationMs) || null,
@@ -164,6 +201,8 @@ function summarize(channels, report) {
     checked: checked.length,
     alive,
     dead: dead.length,
+    blocked: blocked.length,
+    unconfirmed: unconfirmed.length,
     unknown: unknown.length,
     unchecked: list.length - checked.length,
     ratio: checked.length ? Number((alive / checked.length).toFixed(3)) : null,
@@ -173,6 +212,7 @@ function summarize(channels, report) {
       country: channel.country,
       category: channel.category,
       sources: channel.sources,
+      reason: report.results[channel.id].reason || null,
       status: firstAttemptWith(report.results[channel.id], 'status').status ?? null,
       error: firstAttemptWith(report.results[channel.id], 'error').error || null
     }))
@@ -190,6 +230,7 @@ function createChecker({
   channels,
   concurrency = DEFAULTS.concurrency,
   timeoutMs = DEFAULTS.timeoutMs,
+  retries = DEFAULTS.retries,
   maxBytes = DEFAULTS.maxBytes,
   budgetMs = DEFAULTS.budgetMs,
   maxAttemptsPerChannel = DEFAULTS.maxAttemptsPerChannel,
@@ -197,6 +238,9 @@ function createChecker({
   minSuccessRatio = DEFAULTS.minSuccessRatio,
   minSamples = DEFAULTS.minSamples,
   probe = probeMedia,
+  // Se ignoran 429/403 al calcular la salud global: son límites del servidor, no
+  // señales muertas.
+  throttleStatuses = DEFAULTS.throttleStatuses,
   now = Date.now,
   logger = console
 } = {}) {
@@ -239,9 +283,13 @@ function createChecker({
         result = { ok: null, via: null, attempts: [], error: error.message };
         failures++;
       }
+      const definitive = result.ok === false;
       results[channel.id] = {
-        ok: result.ok === true ? true : result.ok === false ? false : null,
-        dead: result.ok === false,
+        ok: result.ok === true ? true : definitive ? false : null,
+        dead: definitive,
+        blocked: Boolean(result.blocked),
+        unconfirmed: Boolean(result.unconfirmed),
+        reason: result.reason || null,
         via: result.via || null,
         attempts: result.attempts || [],
         error: result.error || null
@@ -250,12 +298,22 @@ function createChecker({
       const values = Object.values(results);
       const definitive = values.filter(result => result.ok !== null);
       const alive = definitive.filter(result => result.ok).length;
-      const ratio = definitive.length ? alive / definitive.length : 1;
+      // 429 y 403 no dicen nada sobre la salud global: son límites del servidor.
+      const informative = definitive.filter(result => {
+        const status = firstAttemptWith(result, 'status').status;
+        return !throttleStatuses.includes(status);
+      });
+      const informativeAlive = informative.filter(result => result.ok).length;
+      const ratio = informative.length ? informativeAlive / informative.length : 1;
       const selfCheck = {
         // Si el propio entorno no tiene salida a internet, la ratio se desploma:
         // el informe se marca "no concluyente" y NO se usa para filtrar.
-        inconclusive: definitive.length >= minSamples && ratio < minSuccessRatio,
+        // Solo se evalúa con muestra suficiente; un catálogo real puede tener
+        // la mayoría de señales muertas sin que la red esté mal.
+        inconclusive: informative.length >= minSamples && ratio < minSuccessRatio,
         ratio: Number(ratio.toFixed(3)),
+        informative: informative.length,
+        throttled: definitive.length - informative.length,
         definitive: definitive.length,
         failures
       };
@@ -310,5 +368,7 @@ module.exports = {
   statusOf,
   isDirect,
   DEFAULTS,
-  MEDIA_SIGNATURES
+  MEDIA_SIGNATURES,
+  DEAD_STATUSES,
+  BLOCKED_STATUSES
 };

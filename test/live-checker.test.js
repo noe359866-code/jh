@@ -112,7 +112,8 @@ test('checkChannel: basta un medio directo vivo; si no, prueba la página', asyn
   assert.deepEqual([conPagina.ok, conPagina.via, resuelto], [true, 'page', 1]);
 
   const sinResolver = await checkChannel(page, { get: async () => {}, probe: fakeProbe(), resolvePage: async () => null });
-  assert.equal(sinResolver.ok, false);
+  assert.equal(sinResolver.ok, true, 'no se puede afirmar que esté caído');
+  assert.equal(sinResolver.unconfirmed, true);
   assert.equal(sinResolver.attempts[0].error, 'no resuelto');
 });
 
@@ -307,4 +308,71 @@ test('Stremio: catálogo de caídos con motivo y ocultos en el catálogo normal'
 
   const manifest = addon.manifest();
   assert.ok(manifest.catalogs.some(entry => entry.id === 'caidos'));
+});
+
+
+test('clasificación: 404/410 y DNS son caída; 403/429 no; timeout tampoco', async () => {
+  const caso = status => ({
+    id: 'x',
+    streams: [{ url: 'https://a.example/x.m3u8', source: 'eja.tv' }]
+  });
+  const probar = async resultado => {
+    const report = await createChecker({
+      get: async () => {},
+      channels: [caso()],
+      probe: async () => resultado
+    }).run();
+    return report.results.x;
+  };
+
+  const muerto = await probar({ ok: false, status: 404, error: 'HTTP 404' });
+  assert.deepEqual([muerto.dead, muerto.ok], [true, false]);
+  assert.equal(muerto.reason, 'caído');
+
+  const borrado = await probar({ ok: false, status: 410, error: 'HTTP 410' });
+  assert.equal(borrado.dead, true, '410 Gone también es caída');
+
+  const dns = await probar({ ok: false, status: 'red', error: 'fetch failed' });
+  assert.equal(dns.dead, true, 'un dominio que no resuelve está caído');
+
+  for (const status of [403, 429, 401, 503]) {
+    const bloqueado = await probar({ ok: false, status, error: `HTTP ${status}` });
+    assert.equal(bloqueado.dead, false, `${status} no debe eliminar el canal`);
+    assert.equal(bloqueado.blocked, true);
+  }
+
+  const lento = await probar({ ok: false, status: 'timeout', error: 'timeout' });
+  assert.equal(lento.dead, false, 'un timeout no confirma la caída');
+  assert.equal(lento.unconfirmed, true);
+
+  const mixto = await createChecker({
+    get: async () => {},
+    channels: [{
+      id: 'y',
+      streams: [
+        { url: 'https://a.example/1.m3u8', source: 'eja.tv' },
+        { url: 'https://b.example/1.m3u8', source: 'tvgarden.world' }
+      ]
+    }],
+    probe: async url => (url.includes('a.example')
+      ? { ok: false, status: 404, error: 'HTTP 404' }
+      : { ok: false, status: 429, error: 'HTTP 429' })
+  }).run();
+  assert.equal(mixto.results.y.dead, false, 'con un intento bloqueado no hay certeza');
+});
+
+test('el informe incluye recuento de bloqueados y no confirmados', async () => {
+  const muyLento = async () => ({ ok: false, status: 'timeout', error: 'timeout' });
+  const checker = createChecker({
+    get: async () => {},
+    channels: CHANNELS,
+    resolvePage: async () => ({ url: 'https://edge.example/p.m3u8' }),
+    probe: muyLento
+  });
+  const report = await checker.run();
+  const resumen = summarize(CHANNELS, report);
+  assert.equal(resumen.dead, 0, 'nada se elimina sin certeza');
+  assert.equal(resumen.blocked, 0);
+  assert.equal(resumen.unconfirmed, resumen.checked);
+  assert.equal(resumen.ratio, 0);
 });
