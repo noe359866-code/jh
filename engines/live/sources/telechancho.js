@@ -9,5 +9,7 @@ module.exports = createPlaylistSource({
   name: 'telechancho',
   urls: [
     'https://telechancho.github.io/infinity.m3u'
-  ]
+  ],
+  // Lista argentina: sus canales propios no llevan país en el nombre.
+  defaultCountry: 'AR'
 });

@@ -11,6 +11,7 @@
 // internacionales: nunca se descarta un canal en español por no saber el país.
 const { parseM3u } = require('../m3u');
 const { cleanChannelName, channelKey } = require('../text');
+const { regionOf } = require('../countries');
 
 // País por bandera y por sufijo habitual en estas listas.
 const FLAGS = {
@@ -61,43 +62,53 @@ function countryFromText(text) {
   return null;
 }
 
+/**
+ * Normaliza una entrada M3U ya parseada a la forma del catálogo. Se reutiliza
+ * desde las fuentes que necesitan filtrar antes (por idioma o por nombre) y
+ * evita duplicar la limpieza de nombres, el país y el tipo de medio.
+ */
+function entryFromItem(item, { source, defaultCountry = null, forcedCountry = null } = {}) {
+  const url = String(item.url || '').trim();
+  if (!/^https?:\/\//i.test(url)) return null;
+  const kind = /\.(m3u8|mp4|ts|m3u)(\?|$)/i.test(url) || REDIRECTORS.test(url) ? 'hls' : 'page';
+  const rawName = item.name || item.attrs['tvg-name'] || '';
+  // El país se busca en el nombre ORIGINAL: `cleanChannelName` recorta los
+  // sufijos entre corchetes (`Mega [CL]` → `Mega`).
+  const country = forcedCountry
+    || countryFromText(rawName)
+    || countryFromText(item.attrs['tvg-country'])
+    || countryFromText(item.attrs['group-title'])
+    || (/(^|[_-])es$/i.test(item.attrs['tvg-id'] || '') ? 'ES' : null)
+    || defaultCountry;
+  // `cleanChannelName` no toca emojis: se quitan aquí para que el nombre quede
+  // limpio en Stremio (`Azteca 🇲🇽` → `Azteca`).
+  const name = cleanChannelName(rawName)
+    .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{2B00}-\u{2BFF}]/gu, ' ')
+    .replace(/^[\s☆✔️•·-]+/u, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!name) return null;
+  const language = String(item.attrs['tvg-language'] || '').toLowerCase();
+  if (OTHER_LANGUAGES.has(language)) return null;
+  return {
+    name,
+    // El catálogo trabaja con regiones (`ES`/`US`/`LATAM`); `origin` guarda el
+    // país real, que es lo que alimenta las categorías por país.
+    country: regionOf(country || defaultCountry),
+    origin: country || defaultCountry || 'Internacional',
+    category: item.attrs['group-title'] || 'Generalista',
+    logo: /^https?:\/\//i.test(item.attrs['tvg-logo'] || '') ? item.attrs['tvg-logo'] : null,
+    streams: [{ url, kind, source, httpReferrer: item.referer || null }],
+    language: language || null
+  };
+}
+
 /** Convierte una lista M3U en entradas del catálogo. */
 function parsePlaylist(text, { source, defaultCountry = null } = {}) {
   const entries = [];
   for (const item of parseM3u(text)) {
-    const url = String(item.url || '').trim();
-    if (!/^https?:\/\//i.test(url)) continue;
-    // Los `.m3u8`/`.mp4`/`.ts` y los redirectores conocidos son medio directo;
-    // el resto se guarda como página por si un extractor puede resolverlo.
-    const kind = /\.(m3u8|mp4|ts|m3u)(\?|$)/i.test(url) || REDIRECTORS.test(url) ? 'hls' : 'page';
-    const rawName = item.name || item.attrs['tvg-name'] || '';
-    // El país se busca en el nombre ORIGINAL: `cleanChannelName` recorta los
-    // sufijos entre corchetes (`Mega [CL]` → `Mega`).
-    const country = countryFromText(rawName)
-      || countryFromText(item.attrs['tvg-country'])
-      || countryFromText(item.attrs['group-title'])
-      || (/(^|[_-])es$/i.test(item.attrs['tvg-id'] || '') ? 'ES' : null)
-      || defaultCountry;
-    // `cleanChannelName` no toca emojis: se quitan aquí para que el nombre quede
-    // limpio en Stremio (`Azteca 🇲🇽` → `Azteca`).
-    const name = cleanChannelName(rawName)
-      .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{2B00}-\u{2BFF}]/gu, ' ')
-      .replace(/^[\s☆✔️•·-]+/u, '')
-      .replace(/\s+/g, ' ')
-      .trim();
-    if (!name) continue;
-    const language = String(item.attrs['tvg-language'] || '').toLowerCase();
-    if (OTHER_LANGUAGES.has(language)) continue;
-    entries.push({
-      name,
-      // El catálogo trabaja con dos regiones; `origin` guarda el país real.
-      country: (country || defaultCountry) === 'ES' ? 'ES' : 'LATAM',
-      origin: country || defaultCountry || 'Internacional',
-      category: item.attrs['group-title'] || 'Generalista',
-      logo: /^https?:\/\//i.test(item.attrs['tvg-logo'] || '') ? item.attrs['tvg-logo'] : null,
-      streams: [{ url, kind, source, httpReferrer: item.referer || null }],
-      language: language || null
-    });
+    const entry = entryFromItem(item, { source, defaultCountry });
+    if (entry) entries.push(entry);
   }
   return entries;
 }
@@ -106,7 +117,9 @@ function parsePlaylist(text, { source, defaultCountry = null } = {}) {
  * Recolector genérico para una lista. `urls` permite varias (una por país) y
  * `allowEmpty` documenta que una lista vacía no es un error del recolector.
  */
-function createPlaylistSource({ id, name, urls, defaultCountry = null, maxEntries = 4000, labels = {} }) {
+function createPlaylistSource({
+  id, name, urls, defaultCountry = null, defaultCategory = null, maxEntries = 4000, labels = {}
+}) {
   async function collect({ get, onSource }) {
     const all = [];
     const counts = {};
@@ -120,6 +133,11 @@ function createPlaylistSource({ id, name, urls, defaultCountry = null, maxEntrie
         continue;
       }
       const parsed = parsePlaylist(text, { source: name, defaultCountry });
+      if (defaultCategory) {
+        for (const entry of parsed) {
+          if (!entry.category || entry.category === 'Generalista') entry.category = defaultCategory;
+        }
+      }
       counts[labels[url] || url] = parsed.length;
       all.push(...parsed);
     }
@@ -132,7 +150,7 @@ function createPlaylistSource({ id, name, urls, defaultCountry = null, maxEntrie
       const key = entry.streams[0].url;
       if (seen.has(key)) continue;
       seen.add(key);
-      entry.key = channelKey(entry.name, entry.origin === 'ES' ? 'ES' : HISPANIC.has(entry.origin) ? 'LATAM' : 'INT');
+      entry.key = channelKey(entry.name, HISPANIC.has(entry.origin) ? entry.origin : entry.country);
       unique.push(entry);
       if (unique.length >= maxEntries) break;
     }
@@ -144,6 +162,7 @@ function createPlaylistSource({ id, name, urls, defaultCountry = null, maxEntrie
 
 module.exports = {
   createPlaylistSource,
+  entryFromItem,
   parsePlaylist,
   countryFromText,
   FLAGS,

@@ -3,6 +3,7 @@ const path = require('node:path');
 const { createCatalog } = require('./engines/live/catalog');
 const { get } = require('./engines/live/http');
 const { sources, byId } = require('./engines/live/sources');
+const { COUNTRIES, isCountry } = require('./engines/live/countries');
 const { buildM3u } = require('./engines/live/m3u');
 const addon = require('./engines/live/addon');
 const { createChecker } = require('./engines/live/checker');
@@ -61,11 +62,24 @@ function parseRoute(raw, { withExtra = false } = {}) {
   return { id, extras };
 }
 
-const PLAYLISTS = {
+// Listas M3U: las generales de siempre más una por país (la que se navega en
+// Stremio). El país se mira en `origin`, que es el dato real del canal.
+const REGION_PLAYLISTS = {
   all: { label: 'Todos los canales', filter: () => true },
-  es: { label: 'España', filter: channel => channel.country === 'ES' },
-  latam: { label: 'Latinoamérica', filter: channel => channel.country === 'LATAM' },
+  es: { label: 'España (región)', filter: channel => channel.country === 'ES' },
+  latam: { label: 'Latinoamérica (región)', filter: channel => channel.country === 'LATAM' },
   deportes: { label: 'Deportes', filter: channel => /deporte|sport/i.test(channel.category) }
+};
+
+const PLAYLISTS = {
+  ...REGION_PLAYLISTS,
+  ...Object.fromEntries(COUNTRIES.map(country => [
+    country.code.toLowerCase(),
+    {
+      label: country.name,
+      filter: channel => (channel.origin || channel.country) === country.code
+    }
+  ]))
 };
 
 // Enriquecimiento de embeds para el catálogo por defecto: resuelve el HLS de
@@ -204,7 +218,9 @@ function createApp({
     const type = decodeURIComponent(req.params[0]);
     if (type !== 'tv') return res.status(404).json({ error: 'Tipo no soportado' });
     const { id, extras } = parseRoute(req.params[1], { withExtra: true });
-    if (!['todos', 'espana', 'latinoamerica', 'deportes', 'caidos'].includes(id)) {
+    const known = ['todos', 'espana', 'usa', 'latinoamerica', 'deportes', 'caidos'];
+    const countryCatalog = /^pais-([a-z]{2})$/.exec(id);
+    if (!known.includes(id) && !(countryCatalog && isCountry(countryCatalog[1].toUpperCase()))) {
       return res.status(404).json({ error: 'Catálogo desconocido' });
     }
     const loaded = await channelsOr503(res);
@@ -403,6 +419,10 @@ eja.tv, iptvcat, TV Garden, Global Free TV, TVEnVivo, DaddyLive y Live24.</p>
 <p>Instala el addon con <a href="/manifest.json">${base}/manifest.json</a>.</p>
 <h2>Listas M3U</h2>
 <ul>${Object.entries(PLAYLISTS).map(([id, definition]) => `<li>${definition.label}: <a href="/playlist/${id}.m3u">${base}/playlist/${id}.m3u</a></li>`).join('')}</ul>
+<h2>Stremio: un catálogo por país</h2>
+<p>España, Estados Unidos, México, Argentina, Colombia, Chile, Perú, Venezuela,
+Ecuador, Guatemala, Honduras, El Salvador, Nicaragua, Costa Rica, Panamá, Cuba,
+República Dominicana, Puerto Rico, Uruguay, Paraguay y Bolivia.</p>
 <p>Añade <code>?pages=1</code> a una lista para resolver también las fuentes que
 requieren una petición extra (TVEnVivo y DaddyLive); sin ese parámetro solo se
 publican medios directos.</p>

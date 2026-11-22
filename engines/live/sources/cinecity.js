@@ -9,5 +9,7 @@ module.exports = createPlaylistSource({
   name: 'cinecity',
   urls: [
     'https://raw.githubusercontent.com/CINECITY2023/cinecity/cinecity.net/principal.m3u'
-  ]
+  ],
+  // Predomina Argentina; los canales mexicanos ya traen `group-title` con su país.
+  defaultCountry: 'AR'
 });

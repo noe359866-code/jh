@@ -48,9 +48,15 @@ function slug(value, fallback = 'canal') {
   return out || fallback;
 }
 
-/** Grupos de la lista M3U a partir de país y categoría. */
+const REGION_LABELS = { ES: 'España', US: 'Estados Unidos', LATAM: 'Latinoamérica' };
+
+/**
+ * Grupos de la lista M3U a partir del país real (o de la región, si el canal no
+ * tiene país identificado) y de su categoría.
+ */
 function groupFor(country, category) {
-  const base = country === 'ES' ? 'España' : country === 'LATAM' ? 'Latinoamérica' : (country || 'Internacional');
+  const { countryName, isCountry } = require('./countries');
+  const base = isCountry(country) ? countryName(country) : (REGION_LABELS[country] || country || 'Internacional');
   return category ? `${base} · ${category}` : base;
 }
 

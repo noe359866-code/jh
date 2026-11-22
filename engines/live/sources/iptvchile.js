@@ -8,5 +8,7 @@ module.exports = createPlaylistSource({
   name: 'iptv-chile',
   urls: [
     'https://orieus-lesauce.github.io/iptv-chile/CL.m3u'
-  ]
+  ],
+  // Lista nacional: todo lo que no declare otro país es de Chile.
+  defaultCountry: 'CL'
 });

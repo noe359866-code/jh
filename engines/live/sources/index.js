@@ -19,7 +19,9 @@ const sources = [
   require('./iptvchile'),
   require('./samsungtvplus'),
   require('./pluto'),
-  require('./d9kod')
+  require('./d9kod'),
+  // Estados Unidos: canales en español + cadenas mayoritarias (iptv-org).
+  require('./usa')
 ];
 
 const MODE = {
@@ -36,7 +38,8 @@ const MODE = {
   iptvchile: 'direct',
   samsungtvplus: 'direct',
   pluto: 'direct',
-  d9kod: 'direct'
+  d9kod: 'direct',
+  usa: 'direct'
 };
 
 function byId(id) {

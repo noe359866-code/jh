@@ -22,7 +22,7 @@ const CHANNELS = [
     playable: false
   },
   {
-    id: 'latam-canal-5', key: 'LATAM:canal-5', name: 'Canal 5', country: 'LATAM', origin: 'Mexico', category: 'Generalista',
+    id: 'mx-canal-5', key: 'MX:canal-5', name: 'Canal 5', country: 'LATAM', origin: 'MX', category: 'Generalista',
     logo: null, geoBlocked: false, sources: ['livelive24.com'], streams: [], externalUrl: 'https://livelive24.com/?ch=5',
     info: 'Enlace solo en la web original', playable: false
   }
@@ -72,12 +72,40 @@ test('el catálogo nunca lanza: una fuente caída no oculta las demás', async (
   assert.equal(loaded.status.eja.ok, true);
 });
 
-test('manifest: tipo tv con ids propios y catálogos con skip', () => {
+test('manifest: tipo tv, un catálogo por país y prefijos de país', () => {
   const manifest = addon.manifest();
   assert.deepEqual(manifest.types, ['tv']);
-  assert.deepEqual(manifest.idPrefixes, ['es-', 'latam-']);
+  // Prefijo por país: los ids de canal empiezan por su país real.
+  assert.ok(manifest.idPrefixes.includes('mx-'));
+  assert.ok(manifest.idPrefixes.includes('us-'));
+  assert.ok(manifest.idPrefixes.includes('es-'));
   assert.ok(manifest.catalogs.every(catalog => catalog.type === 'tv'));
   assert.ok(manifest.catalogs[0].extra.some(extra => extra.name === 'skip'));
+  // Una entrada por país más las generales.
+  const byId = Object.fromEntries(manifest.catalogs.map(catalog => [catalog.id, catalog]));
+  assert.equal(byId['pais-mx'].name, 'TV · México');
+  assert.equal(byId['pais-us'].name, 'TV · Estados Unidos');
+  assert.ok(byId['pais-mx'].extra[0].options.includes('México · Deportes'));
+  assert.ok(byId.todos && byId.deportes && byId.caidos);
+});
+
+test('catálogo por país: filtra por el país real del canal', () => {
+  const channels = [
+    ...CHANNELS,
+    { id: 'mx-canal-5', key: 'MX:canal-5', name: 'Canal 5', country: 'LATAM', origin: 'MX', category: 'Generalista',
+      sources: ['x'], streams: [{ url: 'https://mx.example/5.m3u8', kind: 'hls' }], playable: true },
+    { id: 'us-univision', key: 'US:univision', name: 'Univision', country: 'US', origin: 'US', category: 'Generalista',
+      language: 'es', sources: ['x'], streams: [{ url: 'https://us.example/1.m3u8', kind: 'hls' }], playable: true },
+    { id: 'us-cnn', key: 'US:cnn', name: 'CNN', country: 'US', origin: 'US', category: 'Noticias',
+      language: 'en', sources: ['x'], streams: [{ url: 'https://us.example/cnn.m3u8', kind: 'hls' }], playable: true }
+  ];
+  assert.deepEqual(addon.catalog(channels, 'pais-mx', '', 0).metas.map(meta => meta.name), ['Canal 5']);
+  assert.deepEqual(addon.catalog(channels, 'pais-us', '', 0).metas.map(meta => meta.name).sort(), ['CNN', 'Univision']);
+  assert.equal(addon.catalog(channels, 'us', '', 0).metas.length, 2, 'la región US incluye los dos');
+  assert.equal(addon.catalog(channels, 'pais-us', 'Estados Unidos · Noticias', 0).metas.length, 1);
+  assert.equal(addon.catalog(channels, 'pais-us', 'Estados Unidos · Deportes', 0).metas.length, 0);
+  // El género de un país no debe arrastrar canales de otro.
+  assert.equal(addon.catalog(channels, 'pais-mx', 'Estados Unidos · Generalista', 0).metas.length, 0);
 });
 
 test('catálogo Stremio: solo canales publicables, paginado y filtros', () => {
@@ -135,6 +163,7 @@ test('rutas HTTP: manifest, catálogo, meta, stream, M3U y config', async () => 
   await withServer(fakeCatalog(), async base => {
     const manifest = await (await fetch(base + '/manifest.json')).json();
     assert.equal(manifest.id, 'org.tvespanol.live');
+    assert.ok(manifest.catalogs.some(catalog => catalog.id === 'pais-mx'));
 
     const catalog = await (await fetch(base + '/catalog/tv/todos.json')).json();
     assert.equal(catalog.metas.length, 2);
@@ -163,6 +192,15 @@ test('rutas HTTP: manifest, catálogo, meta, stream, M3U y config', async () => 
 
     const latam = await fetch(base + '/playlist/latam.m3u');
     assert.equal(latam.headers.get('x-channel-count'), '0');
+
+    // Una lista M3U por país; `mx` no debe traer canales de España.
+    const mexico = await fetch(base + '/playlist/mx.m3u');
+    assert.match(playlist.headers.get('content-type'), /mpegurl/);
+    assert.equal(mexico.headers.get('x-channel-count'), '0');
+
+    // Un catálogo de país desconocido devuelve 404, no una lista vacía.
+    const unknownCountry = await fetch(base + '/catalog/tv/pais-zz.json');
+    assert.equal(unknownCountry.status, 404);
 
     const listed = await (await fetch(base + '/playlists.json')).json();
     assert.equal(listed.playlists.find(entry => entry.id === 'es').channels, 2);

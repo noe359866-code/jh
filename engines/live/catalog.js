@@ -3,6 +3,7 @@
 const { get } = require('./http');
 const { MODE } = require('./sources');
 const { slug } = require('./text');
+const { isCountry } = require('./countries');
 const { applyReport, summarize } = require('./checker');
 
 const TTL_MS = 30 * 60 * 1000;
@@ -27,8 +28,11 @@ function mergeSources(results) {
         existing.logo = existing.logo || entry.logo || null;
         continue;
       }
+      // El prefijo del id es el país real cuando se conoce (`mx-canal-5`); si
+      // no, la región (`latam-…`). Stremio valida `idPrefixes` sobre esto.
+      const scope = isCountry(entry.origin) ? entry.origin.toLowerCase() : String(entry.country || 'LATAM').toLowerCase();
       byKey.set(key, {
-        id: `${entry.country.toLowerCase()}-${slug(entry.name)}`,
+        id: `${scope}-${slug(entry.name)}`,
         key,
         name: entry.name,
         country: entry.country || 'LATAM',

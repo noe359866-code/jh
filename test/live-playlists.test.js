@@ -98,13 +98,14 @@ test('lista CineCity real: tolera líneas EXTINF sin `#`', () => {
   assert.ok(entries.every(entry => !entry.name.includes('tvg-logo')));
 });
 
-test('las seis listas están registradas y todas tienen url', () => {
-  for (const id of ['cinecity', 'telechancho', 'iptvchile', 'samsungtvplus', 'pluto', 'd9kod']) {
+test('las seis listas y la de USA están registradas', () => {
+  for (const id of ['cinecity', 'telechancho', 'iptvchile', 'samsungtvplus', 'pluto', 'd9kod', 'usa']) {
     const source = byId(id);
     assert.ok(source, `falta la fuente ${id}`);
     assert.equal(typeof source.collect, 'function');
   }
-  assert.equal(sources.length, 13);
+  // Trece fuentes con red + la de Estados Unidos (iptv-org).
+  assert.equal(sources.length, 14);
 });
 
 test('collect deduplica por URL de medio y tolera listas caídas', async () => {

@@ -9,5 +9,8 @@ module.exports = createPlaylistSource({
   name: 'Pluto TV',
   urls: [
     'https://raw.githubusercontent.com/iprtl/m3u/live/Pluto.m3u'
-  ]
+  ],
+  // Solo se quedan los canales hispanos; la mayoría no declara país, así que
+  // entran como internacionales en lugar de inventarles uno.
+  defaultCategory: 'Generalista'
 });
