@@ -1,0 +1,150 @@
+{
+ "liv24tv": {
+  "status": 200,
+  "ctype": "application/json",
+  "length": 126328,
+  "sample": "[\n \n\n \n  {\n    \"channel_name\": \"NFL RedZone USA\",\n    \"image\": \"https://raw.githubusercontent.com/tv-logo/tv-logos/refs/heads/main/countries/united-states/nfl-red-zone-us.png\",\n    \"url\": \"https://hesgoalsss.blogspot.com/p/ntv.html?id=NFLREDZONE\",\n    \"country\": \"USA\",\n    \"category\": \"Sports\"\n  },\n  {\n    \"channel_name\": \"NHL Network USA\",\n    \"image\": \"https://raw.githubusercontent.com/tv-logo/tv-logos/refs/heads/main/countries/united-states/nhl-network-us.png\",\n    \"url\": \"https://hesgoalsss.blogspot.com/p/ntv.html?id=NFLNETWORK\",\n    \"country\": \"USA\",\n    \"category\": \"Sports\"\n  },\n  \n  {\n    \"channel_name\": \"beIN SPORTS USA\",\n    \"image\": \"https://raw.githubusercontent.com/tv-logo/tv-logos/refs/heads/main/countries/united-states/bein-sports-us.png\",\n    \"url\": \"https://hesgoalsss.blogspot.com/p/ntv.html?id=beINSPORTSUS\",\n    \"country\": \"USA\",\n    \"category\": \"Sports\"\n  },\n  \n  \n  {\n "
+ },
+ "liv24tvSummary": {
+  "count": 440,
+  "keys": [
+   "channel_name",
+   "image",
+   "url",
+   "country",
+   "category"
+  ],
+  "countries": [
+   "USA",
+   "Greece",
+   "France",
+   "Turkey",
+   "Netherlands",
+   "Germany",
+   "United Kingdom",
+   "Italy",
+   "Spain",
+   "Portugal",
+   "Austria",
+   "New Zealand",
+   "Qatar",
+   "Cyprus",
+   "Poland",
+   "Bulgaria",
+   "Romania",
+   "Brazil",
+   "Croatia",
+   "Serbia"
+  ],
+  "spanish": 0,
+  "esSample": []
+ },
+ "tvgardenEs": {
+  "status": 200,
+  "length": 34529,
+  "sample": "[{\"nanoid\":\"0ql8ScPnCzsSJo\",\"name\":\"28 kanala\",\"stream_urls\":[\"https://streaming.28kanala.eus/hls/z.m3u8\"],\"youtube_urls\":[],\"languages\":[\"eus\"],\"country\":\"es\",\"isGeoBlocked\":false},{\"nanoid\":\"JVUe7nnKCNgESR\",\"name\":\"3Cat Cameres del temps\",\"stream_urls\":[\"https://directes-tv-int.3catdirectes.cat/live-content/beauties-hls/master.m3u8\"],\"youtube_urls\":[],\"languages\":[\"cat\"],\"country\":\"es\",\"isGeoBlocked\":false},{\"nanoid\":\"KB99Wa2uILCWk1\",\"name\":\"3Cat Exclusiu 1\",\"stream_urls\":[\"https://directes-tv"
+ },
+ "tvgardenEsSummary": {
+  "count": 148,
+  "keys": [
+   "nanoid",
+   "name",
+   "stream_urls",
+   "youtube_urls",
+   "languages",
+   "country",
+   "isGeoBlocked"
+  ],
+  "first": {
+   "nanoid": "0ql8ScPnCzsSJo",
+   "name": "28 kanala",
+   "stream_urls": [
+    "https://streaming.28kanala.eus/hls/z.m3u8"
+   ],
+   "youtube_urls": [],
+   "languages": [
+    "eus"
+   ],
+   "country": "es",
+   "isGeoBlocked": false
+  },
+  "sample": [
+   {
+    "nanoid": "0ql8ScPnCzsSJo",
+    "name": "28 kanala",
+    "stream_urls": [
+     "https://streaming.28kanala.eus/hls/z.m3u8"
+    ],
+    "youtube_urls": [],
+    "languages": [
+     "eus"
+    ],
+    "country": "es",
+    "isGeoBlocked": false
+   },
+   {
+    "nanoid": "JVUe7nnKCNgESR",
+    "name": "3Cat Cameres del temps",
+    "stream_urls": [
+     "https://directes-tv-int.3catdirectes.cat/live-content/beauties-hls/master.m3u8"
+    ],
+    "youtube_urls": [],
+    "languages": [
+     "cat"
+    ],
+    "country": "es",
+    "isGeoBlocked": false
+   }
+  ]
+ },
+ "tvgardenMxCount": 112,
+ "tvenvivo": {
+  "embedStatus": 200,
+  "found": [],
+  "context": "ock\"> <p>Reintentando en</p> <progress id=\"progressBar\" value=\"0\" max=\"5\"></progress> </div> <div class=\"loading-block\" aria-live=\"polite\"> <div class=\"loading-spinner\" aria-hidden=\"true\"></div> <div>CARGANDO SEÑAL...</div> </div> </div> </div> <div id=\"embed-popup\" role=\"dialog\" aria-live=\"polite\"> <div class=\"title\">📋 Embed Disponible:</div> <textarea readonly id=\"embed-code\">https://embed.ksdjugfssddeports.com</textarea> <button id=\"copy-btn\">Copiar</button> </div> <script> var src = \"https:\\/\\/deportes.ksdjugfssddeports.com\\/playlist\\/1\\/index.m3u8?token=765e8341b55afdd27028b2c28194627ef84f1df0-3de6c3116830b34b8964569eb4cad6c1-1795338838-1795317238\"; var video = document.getElementById(\"video\"); var overlay = document.getElementById(\"offlineOverlay\"); var progressBar = document.getElementById(\"progressBar\"); const embedPopup = document."
+ },
+ "iptvcat": {
+  "status": 200,
+  "rows": 100,
+  "chunkLengths": [
+   3680,
+   3403,
+   3715
+  ],
+  "clean": [
+   " | | 1 | --> | 2741546 | --> | | | | | | | | | | | Checked: | | 22 Nov 2026 | | | | | | Liveliness: | | | 100 | | | Days: | | 14 | | Online: | | | | | | | | Formats: | | 1280x720 HD (5020 Mbps) | | | | | --- Server location --- | | | | | Country: | | United States of America | | IP Geolocation by DB",
+   " | | 2 | --> | 2721470 | --> | | | | | | | | | | | Checked: | | 22 Nov 2026 | | | | | | Liveliness: | | | 100 | | | Days: | | 844 | | Online: | | | | | | | | Formats: | | 1920x1080 FHD 2K (7004 Mbps) | | | | | --- Server location --- | | | | | Country: | | Netherlands | | IP Geolocation by DB-IP | |",
+   " | | 3 | --> | 2732728 | --> | | | | | | | | | | | Checked: | | 22 Nov 2026 | | | | | | Liveliness: | | | 95 | | | Days: | | 482 | | Online: | | | | | | | | Adaptive Bitrate Streaming | | | | | | Formats: | | 720x404 (1099 Mbps), 960x540 (1853 Mbps), 1920x1080 FHD 2K (7004 Mbps) | | | | | --- Server"
+  ],
+  "clipboards": [
+   "https://list.iptvcat.net/my_list/s/adfa227ff2725d80166b27e86197e7b5.m3u8",
+   "https://list.iptvcat.net/my_list/s/610daa802a07e87851802448722ca709.m3u8",
+   "https://list.iptvcat.net/my_list/s/2a0568ad4466caeda2be0384cd81886b.m3u8"
+  ],
+  "titles": [
+   null,
+   null,
+   null
+  ],
+  "nameInner": [
+   "Checked:",
+   "Checked:",
+   "Checked:"
+  ]
+ },
+ "ejaUsSpa": {
+  "total": "219"
+ },
+ "daddy": {
+  "direct": {
+   "status": 403,
+   "ctype": "text/plain; charset=utf-8",
+   "prefix": "forbidden\n"
+  }
+ },
+ "gftvChannels": {
+  "status": 200,
+  "channels": 38,
+  "esIds": []
+ }
+}
