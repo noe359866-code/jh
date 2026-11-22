@@ -1,21 +1,81 @@
 {
   "id": "org.tvespanol.live",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "name": "TV en Español (directo)",
-  "description": "Canales de televisión en español (España y Latinoamérica) de eja.tv, iptvcat, TV Garden, Global Free TV, TVEnVivo, DaddyLive y Live24. Solo TV en directo, sin películas ni series.",
-  "resources": ["catalog", "meta", "stream"],
-  "types": ["tv"],
-  "idPrefixes": ["es-", "latam-"],
+  "description": "Canales de televisión en español (España y Latinoamérica) de eja.tv, iptvcat, TV Garden, Global Free TV, TVEnVivo, DaddyLive y Live24. Incluye verificador de señales: los canales caídos se ocultan de los catálogos y de las listas M3U, y hay un catálogo 'Caídos' para revisarlos.",
+  "resources": [
+    "catalog",
+    "meta",
+    "stream"
+  ],
+  "types": [
+    "tv"
+  ],
+  "idPrefixes": [
+    "es-",
+    "latam-"
+  ],
   "catalogs": [
     {
       "type": "tv",
       "id": "todos",
       "name": "TV en español · Todos",
-      "extra": [{ "name": "genre", "options": ["España", "Latinoamérica"] }, { "name": "skip" }]
+      "extra": [
+        {
+          "name": "genre",
+          "options": [
+            "España",
+            "Latinoamérica"
+          ]
+        },
+        {
+          "name": "skip"
+        }
+      ]
     },
-    { "type": "tv", "id": "espana", "name": "TV · España", "extra": [{ "name": "skip" }] },
-    { "type": "tv", "id": "latinoamerica", "name": "TV · Latinoamérica", "extra": [{ "name": "skip" }] },
-    { "type": "tv", "id": "deportes", "name": "TV · Deportes", "extra": [{ "name": "skip" }] }
+    {
+      "type": "tv",
+      "id": "espana",
+      "name": "TV · España",
+      "extra": [
+        {
+          "name": "skip"
+        }
+      ]
+    },
+    {
+      "type": "tv",
+      "id": "latinoamerica",
+      "name": "TV · Latinoamérica",
+      "extra": [
+        {
+          "name": "skip"
+        }
+      ]
+    },
+    {
+      "type": "tv",
+      "id": "deportes",
+      "name": "TV · Deportes",
+      "extra": [
+        {
+          "name": "skip"
+        }
+      ]
+    },
+    {
+      "type": "tv",
+      "id": "caidos",
+      "name": "TV · Caídos (verificador)",
+      "extra": [
+        {
+          "name": "skip"
+        }
+      ]
+    }
   ],
-  "behaviorHints": { "configurable": false, "configurationRequired": false }
+  "behaviorHints": {
+    "configurable": false,
+    "configurationRequired": false
+  }
 }

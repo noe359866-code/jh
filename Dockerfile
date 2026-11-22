@@ -5,6 +5,9 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 COPY index.js manifest.json ./
 COPY engines ./engines
+# Informe de salud persistente (`reports/health.json`).
+RUN mkdir -p reports && chown -R node:node reports
+VOLUME ["/app/reports"]
 USER node
 EXPOSE 8080
 ENV NODE_ENV=production

@@ -1,0 +1,21 @@
+channel,id,name,alt_names,is_main,broadcast_area,timezones,languages,format
+Univision.us,East,East,,TRUE,c/US,America/New_York,eng,480i
+Univision.us,EastHD,East HD,,FALSE,c/US,America/New_York,eng,1080p
+Univision.us,KABECD,KABE-CD,,FALSE,ct/USBFL,America/Los_Angeles,spa,720p
+Univision.us,KAKWDT,KAKW-DT,,FALSE,ct/USILE,America/Chicago,spa,720p
+Telemundo.us,East,East,,TRUE,c/US,America/New_York,eng,480i
+Telemundo.us,EastHD,East HD,,FALSE,c/US,America/New_York,eng,1080p
+Telemundo.us,K09YZD,K09YZ-D,,FALSE,ct/USCRP,America/Chicago,spa,720p
+Telemundo.us,K22JAD,K22JA-D,,FALSE,ct/USCRP,America/Chicago,spa,720p
+Galavision.us,East,East,,TRUE,c/US,America/New_York,spa,480i
+Galavision.us,EastHD,East HD,,FALSE,c/US,America/New_York,spa,1080i
+Galavision.us,West,West,,FALSE,c/US,America/Los_Angeles,spa,480i
+Galavision.us,WestHD,West HD,,FALSE,c/US,America/Los_Angeles,spa,1080i
+ESPNDeportes.us,HD,HD,,FALSE,c/US,Europe/London,spa,1080p
+ESPNDeportes.us,SD,SD,,TRUE,c/US,Europe/London,spa,480i
+FoxDeportes.us,SD,SD,,TRUE,c/US,America/Santiago,spa;eng,480i
+CNN.us,HD,HD,,FALSE,c/US,America/New_York,eng,576i
+CNN.us,SD,SD,,TRUE,c/US;c/CA,America/New_York,eng,480i
+ABC.us,East,East,,TRUE,c/US,America/New_York,eng,480i
+ABC.us,KHRR,KHRR,,FALSE,ct/USTUZ,America/Phoenix,spa,1080p
+LocalAccess.us,E,East,,TRUE,c/US,America/New_York,eng,720p

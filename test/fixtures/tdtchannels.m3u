@@ -1,0 +1,16 @@
+#EXTM3U @LaQuay
+#EXTINF:-1 tvg-id="La1.TV" tvg-logo="https://graph.facebook.com/la1detve/picture" group-title="Generalistas" tvg-name="La 1",La 1
+https://rtvelivestream.rtve.es/rtvesec/la1/la1_main_dvr.m3u8
+#EXTINF:-1 tvg-id="La1.TV" tvg-logo="https://graph.facebook.com/la1detve/picture" group-title="Generalistas" tvg-name="La 1",La 1
+https://stream.ads.ottera.tv/playlist.m3u8?network_id=15619
+#EXTINF:-1 tvg-id="La2.TV" group-title="Generalistas" tvg-name="La 2",La 2
+https://rtvelivestream.rtve.es/rtvesec/la2/la2_main_dvr.m3u8
+#EXTINF:-1 tvg-id="24Horas.TV" group-title="Informativos" tvg-name="24h",24h
+https://ztnr.rtve.es/ztnr/1694255.m3u8
+#EXTINF:-1 tvg-id="TDP.TV" group-title="Deportivos" tvg-name="Teledeporte",Teledeporte
+https://rtvelivestream.rtve.es/rtvesec/tdp/tdp_main.m3u8
+#EXTINF:-1 tvg-id="324.TV" group-title="Informativos" tvg-name="3CatInfo",3CatInfo
+https://directes-tv-es.3catdirectes.cat/live-content/canal324-hls/master.m3u8
+#EXTINF:-1 tvg-id="ETBD.TV" group-title="Deportivos" tvg-name="ETB Deportes",ETB Deportes
+#EXTVLCOPT:http-referrer=https://kirolakeitb.eus/es/kirolak-360/en-directo/
+https://multimedia.eitb.eus/live-content/oka1hd-hls/master.m3u8

@@ -1,0 +1,11 @@
+#EXTM3U x-tvg-url="https://epgshare01.online/epg.xml.gz"
+#EXTINF:-1 tvg-name="Kanali 7" tvg-id="Kanali7.al" tvg-country="AL" group-title="Albania",Kanali 7
+https://fe.tring.al/delta/105/out/u/1200_1.m3u8
+#EXTINF:-1 tvg-name="Rai 1" tvg-id="Rai1.it" tvg-country="IT" group-title="Italy",Rai 1
+https://rai.example/1.m3u8
+#EXTINF:-1 tvg-name="La 1" tvg-id="La1.es" tvg-country="ES" group-title="Spain",La 1
+https://rtve.example/la1.m3u8
+#EXTINF:-1 tvg-name="Telefe" tvg-id="Telefe.ar" tvg-country="AR" group-title="Argentina",Telefe
+https://telefe.example/1.m3u8
+#EXTINF:-1 tvg-name="CNN en Español" tvg-id="CNNe.us" tvg-country="US" group-title="News",CNN en Español
+https://cnne.example/1.m3u8

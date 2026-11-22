@@ -1,7 +1,8 @@
 # TV en Español · Addon de Stremio y listas M3U
 
 Canales de **televisión en directo en español** (España y Latinoamérica), recopilados
-en vivo desde siete webs públicas. El proyecto expone un **addon de Stremio** y
+en vivo desde siete webs públicas y **quince listas M3U** (iptv-org, Samsung TV
+Plus, Pluto TV, CineCity…). El proyecto expone un **addon de Stremio** y
 **listas M3U** listas para VLC, Kodi, TiviMate, IPTVnator o cualquier reproductor
 compatible.
 
@@ -18,9 +19,9 @@ Medido el **22/11/2026** ejecutando `npm run test:live` contra las siete fuentes
 | iptvcat.net | directo | 1.170 | mini‑M3U firmadas por tarjeta (`data-clipboard-text`) |
 | eja.tv | directo | 699 | paginación `?offset=` de 6 en 6, filtro `language=spa` |
 | globalfreetv.com | directo | 243 | HTML SSR; 45 canales/país por límite de peticiones |
-| tvenvivo.org | página | 70 | requiere resolver `core.php?canal=` |
-| thedaddy.li | página | 29 | el CDN solo emite token a navegador real → mejor esfuerzo |
-| livelive24.com | catálogo | 29 | solo publica la página del canal (`externalUrl`) |
+| tvenvivo.org | embed | 70 | cadena `core.php`/iframe; hoy la resuelve JavaScript |
+| thedaddy.li | embed | 29 | el CDN solo emite token a un navegador real |
+| livelive24.com | embed | 29 | el reproductor es un blogspot sin HLS estático |
 
 **Total: 1.857 canales únicos · 1.832 con medio reproducible o resoluble ·
 323 de España · 1.534 de Latinoamérica · 2.830 entradas M3U** (un canal puede
@@ -48,6 +49,9 @@ Con Docker:
 ```bash
 docker build -t tv-espanol .
 docker run --rm -p 8080:8080 tv-espanol
+
+# conservar el informe del verificador entre reinicios
+docker run --rm -p 8080:8080 -v "$PWD/reports:/app/reports" tv-espanol
 ```
 
 ## Stremio
@@ -67,11 +71,136 @@ En Stremio: **Addons → Instalar desde URL → pega la URL**. El addon declara 
 | TV · España | `espana` | `skip` |
 | TV · Latinoamérica | `latinoamerica` | `skip` |
 | TV · Deportes | `deportes` | `skip` |
+| TV · Caídos (verificador) | `caidos` | `skip` |
 
 Cada canal es un `meta` con póster (si la fuente lo trae), país, categoría y las
 fuentes que lo aportan. Las señales se entregan como HLS directo; cuando el origen
 exige `Referer` o `User-Agent`, se envían como `proxyHeaders` para que el
 reproductor de Stremio los use.
+
+## Categorías en Stremio
+
+El addon expone **un catálogo por país**, además de los generales:
+
+| Catálogo | Qué muestra |
+|---|---|
+| `TV · Todos los canales` | todo el catálogo, con filtro de género por país |
+| `TV · España`, `TV · Estados Unidos`, `TV · México`… | solo ese país (21 países) |
+| `TV · España (región)`, `TV · Estados Unidos (región)`, `TV · Latinoamérica (región)` | agrupaciones amplias |
+| `TV · Deportes` | canales de deportes de todos los países |
+| `TV · Caídos (verificador)` | los que el verificador dio por caídos, con el motivo |
+
+Dentro de cada país, el filtro de género ofrece **Generalista, Deportes, Noticias,
+Infantil, Música y Cine y series** (`México · Deportes`), y solo devuelve canales
+de ese país.
+
+Los identificadores de canal empiezan por su país (`mx-canal-5`, `us-univision`),
+que es lo que Stremio usa para validar el addon.
+
+## Fuentes
+
+Además de los siete sitios que se recorren, el catálogo incorpora seis listas M3U
+externas de canales en español. Se descargan en cada pasada, se normalizan con el
+mismo parser (`engines/live/sources/playlist.js`) y pasan por el verificador como
+cualquier otra fuente:
+
+| Fuente | Lista | Aporta |
+|---|---|---|
+| CineCity | `CINECITY2023/cinecity` (`principal.m3u`, rama `cinecity.net`) | cine, deportes y regionales de Argentina y México |
+| Telechancho | `telechancho.github.io/infinity.m3u` | generalistas, noticias y radios de Argentina |
+| iptv-chile | `Orieus-lesauce/iptv-chile` (`CL.m3u`) | 23 canales nacionales chilenos (Mega, CHV, TVN, La Red…) |
+| Samsung TV Plus ES | `BuddyChewChew/app-m3u-generator` (`samsungtvplus_es.m3u`) | 194 canales FAST de España, servidos vía `jmp2.uk` |
+| Pluto TV | `iprtl/m3u` (rama `live`, `Pluto.m3u`) | solo los canales hispanos de sus 850 entradas |
+| D9Kod | `s.id/d9Kod` | lo que publique el acortador, verificado antes de listarse |
+| Estados Unidos | `iptv-org/iptv` (`streams/us.m3u` + base de idiomas) | canales hispanos de EE. UU. y cadenas mayoritarias en inglés |
+| iptv-org por país | `iptv-org/iptv` (`streams/<cc>.m3u`) | rellena los países con pocas fuentes (Cuba, Uruguay, Nicaragua, Panamá…) |
+| TDTChannels | `tdtchannels.com/lists/tv.m3u8` | la TDT española en abierto: La 1, La 2, 24h, Teledeporte, autonómicas |
+| Free-TV | `Free-TV/IPTV` (`playlist.m3u8`) | lista mundial de 2.200 canales; se filtran los 159 hispanos |
+
+Detalles de la normalización:
+
+- **Solo español.** Se descarta la entrada si declara `tvg-language` distinto de
+  español (`por`, `pt`, `eng`, `fra`, `deu`, `ita`…). Nada se inventa: un canal
+  sin país identificable se queda como internacional, no se elimina.
+- **País por tres vías**, en este orden: bandera o sufijo del nombre (`Mega [CL]`,
+  `La 1 (ES)`), `tvg-country`/`group-title` (`🌍 Mexico`, `🏙️ Buenos Aires`) y
+  lista de procedencia (Samsung ES → España). El catálogo normaliza el resultado
+  (`cl`, `CL`, `Chile` → `CL`) antes de agrupar, así que cada país tiene una sola
+  categoría. España va a la lista `es`, Estados Unidos a `us` y el resto a `latam`;
+  todos entran también en `all` y en su lista de país.
+- **Redirectores.** `jmp2.uk` y `s.id` sirven un `#EXTM3U` aunque la URL no acabe
+  en `.m3u8`: se tratan como medio directo y el verificador sigue el 302 y
+  comprueba la firma del destino final. Si el destino no responde, el canal queda
+  caído y no se publica.
+- **Tolerancia.** Líneas `EXTINF` mal formadas, URLs `rtmp://` y entradas sin URL
+  se ignoran sin romper la lista. Una lista que no responde no tumba el catálogo:
+  las demás siguen aportando canales.
+
+### Estados Unidos
+
+`us.m3u` de iptv-org trae más de mil canales y **no dice el idioma**. Su base de
+datos sí (`data/feeds.csv`, una fila por emisión con `languages` e `is_main`), y la
+fuente cruza las dos:
+
+- **Feed principal en español** → se publica (`language: 'es'`). Son 324 canales.
+- **Cadenas mayoritarias en inglés** (ABC, CBS, NBC, FOX, CNN, MSNBC, Bloomberg,
+  ESPN, NBA TV, NFL Network…) → 74 canales, marcados `language: 'en'` y con
+  «emite en inglés» en la descripción de Stremio.
+- El resto (canales locales en inglés) se descarta.
+
+El idioma se mira en la emisión **principal** porque `ABC.us` tiene cientos de
+repetidoras locales: casi todas en inglés y alguna en español. Con «tiene algún
+feed en español» entraban ABC, CNN y compañía como si fueran canales en español.
+Univision, Telemundo y otros 24 canales están en una lista de «siempre en
+español», porque la base de iptv-org los marca como `eng` por error.
+
+### Listas que no son solo de un país
+
+Dos de las listas mezclan países, y cada una necesita un trato distinto:
+
+- **Free-TV** es mundial (2.203 entradas). Se aplica el filtro estricto: solo
+  entra lo que declara `tvg-language` español, `tvg-country` hispano, o un país
+  desconocido con nombre acentuado. Quedan **159 canales**; sin ese filtro se
+  colaban 2.044 en albanés, italiano, árabe o ruso. Un canal de EE. UU. solo
+  entra si su nombre lo delata (`CNN en Español`), porque el resto emite en
+  inglés.
+- **TDTChannels** es la TDT española. Su `group-title` no es el país sino la
+  categoría (`Generalistas`, `Informativos`, `Deportivos`), así que se mapea a
+  las categorías del addon. Trae la misma cadena con varias señales (DVR,
+  Rakuten, Ottera) y el catálogo las agrupa.
+
+### Medición en CI (última pasada)
+
+Catálogo **4115 canales, 3570 vivos**. Listas: `all` **6491**, `es` **1032**,
+`latam` **5056**, `deportes` **186**.
+
+Canales vivos por país: Internacional 1546 · ES 754 · AR 553 · US 293 · CL 271 ·
+MX 246 · DO 240 · PE 195 · CO 136 · VE 89 · BO 79 · EC 79 · HN 75 · PY 74 ·
+CR 71 · GT 53 · SV 46 · PR 42 · PA 22 · NI 18 · UY 8 · CU 4.
+
+**Internacional** son los canales cuya fuente no dice el país (la mayoría de Pluto
+TV, CineCity y D9Kod). Se quedan así en lugar de asignarles un país inventado.
+
+## Revisión del addon y del M3U
+
+Comprobaciones hechas sobre el addon y las listas, con sus arreglos:
+
+| Comprobación | Estado |
+|---|---|
+| Manifiesto por debajo de 8 KB (Stremio puede rechazar los grandes) | 6.586 bytes; los 126 géneros `país · categoría` se movieron al `extra` de cada país |
+| `idPrefixes` cubre todos los ids de canal | Faltaba `latam-`: 1.546 canales sin país habrían fallado. Añadido |
+| Paginación de 100 en 100 | Correcta (`skip=0/100/200/300`) |
+| `extra` en una sola cadena (`genre=…&skip=…`) | Correcta en los dos órdenes, con acentos y espacios |
+| Manifest válido para el SDK | Sin errores: id, versión, tipos, ids y `extra` permitidos |
+| `#EXTINF` con coma en el nombre | Se rompía la entrada; ahora la coma se sustituye |
+| `tvg-country` y `group-title` en el M3U | Ponían la región (`LATAM`); ahora el país real (`AR`, `Argentina · Generalista`) |
+| Guía de programación | `x-tvg-url` iba vacío (la desactiva). Ahora declara la EPG y conserva el `tvg-id` original de la lista |
+| Póster de los canales sin logo | Se generaba una tarjeta vacía; ahora hay póster con las iniciales |
+| Catálogos con nombre engañoso | «Latinoamérica» mostraba canales de México; ahora hay `Sin país asignado` |
+
+Lo que no se puede arreglar desde aquí: los reproductores de tvenvivo, thedaddy y
+livelive24 montan la URL por JavaScript en el navegador, así que la extracción de
+HLS sigue en 0 (ver más abajo).
 
 ## Listas M3U
 
@@ -79,8 +208,13 @@ reproductor de Stremio los use.
 |---|---|---|
 | Todo | `/playlist/all.m3u` (alias `/playlist.m3u`) | todos los canales |
 | España | `/playlist/es.m3u` | solo España |
+| Estados Unidos | `/playlist/us.m3u` | solo Estados Unidos |
 | Latinoamérica | `/playlist/latam.m3u` | solo Latinoamérica |
 | Deportes | `/playlist/deportes.m3u` | solo deportes |
+| Un país | `/playlist/<cc>.m3u` | solo ese país (`mx`, `ar`, `co`, `cl`, `pe`, `ve`, `ec`, `gt`, `hn`, `sv`, `ni`, `cr`, `pa`, `cu`, `do`, `pr`, `uy`, `py`, `bo`) |
+
+Los canales caídos (según el verificador) se excluyen de todas ellas; añade
+`?dead=1` para incluirlos.
 
 Ejemplo:
 
@@ -92,11 +226,98 @@ https://TU-DOMINIO/playlist/es.m3u?pages=1
 - `?pages=1` resuelve además las **fuentes de página** (TVEnVivo y DaddyLive) antes de
   escribir la lista. Sin el parámetro solo se publican medios directos, que es lo más
   rápido y estable.
-- La respuesta lleva `X-Channel-Count` y se cachea 5 minutos.
+- La respuesta lleva `X-Channel-Count` (y `X-Checked-At` si hay informe de salud) y
+  se cachea 5 minutos.
 - Cada entrada incluye `tvg-id`, `tvg-logo`, `group-title` (`España · Deportes`,
   `Latinoamérica · Noticias`…), y `#EXTVLCOPT` con `Referer`/`User-Agent` cuando la
   fuente los exige.
 - `/playlists.json` da recuentos por lista y `/config` el estado de cada fuente.
+
+## Verificador de señales (canales caídos)
+
+No todos los canales que publican las webs siguen emitiendo. El servidor los
+**sondea** y quita de las listas solo los que están demostrablemente muertos.
+
+**Qué se considera caído** (para no borrar canales buenos por error):
+
+| Resultado del sondeo | Veredicto | ¿Se elimina? |
+|---|---|---|
+| `404`, `410`, `451`, DNS roto | **caído** | sí |
+| `401`, `403`, `429`, `503` | bloqueado (límite o geobloqueo) | no |
+| timeout / sin firma inesperada | tiempo agotado (sin confirmar) | no |
+| fuente de catálogo o página sin resolutor | desconocido | no |
+
+El sondeo pide solo los primeros 8 KB de cada medio, reintenta una vez los fallos
+de red/tiempo, reutiliza el resultado cuando el mismo medio aparece en varios
+canales y tiene un presupuesto total de tiempo: lo que no cabe se reintenta en la
+siguiente pasada. Si el propio entorno se queda sin salida a internet, el informe
+se marca **no concluyente** y no se usa para filtrar.
+
+**Medición real** (22/11/2026, 1.764 canales sondeados en 170 s):
+
+| Vivos | Caídos | Bloqueados | Tiempo agotado |
+|---:|---:|---:|---:|
+| 1.655 | **109** | 291 | 95 |
+
+De los 109 caídos, 81 eran `404` y 28 dominios que ya no resuelven.
+
+**En Stremio**: los caídos desaparecen de los catálogos normales y de las listas;
+se pueden revisar en el catálogo **`TV · Caídos (verificador)`**, donde cada ficha
+explica el motivo. También está `GET /health/dead.json`.
+
+**En M3U**: se excluyen por defecto. `?dead=1` los devuelve para depurar.
+
+Control:
+
+- El informe se calcula **al arrancar** (en segundo plano, sin retrasar el
+  `listen`) y se guarda en `reports/health.json`; tras un reinicio se reutiliza
+  mientras tenga menos de 6 h.
+- `?check=1` en una lista o en `/health.json` fuerza un sondeo nuevo (con
+  presupuesto de 25 s; si tarda más se responde con el informe anterior).
+- Desactivar: `createApp({ checker: null })`.
+
+```bash
+npm run verify                 # informe + listas sin caídos en reports/
+LIMIT=40 npm run verify        # muestra rápida
+CONCURRENCY=32 npm run verify  # más paralelismo
+FAIL_ON_DEAD=1 npm run verify  # exit 1 si hay caídos (CI estricta)
+```
+
+Deja `reports/health.json`, `reports/dead.txt` y copias `reports/playlist-*.m3u`
+ya filtradas. El workflow `verify.yml` lo ejecuta a diario a las 04:47 UTC y
+publica los artefactos.
+
+## Extracción de HLS de los embeds
+
+Las fuentes con reproductor (`tvenvivo`, `thedaddy`, `livelive24`) no publican el
+`.m3u8` en el HTML: dan una página con un iframe. El servidor **intenta extraer el
+HLS al recolectar**, no solo al reproducir:
+
+1. Sigue la cadena documentada de cada fuente (`core.php`, `watch.php`, blogspot).
+2. Si falla, usa un extractor genérico que busca el `.m3u8` en:
+   URL literal, barras escapadas (`https:\/\/…`), base64, JSON escapado,
+   rutas relativas, `<video>`, `<source>` y hasta 3 iframes anidados.
+3. Solo publica el HLS si el medio responde con **firma HLS** (los primeros 4 KB).
+4. Si no, el canal conserva su enlace de página y se resuelve al reproducir.
+
+Límites: 3 canales en paralelo, pausa entre canales, reintento ante `403/429`,
+presupuesto de 100 s y `EXTRACT_HLS=0` para desactivarla. Un origen que no entrega
+ni un HLS en dos recolecciones seguidas queda **penalizado 6 h** (no se gasta el
+presupuesto en él y se reintenta más tarde).
+
+**Resultado medido** (22/11/2026): de **124 canales con embed, 0 HLS extraídos**.
+Los motivos, verificados con sonda:
+
+| Fuente | Qué devuelve realmente |
+|---|---|
+| tvenvivo | el iframe regional responde un *loader* de 1.9 KB que monta el reproductor con JavaScript; `core.php` ya no expone `var src` |
+| thedaddy | `dembed.st` responde **403** salvo con un navegador real; el CDN también |
+| livelive24 | la página de blogspot (24 KB) no tiene iframes ni `.m3u8` |
+
+Es decir: **esos canales no se pueden resolver sin ejecutar JavaScript**, y el
+proyecto no lo hace (sin navegador headless, sin cookies, sin CAPTCHAs). La
+extracción queda implementada y probada; en cuanto un origen vuelva a servir el
+HLS de forma estática, se publicará automáticamente sin tocar código.
 
 ## Rutas HTTP
 
@@ -107,7 +328,9 @@ https://TU-DOMINIO/playlist/es.m3u?pages=1
 | `GET /meta/tv/:id.json` | metadatos de un canal |
 | `GET /stream/tv/:id.json` | señales reproducibles de un canal |
 | `GET /playlist/:variant.m3u` | listas M3U (`all`, `es`, `latam`, `deportes`) |
-| `GET /playlists.json` | índice de listas con recuentos |
+| `GET /playlists.json` | índice de listas con recuentos y salud |
+| `GET /health.json` | informe del verificador (vivos, caídos, bloqueados) |
+| `GET /health/dead.json` | canales caídos en formato Stremio |
 | `GET /config` | estado y tiempos de cada fuente |
 | `GET /stream/page?url=` | resuelve una página de origen (solo `tvenvivo.org` y `thedaddy.li`) |
 | `GET /` | portada con enlaces |
@@ -125,9 +348,10 @@ con `stale: true` y `staleReason`.
 | iptvcat.net | directo | listado por país (`spain__9`, `mexico__6`…), 100 filas, mini‑M3U en `data-clipboard-text` |
 | tvgarden.world | directo | API JSON por país con `stream_urls[]` |
 | globalfreetv.com | directo | HTML SSR: `channel:$R[n]={…}` + `streams:$R[m]=[…]` con `url` y `http_referrer` |
-| tvenvivo.org | página | `core.php?canal=<slug>` → iframe → `var src = "…m3u8"` |
-| thedaddy.li | página | `watch.php?id=N` → `stream-N.php` → embed → `const SRC` |
-| livelive24.com | catálogo | `tv.json`, solo enlaces a la página del canal |
+| tvenvivo.org | embed | `core.php?canal=<slug>` → iframe → `var src = "…m3u8"` |
+| thedaddy.li | embed | `watch.php?id=N` → `stream-N.php` → embed → `const SRC` |
+| livelive24.com | embed | reproductor intermedio (blogspot) → `.m3u8` literal si existe |
+| CineCity, Telechancho, iptv-chile, Samsung TV Plus ES, Pluto TV, D9Kod | directo | listas M3U propias, descargadas y normalizadas (ver «Fuentes») |
 
 **Modos:** `directo` = el canal ya trae una URL de medio; `página` = hay que resolver
 una cadena de iframes al reproducir; `catálogo` = la fuente solo aporta el nombre y el
@@ -140,10 +364,11 @@ español de EE. UU. Todos los canales se etiquetan con su país de origen.
 ## Verificación
 
 ```bash
-npm test        # 20 pruebas unitarias (parser + addon + rutas HTTP), sin red
+npm test        # 60 pruebas unitarias (parser + addon + rutas + verificador + extracción), sin red
 npm run check   # node --check sobre todo el motor
-npm run test:live   # comprobación real contra las 7 fuentes (necesita red)
+npm run test:live   # comprobación real contra las 13 fuentes (necesita red)
 SOURCE=eja,tvgarden npm run test:live   # solo algunas fuentes
+npm run verify  # sondeo de señales y listas limpias (necesita red)
 ```
 
 `test:live` escribe `reports/live-check.json` (sin URLs ni tokens), imprime un resumen
@@ -182,8 +407,11 @@ engines/live/text.js         limpieza de nombres, slugs e identificadores
 engines/live/catalog.js      recolección, caché con TTL y fusión de fuentes
 engines/live/m3u.js          generación y lectura de listas M3U
 engines/live/addon.js        manifiesto, catálogos, meta y streams
+engines/live/checker.js      verificador de señales (caído / bloqueado / sin confirmar)
+engines/live/extract.js      extracción de HLS de embeds al recolectar
 engines/live/sources/*.js    un recolector por web
 scripts/live-check.js        verificación real contra las siete fuentes
+scripts/verify.js            sondeo de cada canal + listas sin caídos
 test/                        pruebas unitarias con instantáneas de HTML/JSON
 ```
 

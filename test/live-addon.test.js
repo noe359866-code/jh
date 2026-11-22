@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { once } = require('node:events');
 const { createApp } = require('../index');
-const { createCatalog, mergeSources } = require('../engines/live/catalog');
+const { createCatalog, mergeSources, countsOf } = require('../engines/live/catalog');
 const { buildM3u, parseM3u } = require('../engines/live/m3u');
 const addon = require('../engines/live/addon');
 
@@ -22,7 +22,7 @@ const CHANNELS = [
     playable: false
   },
   {
-    id: 'latam-canal-5', key: 'LATAM:canal-5', name: 'Canal 5', country: 'LATAM', origin: 'Mexico', category: 'Generalista',
+    id: 'mx-canal-5', key: 'MX:canal-5', name: 'Canal 5', country: 'LATAM', origin: 'MX', category: 'Generalista',
     logo: null, geoBlocked: false, sources: ['livelive24.com'], streams: [], externalUrl: 'https://livelive24.com/?ch=5',
     info: 'Enlace solo en la web original', playable: false
   }
@@ -34,7 +34,9 @@ const fakeCatalog = () => createCatalog({
 });
 
 async function withServer(catalog, callback, options = {}) {
-  const app = createApp({ catalog, ...options });
+  // Sin verificador salvo que la prueba lo pida: así no hay red ni esperas.
+  // `options` va primero para que sus claves no pisen el `checker: null`.
+  const app = createApp({ catalog, ...options, checker: options.checker ?? null });
   const server = app.listen(0, '127.0.0.1');
   await once(server, 'listening');
   try {
@@ -70,12 +72,131 @@ test('el catálogo nunca lanza: una fuente caída no oculta las demás', async (
   assert.equal(loaded.status.eja.ok, true);
 });
 
-test('manifest: tipo tv con ids propios y catálogos con skip', () => {
+test('mergeSources: unifica el país venga como venga (`cl`, `CL`, `Chile`)', () => {
+  const merged = mergeSources([
+    { id: 'a', entries: [{ name: 'Mega', country: 'LATAM', origin: 'cl', streams: [{ url: 'https://a/1.m3u8', kind: 'hls' }] }] },
+    { id: 'b', entries: [{ name: 'TVN', country: 'LATAM', origin: 'CL', streams: [{ url: 'https://a/2.m3u8', kind: 'hls' }] }] },
+    { id: 'c', entries: [{ name: 'Canal 13', country: 'LATAM', origin: 'Chile', streams: [{ url: 'https://a/3.m3u8', kind: 'hls' }] }] },
+    { id: 'd', entries: [{ name: 'La Red', country: 'LATAM', origin: 'Chile', streams: [{ url: 'https://a/4.m3u8', kind: 'hls' }] }] }
+  ]);
+  assert.ok(merged.every(channel => channel.origin === 'CL'));
+  assert.ok(merged.every(channel => channel.id.startsWith('cl-')), 'el id usa el país real');
+  assert.deepEqual(merged.map(channel => channel.country), ['LATAM', 'LATAM', 'LATAM', 'LATAM']);
+  // Un canal sin país en la fuente pero con bandera en el nombre también se etiqueta.
+  const flagged = mergeSources([{ id: 'e', entries: [{ name: 'Azteca 🇲🇽', country: 'LATAM', streams: [{ url: 'https://a/5.m3u8', kind: 'hls' }] }] }]);
+  assert.equal(flagged[0].origin, 'MX');
+});
+
+test('manifest: cabe en 8 KB e incluye el prefijo de las regiones', () => {
+  const manifest = addon.manifest();
+  // Stremio puede rechazar un manifiesto demasiado grande.
+  assert.ok(JSON.stringify(manifest).length < 8192, `pesa ${JSON.stringify(manifest).length} bytes`);
+  // Los canales sin país llevan id `latam-…`: sin ese prefijo sus enlaces fallan.
+  assert.ok(manifest.idPrefixes.includes('latam-'));
+  // Un género por país en «Todos», no 126 combinaciones país·categoría.
+  const genres = manifest.catalogs[0].extra[0].options;
+  assert.ok(genres.includes('México'));
+  assert.ok(!genres.includes('México · Deportes'));
+  assert.equal(new Set(manifest.catalogs.map(catalog => catalog.id)).size, manifest.catalogs.length);
+});
+
+test('mergeSources: ids únicos y válidos para Stremio', () => {
+  // Dos fuentes con claves distintas para el mismo canal: antes salían dos
+  // canales con el mismo id y el segundo quedaba inaccesible.
+  const same = mergeSources([
+    { id: 'eja', entries: [{ name: 'Canal 5', country: 'LATAM', origin: 'MX', key: 'LATAM:canal-5', streams: [{ url: 'https://a/1.m3u8', kind: 'hls' }] }] },
+    { id: 'iptvorg', entries: [{ name: 'Canal 5', country: 'LATAM', origin: 'MX', key: 'MX:canal-5', streams: [{ url: 'https://b/5.m3u8', kind: 'hls' }] }] }
+  ]);
+  assert.equal(same.length, 1, 'el mismo canal no se duplica');
+  assert.equal(same[0].streams.length, 2, 'pero conserva las dos señales');
+
+  // Un nombre larguísimo generaba un id de 94 caracteres que el patrón del SDK
+  // rechaza: `findChannel` no lo encontraba y el canal no se abría.
+  const largo = 'Canal de prueba con un nombre larguísimo que supera el límite de longitud del identificador';
+  const big = mergeSources([{ id: 'x', entries: [{ name: largo, origin: 'MX', streams: [{ url: 'https://x/1.m3u8', kind: 'hls' }] }] }]);
+  assert.ok(addon.ID_PATTERN.test(big[0].id), `id inválido: ${big[0].id}`);
+  assert.ok(big[0].id.length <= 80);
+  assert.ok(addon.findChannel(big, big[0].id), 'el canal se encuentra por su id');
+
+  // Dos canales distintos que producen el mismo slug: el segundo lleva sufijo.
+  const colision = mergeSources([{ id: 'x', entries: [
+    { name: 'Solo', origin: 'MX', streams: [{ url: 'https://x/1.m3u8', kind: 'hls' }] },
+    { name: 'S0lo', origin: 'MX', streams: [{ url: 'https://x/2.m3u8', kind: 'hls' }] }
+  ] }]);
+  assert.equal(new Set(colision.map(channel => channel.id)).size, colision.length);
+});
+
+test('mergeSources: un stream nulo no tumba el catálogo', () => {
+  const merged = mergeSources([{ id: 'x', entries: [
+    { name: 'Rota', origin: 'MX', streams: [null, { url: 'https://x/1.m3u8', kind: 'hls' }] }
+  ] }]);
+  assert.equal(merged.length, 1);
+  assert.equal(merged[0].streams.length, 1, 'solo queda la señal válida');
+});
+
+test('mergeSources: una entrada rota no tumba el catálogo', () => {
+  const merged = mergeSources([
+    { id: 'a', entries: [null, { name: 'sin streams' }, { origin: 'MX', streams: [{ url: 'https://x/1.m3u8', kind: 'hls' }] },
+      { name: 'Buena', origin: 'MX', streams: [{ url: 'https://x/2.m3u8', kind: 'hls' }] }] }
+  ]);
+  assert.deepEqual(merged.map(channel => channel.name), ['Buena']);
+});
+
+test('countsOf: recuentos coherentes con el catálogo final', () => {
+  const counts = countsOf([
+    { country: 'ES', origin: 'ES', playable: true },
+    { country: 'LATAM', origin: 'MX', playable: false, dead: true },
+    { country: 'US', origin: 'US', playable: true },
+    { country: 'LATAM', origin: 'Internacional', playable: true }
+  ]);
+  assert.deepEqual(counts, { total: 4, playable: 3, dead: 1, alive: 3, es: 1, latam: 2, us: 1, paises: 3 });
+});
+
+test('manifest incluye el icono y el servidor lo sirve', () => {
+  assert.equal(addon.manifest().logo, addon.LOGO_PATH);
+  assert.equal(addon.LOGO_PATH, '/logo.svg');
+});
+
+test('manifest: tipo tv, un catálogo por país y prefijos de país', () => {
   const manifest = addon.manifest();
   assert.deepEqual(manifest.types, ['tv']);
-  assert.deepEqual(manifest.idPrefixes, ['es-', 'latam-']);
+  // Prefijo por país: los ids de canal empiezan por su país real.
+  assert.ok(manifest.idPrefixes.includes('mx-'));
+  assert.ok(manifest.idPrefixes.includes('us-'));
+  assert.ok(manifest.idPrefixes.includes('es-'));
   assert.ok(manifest.catalogs.every(catalog => catalog.type === 'tv'));
   assert.ok(manifest.catalogs[0].extra.some(extra => extra.name === 'skip'));
+  // Una entrada por país más las generales.
+  const byId = Object.fromEntries(manifest.catalogs.map(catalog => [catalog.id, catalog]));
+  assert.equal(byId['pais-mx'].name, 'TV · México');
+  assert.equal(byId['pais-us'].name, 'TV · Estados Unidos');
+  assert.ok(byId['pais-mx'].extra[0].options.includes('México · Deportes'));
+  assert.ok(byId.sinpais, 'los canales sin país tienen su propio catálogo');
+  assert.ok(byId.todos && byId.deportes && byId.caidos);
+});
+
+test('catálogo por país: filtra por el país real del canal', () => {
+  const channels = [
+    ...CHANNELS,
+    { id: 'mx-canal-5', key: 'MX:canal-5', name: 'Canal 5', country: 'LATAM', origin: 'MX', category: 'Generalista',
+      sources: ['x'], streams: [{ url: 'https://mx.example/5.m3u8', kind: 'hls' }], playable: true },
+    { id: 'us-univision', key: 'US:univision', name: 'Univision', country: 'US', origin: 'US', category: 'Generalista',
+      language: 'es', sources: ['x'], streams: [{ url: 'https://us.example/1.m3u8', kind: 'hls' }], playable: true },
+    { id: 'us-cnn', key: 'US:cnn', name: 'CNN', country: 'US', origin: 'US', category: 'Noticias',
+      language: 'en', sources: ['x'], streams: [{ url: 'https://us.example/cnn.m3u8', kind: 'hls' }], playable: true }
+  ];
+  assert.deepEqual(addon.catalog(channels, 'pais-mx', '', 0).metas.map(meta => meta.name), ['Canal 5']);
+  assert.deepEqual(addon.catalog(channels, 'pais-us', '', 0).metas.map(meta => meta.name).sort(), ['CNN', 'Univision']);
+  assert.equal(addon.catalog(channels, 'us', '', 0).metas.length, 2, 'la región US incluye los dos');
+  assert.equal(addon.catalog(channels, 'pais-us', 'Estados Unidos · Noticias', 0).metas.length, 1);
+  assert.equal(addon.catalog(channels, 'pais-us', 'Estados Unidos · Deportes', 0).metas.length, 0);
+  // El género de un país no debe arrastrar canales de otro.
+  assert.equal(addon.catalog(channels, 'pais-mx', 'Estados Unidos · Generalista', 0).metas.length, 0);
+  // `sinpais` deja fuera lo que sí tiene país.
+  const sinPais = addon.catalog([...channels,
+    { id: 'latam-x', key: 'LATAM:x', name: 'X', country: 'LATAM', origin: 'Internacional', category: 'Generalista',
+      sources: ['pluto'], streams: [{ url: 'https://x/x.m3u8', kind: 'hls' }], playable: true }], 'sinpais', '', 0);
+  assert.deepEqual(sinPais.metas.map(meta => meta.name), ['X']);
 });
 
 test('catálogo Stremio: solo canales publicables, paginado y filtros', () => {
@@ -84,12 +205,76 @@ test('catálogo Stremio: solo canales publicables, paginado y filtros', () => {
   assert.deepEqual(all.metas.map(meta => meta.id), ['es-la-1', 'es-antena-3']);
   assert.equal(all.metas[0].type, 'tv');
   assert.equal(all.metas[0].poster, 'https://logos.example/la1.png');
+  // Sin logo, hay póster de reserva (si no, la tarjeta sale vacía en Stremio).
+  assert.match(all.metas[1].poster, /^https:\/\/placehold\.co\//);
 
   assert.deepEqual(addon.catalog(CHANNELS, 'espana', '', 0).metas.length, 2);
   assert.equal(addon.catalog(CHANNELS, 'latinoamerica', '', 0).metas.length, 0);
   assert.equal(addon.catalog(CHANNELS, 'deportes', '', 0).metas.length, 1);
   assert.equal(addon.catalog(CHANNELS, 'todos', 'España', 0).metas.length, 2);
   assert.equal(addon.catalog(CHANNELS, 'todos', '', 1).metas.length, 1);
+});
+
+test('m3u: dos canales con el mismo tvg-id no se pisan, pero las señales sí lo comparten', async () => {
+  const mismoCanal = await buildM3u([{
+    id: 'es-la1', name: 'La 1', country: 'ES', origin: 'ES', category: 'Generalista', sources: ['x'], epgId: 'La1.TV',
+    streams: [{ url: 'https://x/a.m3u8', kind: 'hls' }, { url: 'https://x/b.m3u8', kind: 'hls' }]
+  }], {});
+  const ids = parseM3u(mismoCanal.body).map(item => item.attrs['tvg-id']);
+  assert.equal(new Set(ids).size, 1, 'las señales del mismo canal comparten id');
+
+  const dosCanales = await buildM3u([
+    { id: 'cl-13c', name: '13C', country: 'CL', origin: 'CL', category: 'Generalista', sources: ['x'], epgId: '13C.cl', streams: [{ url: 'https://x/a.m3u8', kind: 'hls' }] },
+    { id: 'cl-cultura', name: '13 Cultura', country: 'CL', origin: 'CL', category: 'Generalista', sources: ['x'], epgId: '13C.cl', streams: [{ url: 'https://x/b.m3u8', kind: 'hls' }] }
+  ], {});
+  const ids2 = parseM3u(dosCanales.body).map(item => item.attrs['tvg-id']);
+  assert.equal(new Set(ids2).size, 2, 'dos canales distintos no pueden compartir tvg-id');
+  assert.ok(ids2.every(id => id.startsWith('13C.cl-')), 'conservan el id de EPG como prefijo');
+
+  // La misma cadena con dos grafías no es un conflicto: conserva su id de EPG.
+  const grafias = await buildM3u([
+    { id: 'es-big-1', name: 'Bigtime - Películas Gratis', country: 'ES', origin: 'ES', category: 'Generalista', sources: ['x'], epgId: 'ESBC2700003T8', streams: [{ url: 'https://x/1.m3u8', kind: 'hls' }] },
+    { id: 'es-big-2', name: 'Bigtime Peliculas Gratis', country: 'ES', origin: 'ES', category: 'Generalista', sources: ['y'], epgId: 'ESBC2700003T8', streams: [{ url: 'https://x/2.m3u8', kind: 'hls' }] }
+  ], {});
+  const ids3 = parseM3u(grafias.body).map(item => item.attrs['tvg-id']);
+  assert.deepEqual(ids3, ['ESBC2700003T8', 'ESBC2700003T8']);
+});
+
+test('buildM3u resuelve las páginas en paralelo y conserva el orden', async () => {
+  const channels = Array.from({ length: 24 }, (_, i) => ({
+    id: `mx-c-${i}`, name: `Canal ${i}`, country: 'LATAM', origin: 'MX', category: 'Generalista', sources: ['x'],
+    streams: [{ url: `https://x/${i}.php`, kind: 'page', source: 'tvenvivo' }]
+  }));
+  let enVuelo = 0;
+  let maximo = 0;
+  const { body, count } = await buildM3u(channels, {
+    resolve: async stream => {
+      enVuelo++;
+      maximo = Math.max(maximo, enVuelo);
+      await new Promise(resolve => setTimeout(resolve, 5));
+      enVuelo--;
+      return { url: stream.url.replace('.php', '.m3u8') };
+    }
+  });
+  assert.equal(count, 24);
+  assert.ok(maximo > 1, 'las páginas se resuelven en paralelo, no de una en una');
+  // El orden del archivo sigue el de entrada.
+  const urls = body.split('\n').filter(line => line.startsWith('https'));
+  assert.deepEqual(urls, channels.map(channel => channel.streams[0].url.replace('.php', '.m3u8')));
+});
+
+test('streams: la misma URL repetida no se ofrece dos veces', async () => {
+  const channel = {
+    id: 'mx-1', name: 'Canal 5', sources: ['a', 'b'],
+    streams: [
+      { url: 'https://x/1.m3u8', kind: 'hls', source: 'eja' },
+      { url: 'https://x/1.m3u8', kind: 'hls', source: 'iptvorg' },
+      { url: 'https://x/2.m3u8', kind: 'hls', source: 'tvgarden' }
+    ]
+  };
+  const options = await addon.streams(channel, {});
+  assert.equal(options.length, 2);
+  assert.equal(new Set(options.map(option => option.url)).size, 2);
 });
 
 test('streams: directos tal cual, `page` resuelto y sin URL inventada', async () => {
@@ -133,6 +318,13 @@ test('rutas HTTP: manifest, catálogo, meta, stream, M3U y config', async () => 
   await withServer(fakeCatalog(), async base => {
     const manifest = await (await fetch(base + '/manifest.json')).json();
     assert.equal(manifest.id, 'org.tvespanol.live');
+    assert.ok(manifest.logo, 'el manifiesto declara icono');
+    const logo = await fetch(base + manifest.logo);
+    assert.equal(logo.status, 200);
+    assert.match(logo.headers.get('content-type'), /svg/);
+    const robots = await fetch(base + '/robots.txt');
+    assert.equal(robots.status, 200);
+    assert.ok(manifest.catalogs.some(catalog => catalog.id === 'pais-mx'));
 
     const catalog = await (await fetch(base + '/catalog/tv/todos.json')).json();
     assert.equal(catalog.metas.length, 2);
@@ -161,6 +353,15 @@ test('rutas HTTP: manifest, catálogo, meta, stream, M3U y config', async () => 
 
     const latam = await fetch(base + '/playlist/latam.m3u');
     assert.equal(latam.headers.get('x-channel-count'), '0');
+
+    // Una lista M3U por país; `mx` no debe traer canales de España.
+    const mexico = await fetch(base + '/playlist/mx.m3u');
+    assert.match(playlist.headers.get('content-type'), /mpegurl/);
+    assert.equal(mexico.headers.get('x-channel-count'), '0');
+
+    // Un catálogo de país desconocido devuelve 404, no una lista vacía.
+    const unknownCountry = await fetch(base + '/catalog/tv/pais-zz.json');
+    assert.equal(unknownCountry.status, 404);
 
     const listed = await (await fetch(base + '/playlists.json')).json();
     assert.equal(listed.playlists.find(entry => entry.id === 'es').channels, 2);

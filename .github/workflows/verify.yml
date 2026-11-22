@@ -1,0 +1,61 @@
+name: Verificación de señales
+
+on:
+  schedule:
+    # Después de la recolección diaria (04:17 UTC).
+    - cron: '47 4 * * *'
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: 'Máximo de canales a verificar (vacío = todos)'
+        required: false
+        default: ''
+        type: string
+
+concurrency:
+  group: signal-check
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Verificar señales
+        # Un fallo de red del runner no debe tumbar el workflow: el informe y los
+        # recuentos quedan igualmente en el artefacto y en el resumen.
+        continue-on-error: true
+        env:
+          LIMIT: ${{ inputs.limit }}
+        run: node scripts/verify.js
+      - name: Resumen
+        if: always()
+        run: |
+          node -e "
+            const fs = require('fs');
+            if (!fs.existsSync('reports/health.json')) { console.log('sin informe'); process.exit(0); }
+            const r = JSON.parse(fs.readFileSync('reports/health.json', 'utf8'));
+            const summary = { checkedAt: r.checkedAt, inconclusive: r.inconclusive, totals: r.totals, caidos: r.dead.length };
+            console.log(JSON.stringify(summary, null, 1));
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, '```json\n' + JSON.stringify(summary, null, 1) + '\n```\n');
+            if (fs.existsSync('reports/dead.txt')) {
+              const dead = fs.readFileSync('reports/dead.txt', 'utf8').split('\n').slice(0, 40).join('\n');
+              fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, '### Primeros caídos\n```\n' + dead + '\n```\n');
+            }
+          "
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: signal-check
+          path: |
+            reports/health.json
+            reports/dead.txt
+            reports/playlist-*.m3u
+          if-no-files-found: warn
+          retention-days: 7

@@ -3,8 +3,15 @@ const path = require('node:path');
 const { createCatalog } = require('./engines/live/catalog');
 const { get } = require('./engines/live/http');
 const { sources, byId } = require('./engines/live/sources');
+const { COUNTRIES, isCountry } = require('./engines/live/countries');
 const { buildM3u } = require('./engines/live/m3u');
 const addon = require('./engines/live/addon');
+const { createChecker } = require('./engines/live/checker');
+const extractor = require('./engines/live/extract');
+
+// Guía de programación usada en las listas M3U. TDTChannels publica una EPG
+// abierta de la TDT española; cubre una parte del catálogo, no todo.
+const EPG_URL = process.env.EPG_URL || 'https://www.tdtchannels.com/epg/TV.xml.gz';
 
 const SITE_NAME = 'TV en Español';
 
@@ -59,22 +66,135 @@ function parseRoute(raw, { withExtra = false } = {}) {
   return { id, extras };
 }
 
-const PLAYLISTS = {
+// Listas M3U: las generales de siempre más una por país (la que se navega en
+// Stremio). El país se mira en `origin`, que es el dato real del canal.
+const REGION_PLAYLISTS = {
   all: { label: 'Todos los canales', filter: () => true },
-  es: { label: 'España', filter: channel => channel.country === 'ES' },
-  latam: { label: 'Latinoamérica', filter: channel => channel.country === 'LATAM' },
+  es: { label: 'España (región)', filter: channel => channel.country === 'ES' },
+  latam: { label: 'Latinoamérica (región)', filter: channel => channel.country === 'LATAM' },
   deportes: { label: 'Deportes', filter: channel => /deporte|sport/i.test(channel.category) }
 };
 
+const PLAYLISTS = {
+  ...REGION_PLAYLISTS,
+  ...Object.fromEntries(COUNTRIES.map(country => [
+    country.code.toLowerCase(),
+    {
+      label: country.name,
+      filter: channel => (channel.origin || channel.country) === country.code
+    }
+  ]))
+};
+
+// Enriquecimiento de embeds para el catálogo por defecto: resuelve el HLS de
+// tvenvivo/thedaddy al recolectar, con presupuesto propio.
+const defaultExtract = (channels, options) => extractor.enrich(channels, { ...options, byId, stats: extractor.sharedStats });
+
 function createApp({
-  catalog = createCatalog({ sources, ...(catalogTtl() ? { ttlMs: catalogTtl() } : {}) }),
+  catalog = createCatalog({
+    sources,
+    ...(catalogTtl() ? { ttlMs: catalogTtl() } : {}),
+    extract: process.env.EXTRACT_HLS === '0' ? null : defaultExtract
+  }),
   resolve = resolvePage,
   playlistTtlMs = 5 * 60 * 1000,
   now = Date.now,
-  logger = console
+  logger = console,
+  // Verificador de señales. Se puede inyectar (pruebas) o desactivar con
+  // `checker: null`; por defecto verifica bajo demanda con `get`.
+  // `channels` se resuelve perezosamente del catálogo: al construir `createApp`
+  // el catálogo aún no ha recolectado y una lista vacía dejaría canales sin
+  // informe (y por tanto sin veredicto de salud).
+  checker = createChecker({
+    get,
+    resolvePage: resolve,
+    channels: async () => (await catalog.load()).channels,
+    logger
+  }),
+  // Persistencia opcional del informe (`{ read, write }`). El servidor real usa
+  // `reports/health.json` para no re-sondear todo tras un reinicio.
+  healthStore = null,
+  // Verificación automática al arrancar el catálogo (por defecto sí).
+  autoVerify = true
 } = {}) {
   const app = express();
   const playlistCache = new Map();
+
+  if (checker && healthStore && typeof healthStore.read === 'function') {
+    try {
+      const stored = healthStore.read();
+      if (stored && checker.restore(stored)) catalog.setHealth(stored);
+    } catch (error) {
+      logger.warn(`[checker] informe guardado ilegible: ${error.message}`);
+    }
+  }
+
+  function persistHealth(report) {
+    if (!healthStore || typeof healthStore.write !== 'function' || !report) return;
+    try {
+      healthStore.write(report);
+    } catch (error) {
+      logger.warn(`[checker] no se pudo guardar el informe: ${error.message}`);
+    }
+  }
+
+  /**
+   * Verifica todo el catálogo y deja el resultado listo para las rutas.
+   * Carga el catálogo primero: los ids de los canales los normaliza el catálogo
+   * (slug del nombre), así que la lista debe salir de él y no de fuera.
+   */
+  async function verifyNow(list) {
+    if (!checker) return null;
+    const target = list || (await catalog.load()).channels;
+    const report = await checker.run({ force: true, list: target });
+    catalog.setHealth(report);
+    playlistCache.clear();
+    persistHealth(report);
+    return report;
+  }
+
+  // Sin presupuesto suficiente, `?check=1` responde con el informe anterior en
+  // vez de dejar la petición colgada.
+  const CHECK_BUDGET_MS = Number(process.env.CHECK_BUDGET_MS) > 0 ? Number(process.env.CHECK_BUDGET_MS) : 25 * 1000;
+
+  // Lanza la verificación en segundo plano sin bloquear la petición actual.
+  function verifyInBackground(list) {
+    if (!checker) return;
+    if (checker.fresh()) return;
+    checker.run({ list }).then(report => {
+      catalog.setHealth(report);
+      // El filtrado cambia: las listas cacheadas dejan de valer.
+      playlistCache.clear();
+      persistHealth(report);
+    }).catch(error => {
+      logger.warn(`[checker] no se pudo verificar: ${error.message}`);
+    });
+  }
+
+  // `?check=1` fuerza verificación antes de responder; el resto de peticiones
+  // responde al instante con el último informe y refresca en segundo plano.
+  // Un fallo del verificador nunca rompe la respuesta.
+  async function ensureHealth(req, loaded) {
+    if (!checker) return loaded;
+    const forced = req.query.check === '1' || req.query.check === 'true';
+    try {
+      if (forced) {
+        const report = await Promise.race([
+          verifyNow(loaded.channels),
+          new Promise(resolve => setTimeout(() => resolve(null), CHECK_BUDGET_MS).unref?.())
+        ]);
+        if (report) return await catalog.load();
+        logger.warn('[checker] verificación lenta: se responde con el informe anterior');
+      }
+      // Solo se responde con el informe existente: la verificación va siempre en
+      // segundo plano para no bloquear rutas de lista (ni pruebas ni usuarios).
+      if (!checker.peek() || !checker.fresh()) verifyInBackground(loaded.channels);
+      return loaded;
+    } catch (error) {
+      logger.warn(`[checker] verificación fallida: ${error.message}`);
+      return loaded;
+    }
+  }
 
   async function channelsOr503(res) {
     try {
@@ -96,13 +216,32 @@ function createApp({
 
   app.get('/manifest.json', (req, res) => res.json(addon.manifest()));
 
+  // Icono del addon: un SVG pequeño, sin depender de servicios externos.
+  app.get(addon.LOGO_PATH, (req, res) => {
+    res.type('image/svg+xml').set('Cache-Control', 'public, max-age=86400').send(
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">' +
+      '<rect width="100" height="100" rx="18" fill="#111827"/>' +
+      '<rect x="16" y="26" width="68" height="42" rx="6" fill="#f9fafb"/>' +
+      '<rect x="26" y="36" width="48" height="22" rx="3" fill="#111827"/>' +
+      '<path d="M44 41l14 6-14 6z" fill="#f9fafb"/>' +
+      '<rect x="32" y="74" width="36" height="5" rx="2.5" fill="#f9fafb"/>' +
+      '</svg>'
+    );
+  });
+
+  app.get('/robots.txt', (req, res) => {
+    res.type('text/plain').send('User-agent: *\nAllow: /\n');
+  });
+
   // Catálogo: `/catalog/tv/todos.json`, `/catalog/tv/todos/skip=100.json`,
   // `/catalog/tv/todos/genre=España&skip=100.json`.
   app.get(/^\/catalog\/([^/]+)\/(.+)\.json$/, async (req, res) => {
     const type = decodeURIComponent(req.params[0]);
     if (type !== 'tv') return res.status(404).json({ error: 'Tipo no soportado' });
     const { id, extras } = parseRoute(req.params[1], { withExtra: true });
-    if (!['todos', 'espana', 'latinoamerica', 'deportes'].includes(id)) {
+    const known = ['todos', 'espana', 'usa', 'latinoamerica', 'sinpais', 'deportes', 'caidos'];
+    const countryCatalog = /^pais-([a-z]{2})$/.exec(id);
+    if (!known.includes(id) && !(countryCatalog && isCountry(countryCatalog[1].toUpperCase()))) {
       return res.status(404).json({ error: 'Catálogo desconocido' });
     }
     const loaded = await channelsOr503(res);
@@ -154,23 +293,34 @@ function createApp({
     const definition = PLAYLISTS[variant];
     if (!definition) return res.status(404).json({ error: 'Lista desconocida' });
     const includePages = req.query.pages === '1';
-    const cacheKey = `${variant}:${includePages ? 'pages' : 'direct'}`;
+    // `?dead=0` (por defecto) excluye los canales que el verificador dio por
+    // caídos; `?dead=1` los incluye para depurar.
+    const includeDead = req.query.dead === '1';
+    const cacheKey = `${variant}:${includePages ? 'pages' : 'direct'}:${includeDead ? 'con-caidos' : 'sin-caidos'}`;
     const hit = playlistCache.get(cacheKey);
     if (hit && hit.expires > now()) {
+      res.set('X-Channel-Count', String(hit.count));
       res.type('application/vnd.apple.mpegurl').send(hit.body);
       return undefined;
     }
-    const loaded = await channelsOr503(res);
+    let loaded = await channelsOr503(res);
     if (!loaded) return undefined;
-    const channels = loaded.channels.filter(definition.filter);
+    loaded = await ensureHealth(req, loaded);
+    const channels = loaded.channels
+      .filter(definition.filter)
+      .filter(channel => includeDead || !channel.dead);
     const { body, count } = await buildM3u(channels, {
-      resolve: includePages ? resolvePage : null,
+      // Se usa el resolutor inyectado (`resolve`), no el global, para que las
+      // pruebas y los despliegues puedan sustituirlo.
+      resolve: includePages ? resolve : null,
       siteName: SITE_NAME,
+      epgUrl: EPG_URL,
       siteUrl: `${req.protocol}://${req.get('host')}`
     });
     if (playlistCache.size > 32) playlistCache.delete(playlistCache.keys().next().value);
-    playlistCache.set(cacheKey, { body, expires: now() + playlistTtlMs });
+    playlistCache.set(cacheKey, { body, count, expires: now() + playlistTtlMs });
     res.set('X-Channel-Count', String(count));
+    if (loaded.health && loaded.health.checkedAt) res.set('X-Checked-At', loaded.health.checkedAt);
     res.type('application/vnd.apple.mpegurl').send(body);
     return undefined;
   });
@@ -184,11 +334,17 @@ function createApp({
     res.json({
       updatedAt: new Date(loaded.loadedAt).toISOString(),
       counts: loaded.counts,
+      health: loaded.health || null,
       playlists: Object.entries(PLAYLISTS).map(([id, definition]) => ({
         id,
         name: definition.label,
         url: `${base}/playlist/${id}.m3u`,
-        channels: loaded.channels.filter(definition.filter).filter(channel => channel.playable).length
+        // Cuenta lo que la lista entrega de verdad: medio directo o página que
+        // el servidor sabe resolver.
+        channels: loaded.channels.filter(definition.filter)
+          .filter(channel => !channel.dead)
+          .filter(channel => channel.playable || channel.streams.some(stream => stream.kind === 'page')).length,
+        withDeadUrl: `${base}/playlist/${id}.m3u?dead=1`
       }))
     });
     return undefined;
@@ -212,7 +368,39 @@ function createApp({
         stale: Boolean(loaded.stale),
         staleReason: loaded.staleReason || null
       },
+      health: loaded.health || null,
+      extract: loaded.status._extract || null,
       sources: loaded.status
+    });
+  });
+
+  // Estado del verificador: resumen y lista de canales caídos.
+  app.get('/health.json', async (req, res) => {
+    if (!checker) return res.status(404).json({ error: 'Verificador desactivado' });
+    let loaded = await channelsOr503(res);
+    if (!loaded) return undefined;
+    loaded = await ensureHealth(req, loaded);
+    return res.json({
+      ok: true,
+      siteName: SITE_NAME,
+      ...(loaded.health || {
+        checkedAt: null, checked: 0, alive: 0, dead: 0, unknown: 0,
+        unchecked: loaded.channels.length, deadChannels: []
+      })
+    });
+  });
+
+  // Lista de canales caídos en formato Stremio (solo los que el addon publica).
+  app.get('/health/dead.json', async (req, res) => {
+    if (!checker) return res.status(404).json({ error: 'Verificador desactivado' });
+    let loaded = await channelsOr503(res);
+    if (!loaded) return undefined;
+    loaded = await ensureHealth(req, loaded);
+    const dead = loaded.channels.filter(channel => channel.dead);
+    return res.json({
+      checkedAt: (loaded.health && loaded.health.checkedAt) || null,
+      total: dead.length,
+      metas: dead.map(addon.toMeta)
     });
   });
 
@@ -253,25 +441,67 @@ eja.tv, iptvcat, TV Garden, Global Free TV, TVEnVivo, DaddyLive y Live24.</p>
 <p>Instala el addon con <a href="/manifest.json">${base}/manifest.json</a>.</p>
 <h2>Listas M3U</h2>
 <ul>${Object.entries(PLAYLISTS).map(([id, definition]) => `<li>${definition.label}: <a href="/playlist/${id}.m3u">${base}/playlist/${id}.m3u</a></li>`).join('')}</ul>
+<h2>Stremio: un catálogo por país</h2>
+<p>España, Estados Unidos, México, Argentina, Colombia, Chile, Perú, Venezuela,
+Ecuador, Guatemala, Honduras, El Salvador, Nicaragua, Costa Rica, Panamá, Cuba,
+República Dominicana, Puerto Rico, Uruguay, Paraguay y Bolivia.</p>
 <p>Añade <code>?pages=1</code> a una lista para resolver también las fuentes que
 requieren una petición extra (TVEnVivo y DaddyLive); sin ese parámetro solo se
 publican medios directos.</p>
 <p class="nota">DaddyLive y Live24 funcionan como <strong>mejor esfuerzo</strong>: su CDN
 solo entrega los tokens a un navegador real, así que esos canales pueden requerir
 abrir la página del origen.</p>
+<h2>Verificación de señales</h2>
+<p>Los canales caídos se detectan sondeando cada medio y se excluyen de las listas.
+Estado: <a href="/health.json">/health.json</a> · caídos: <a href="/health/dead.json">/health/dead.json</a>.
+Añade <code>?check=1</code> a una lista o a <a href="/health.json?check=1">/health.json</a>
+para verificar ahora mismo; con <code>?dead=1</code> se incluyen también los caídos.</p>
 <p>El estado real de las fuentes está en <a href="/config">/config</a>.</p>
 </html>`);
   });
 
   app.use((req, res) => res.status(404).json({ error: 'No encontrado' }));
+
+  // Permite a `npm start` lanzar la verificación inicial sin bloquear el listen.
+  app.locals.verifyNow = verifyNow;
+  app.locals.autoVerify = autoVerify;
   return app;
+}
+
+// Persistencia del informe de salud (`reports/health.json`, ignorado por git).
+function fileHealthStore(file = path.join('reports', 'health.json')) {
+  const fs = require('node:fs');
+  return {
+    path: file,
+    read() {
+      if (!fs.existsSync(file)) return null;
+      return JSON.parse(fs.readFileSync(file, 'utf8'));
+    },
+    write(report) {
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      fs.writeFileSync(file, JSON.stringify(report));
+    }
+  };
 }
 
 if (require.main === module) {
   const port = process.env.PORT || 8080;
-  createApp().listen(port, '0.0.0.0', () => {
+  const app = createApp({ healthStore: fileHealthStore() });
+  app.listen(port, '0.0.0.0', () => {
     console.log(`${SITE_NAME} addon escuchando en el puerto ${port}`);
+    // Verificación inicial en segundo plano: no retrasa el arranque y, si falla
+    // (sin red), el servidor sigue sirviendo el catálogo completo.
+    if (app.locals.autoVerify) {
+      setImmediate(async () => {
+        try {
+          const report = await app.locals.verifyNow();
+          console.log(`[checker] verificación inicial: ${report.alive} vivos · ${report.dead} caídos · ${report.unknown} sin verificar`);
+        } catch (error) {
+          console.warn(`[checker] verificación inicial omitida: ${error.message}`);
+        }
+      });
+    }
   });
 }
 
-module.exports = { createApp, parseRoute, PLAYLISTS, SITE_NAME, path };
+module.exports = { createApp, parseRoute, PLAYLISTS, SITE_NAME, path, fileHealthStore };

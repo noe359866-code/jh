@@ -76,6 +76,19 @@ async function collect({ get, maxPages = 3, onSource }) {
  */
 async function resolve(pageUrl, { get }) {
   const page = await get(pageUrl, { referer: BASE + '/' });
+  // 1) Algunas páginas ya traen el iframe del reproductor (a veces de un host
+  //    regional). Se prueban antes que `core.php`, que es un salto extra.
+  const inline = [...String(page.text).matchAll(/<iframe[^>]*\bsrc="([^"]+)"/gi)]
+    .map(match => match[1].replace(/&amp;/g, '&'))
+    .filter(url => !/tvenvivo\.org/i.test(url));
+  for (const candidate of inline) {
+    try {
+      const embedUrl = new URL(candidate, pageUrl).href;
+      const embed = await get(embedUrl, { referer: pageUrl });
+      const url = streamFromEmbed(embed.text);
+      if (url) return { url, referer: new URL(embedUrl).origin + '/' };
+    } catch { /* siguiente */ }
+  }
   const canal = canalFromPage(page.text) || pageUrl.split('/').pop().replace(/-en-vivo-online\.php$/i, '');
   for (const variant of ['live', 'live2', 'live3']) {
     const coreUrl = `${BASE}/${variant}/core.php?canal=${encodeURIComponent(canal)}`;
