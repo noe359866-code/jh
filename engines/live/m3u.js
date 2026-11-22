@@ -1,5 +1,6 @@
 // Generación y lectura de listas M3U con atributos IPTV.
 const { groupFor } = require('./text');
+const { mapLimit } = require('./limit');
 const { isCountry } = require('./countries');
 
 // País del canal para el M3U: el real si se conoce, la región si no.
@@ -16,22 +17,45 @@ const escapeName = value => escapeAttr(value).replace(/,/g, ' ');
  * reproducible; `resolve` permite convertir fuentes `kind:'page'` en medios
  * bajo demanda (devuelve `{ url, referer }` o `null`).
  */
-async function buildM3u(channels, { resolve, siteName = 'TV en español', siteUrl = '', epgUrl = '' } = {}) {
+async function buildM3u(channels, {
+  resolve, siteName = 'TV en español', siteUrl = '', epgUrl = '',
+  // Resolver páginas de una en una tarda ~300 ms por canal: con miles de canales
+  // una lista no terminaba y `verify.js` se quedaba a medias.
+  resolveConcurrency = 8
+} = {}) {
   // `x-tvg-url` vacío desactiva la guía en la mayoría de reproductores; si hay
   // EPG se declara, y si no se omite el atributo en vez de dejarlo en blanco.
   const lines = [epgUrl ? `#EXTM3U x-tvg-url="${escapeAttr(epgUrl)}"` : '#EXTM3U'];
   let count = 0;
-  for (const channel of channels) {
+
+  // Fase 1: resolver en paralelo las señales de página de todos los canales.
+  // Sin `resolve` no hay fase 1 (solo se publican medios directos).
+  const resueltas = resolve
+    ? await mapLimit(channels, resolveConcurrency, async channel => {
+      const out = [];
+      for (const stream of channel.streams || []) {
+        if (stream.kind !== 'page') continue;
+        try {
+          const resolved = await resolve(stream);
+          if (resolved && /^https?:\/\//i.test(resolved.url || '')) {
+            out.push({ url: resolved.url, referer: resolved.referer || null, source: stream.source });
+          }
+        } catch {
+          // Una página que no resuelve no rompe la lista.
+        }
+      }
+      return out;
+    })
+    : channels.map(() => []);
+
+  // Fase 2: escribir en orden, que es lo que hace determinista el archivo.
+  for (const [index, channel] of channels.entries()) {
     const streams = [];
     for (const stream of channel.streams || []) {
-      if (stream.kind === 'page') {
-        if (!resolve) continue;
-        const resolved = await resolve(stream);
-        if (resolved) streams.push({ url: resolved.url, referer: resolved.referer });
-        continue;
-      }
+      if (stream.kind === 'page') continue;
       if (/^https?:\/\//i.test(stream.url || '')) streams.push(stream);
     }
+    streams.push(...resueltas[index]);
     if (!streams.length) continue;
     for (const stream of streams) {
       // Si la lista de origen trae `tvg-id` (el que usa la EPG), se publica ese;

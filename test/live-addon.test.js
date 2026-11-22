@@ -215,6 +215,29 @@ test('catálogo Stremio: solo canales publicables, paginado y filtros', () => {
   assert.equal(addon.catalog(CHANNELS, 'todos', '', 1).metas.length, 1);
 });
 
+test('buildM3u resuelve las páginas en paralelo y conserva el orden', async () => {
+  const channels = Array.from({ length: 24 }, (_, i) => ({
+    id: `mx-c-${i}`, name: `Canal ${i}`, country: 'LATAM', origin: 'MX', category: 'Generalista', sources: ['x'],
+    streams: [{ url: `https://x/${i}.php`, kind: 'page', source: 'tvenvivo' }]
+  }));
+  let enVuelo = 0;
+  let maximo = 0;
+  const { body, count } = await buildM3u(channels, {
+    resolve: async stream => {
+      enVuelo++;
+      maximo = Math.max(maximo, enVuelo);
+      await new Promise(resolve => setTimeout(resolve, 5));
+      enVuelo--;
+      return { url: stream.url.replace('.php', '.m3u8') };
+    }
+  });
+  assert.equal(count, 24);
+  assert.ok(maximo > 1, 'las páginas se resuelven en paralelo, no de una en una');
+  // El orden del archivo sigue el de entrada.
+  const urls = body.split('\n').filter(line => line.startsWith('https'));
+  assert.deepEqual(urls, channels.map(channel => channel.streams[0].url.replace('.php', '.m3u8')));
+});
+
 test('streams: la misma URL repetida no se ofrece dos veces', async () => {
   const channel = {
     id: 'mx-1', name: 'Canal 5', sources: ['a', 'b'],

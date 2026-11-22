@@ -111,13 +111,22 @@ async function main() {
   );
 
   // Listas sin caídos (mismas rutas y atributos que el servidor).
-  for (const [variant, filter] of Object.entries(PLAYLISTS)) {
-    const { body, count } = await buildM3u(channels.filter(filter).filter(channel => !channel.dead), {
-      siteName: 'TV en Español'
-    });
-    const file = path.join('reports', `playlist-${variant}.m3u`);
-    fs.writeFileSync(file, body);
-    written[variant] = count;
+  //
+  // `all` va primero y cada lista se escribe en cuanto se genera: si el proceso
+  // se corta a mitad (24 listas sobre miles de canales), al menos quedan las
+  // anteriores en lugar de un directorio vacío.
+  const vivos = channels.filter(channel => !channel.dead);
+  const orden = ['all', ...Object.keys(PLAYLISTS).filter(id => id !== 'all')];
+  for (const variant of orden) {
+    const filter = PLAYLISTS[variant];
+    if (!filter) continue;
+    try {
+      const { body, count } = await buildM3u(vivos.filter(filter), { siteName: 'TV en Español' });
+      fs.writeFileSync(path.join('reports', `playlist-${variant}.m3u`), body);
+      written[variant] = count;
+    } catch (error) {
+      console.warn(`Lista ${variant} no generada: ${error.message}`);
+    }
   }
   console.log(`Listas escritas en reports/: ${Object.entries(written).map(([id, count]) => `${id} (${count})`).join(', ')}`);
 
