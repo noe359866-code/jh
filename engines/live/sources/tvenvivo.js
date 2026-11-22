@@ -12,7 +12,7 @@ const BASE = 'https://www.tvenvivo.org';
 function parseHome(html) {
   const channels = [];
   const seen = new Set();
-  const linkRe = /<a\b([^>]*href="([^"]*?\/[a-z0-9-]+-en-vivo-online\.php)"[^>]*)>([\s\S]{0,600}?)<\/a>/gi;
+  const linkRe = /<a\b([^>]*?href="([^"]*?-en-vivo-online\.php)"[^>]*)>([\s\S]{0,1500}?)<\/a>/gi;
   for (const match of String(html).matchAll(linkRe)) {
     const pageUrl = new URL(match[2], BASE).href;
     if (seen.has(pageUrl)) continue;

@@ -42,7 +42,7 @@ const dispatcher = new Agent({
   connections: 6, pipelining: 1, headersTimeout: 12000, bodyTimeout: 20000
 });
 
-const BROWSER_UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
+const BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
 
 // `redirect: 'error'` evita saltos a hosts no validados. El cuerpo se lee
 // completo pero con límite estricto de bytes.
@@ -98,6 +98,11 @@ async function get(url, {
       'User-Agent': BROWSER_UA,
       Accept: accept,
       'Accept-Language': 'es-ES,es;q=0.9,en;q=0.6',
+      'Accept-Encoding': 'gzip, deflate',
+      'Upgrade-Insecure-Requests': '1',
+      'Sec-Fetch-Dest': 'document',
+      'Sec-Fetch-Mode': 'navigate',
+      'Sec-Fetch-Site': referer ? 'same-origin' : 'none',
       ...(referer ? { Referer: referer } : {}),
       ...headers
     }

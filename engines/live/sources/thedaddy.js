@@ -5,7 +5,7 @@
 // La resolución encadena `watch.php?id=N` → iframe `stream/stream-N.php` →
 // iframe del reproductor (`dembed.st/...`) → `const SRC = "https://….m3u8"`.
 // El CDN de ese reproductor exige `Referer`, que se propaga al reproductor.
-const { cleanChannelName, channelKey } = require('../text');
+const { cleanChannelName, channelKey, stripTags } = require('../text');
 
 const BASE = 'https://thedaddy.li';
 const LIST_PATH = '/24-7-channels.php';
@@ -25,8 +25,19 @@ const SPANISH_SIGNALS = [
 /** Tarjetas `a.card[href="/watch.php?id=N"]`. */
 function parseList(html) {
   const items = [];
-  for (const match of String(html).matchAll(/<a class="card" href="\/watch\.php\?id=(\d+)"[\s\S]*?<div class="card__title">([\s\S]*?)<\/div>/g)) {
-    items.push({ id: Number(match[1]), name: cleanChannelName(match[2]) });
+  const text = String(html);
+  const cardRe = /<a\b[^>]*href="\/watch\.php\?id=(\d+)"[^>]*>([\s\S]{0,1200}?)<\/a>/gi;
+  for (const match of text.matchAll(cardRe)) {
+    const body = match[2];
+    const title = (body.match(/<div class="card__title">([\s\S]*?)<\/div>/) || [])[1]
+      || (match[0].match(/data-title="([^"]+)"/) || [])[1] || '';
+    const name = cleanChannelName(stripTags(title));
+    if (name) items.push({ id: Number(match[1]), name });
+  }
+  if (!items.length) {
+    for (const match of text.matchAll(/watch\.php\?id=(\d+)"[^>]*title="([^"]+)"/g)) {
+      items.push({ id: Number(match[1]), name: cleanChannelName(match[2]) });
+    }
   }
   return items;
 }
