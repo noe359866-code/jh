@@ -1,9 +1,0 @@
-{
- "checked": 3213,
- "alive": 2838,
- "dead": 375,
- "blocked": 646,
- "unconfirmed": 439,
- "unknown": 0,
- "skipped": 513
-}

@@ -77,6 +77,43 @@ fuentes que lo aportan. Las señales se entregan como HLS directo; cuando el ori
 exige `Referer` o `User-Agent`, se envían como `proxyHeaders` para que el
 reproductor de Stremio los use.
 
+## Fuentes
+
+Además de los siete sitios que se recorren, el catálogo incorpora seis listas M3U
+externas de canales en español. Se descargan en cada pasada, se normalizan con el
+mismo parser (`engines/live/sources/playlist.js`) y pasan por el verificador como
+cualquier otra fuente:
+
+| Fuente | Lista | Aporta |
+|---|---|---|
+| CineCity | `CINECITY2023/cinecity` (`principal.m3u`, rama `cinecity.net`) | cine, deportes y regionales de Argentina y México |
+| Telechancho | `telechancho.github.io/infinity.m3u` | generalistas, noticias y radios de Argentina |
+| iptv-chile | `Orieus-lesauce/iptv-chile` (`CL.m3u`) | 23 canales nacionales chilenos (Mega, CHV, TVN, La Red…) |
+| Samsung TV Plus ES | `BuddyChewChew/app-m3u-generator` (`samsungtvplus_es.m3u`) | 194 canales FAST de España, servidos vía `jmp2.uk` |
+| Pluto TV | `iprtl/m3u` (rama `live`, `Pluto.m3u`) | solo los canales hispanos de sus 850 entradas |
+| D9Kod | `s.id/d9Kod` | lo que publique el acortador, verificado antes de listarse |
+
+Detalles de la normalización:
+
+- **Solo español.** Se descarta la entrada si declara `tvg-language` distinto de
+  español (`por`, `pt`, `eng`, `fra`, `deu`, `ita`…). Nada se inventa: un canal
+  sin país identificable se queda como internacional, no se elimina.
+- **País por tres vías**, en este orden: bandera o sufijo del nombre (`Mega [CL]`,
+  `La 1 (ES)`), `tvg-country`/`group-title` (`🌍 Mexico`, `🏙️ Buenos Aires`) y
+  lista de procedencia (Samsung ES → España). España va a la lista `es` y el resto
+  de países hispanos a `latam`; ambos entran también en `all`.
+- **Redirectores.** `jmp2.uk` y `s.id` sirven un `#EXTM3U` aunque la URL no acabe
+  en `.m3u8`: se tratan como medio directo y el verificador sigue el 302 y
+  comprueba la firma del destino final. Si el destino no responde, el canal queda
+  caído y no se publica.
+- **Tolerancia.** Líneas `EXTINF` mal formadas, URLs `rtmp://` y entradas sin URL
+  se ignoran sin romper la lista. Una lista que no responde no tumba el catálogo:
+  las demás siguen aportando canales.
+
+Medición en CI (última pasada): catálogo **3803 canales, 3388 con medio directo**;
+listas `all` **4210**, `es` **516**, `latam` **3694**, `deportes` **170**. Las seis
+listas dominan el catálogo (solas eran 1860 canales antes de incorporarlas).
+
 ## Listas M3U
 
 | Lista | Ruta | Contenido |
@@ -224,6 +261,7 @@ con `stale: true` y `staleReason`.
 | tvenvivo.org | embed | `core.php?canal=<slug>` → iframe → `var src = "…m3u8"` |
 | thedaddy.li | embed | `watch.php?id=N` → `stream-N.php` → embed → `const SRC` |
 | livelive24.com | embed | reproductor intermedio (blogspot) → `.m3u8` literal si existe |
+| CineCity, Telechancho, iptv-chile, Samsung TV Plus ES, Pluto TV, D9Kod | directo | listas M3U propias, descargadas y normalizadas (ver «Fuentes») |
 
 **Modos:** `directo` = el canal ya trae una URL de medio; `página` = hay que resolver
 una cadena de iframes al reproducir; `catálogo` = la fuente solo aporta el nombre y el
@@ -236,9 +274,9 @@ español de EE. UU. Todos los canales se etiquetan con su país de origen.
 ## Verificación
 
 ```bash
-npm test        # 44 pruebas unitarias (parser + addon + rutas + verificador + extracción), sin red
+npm test        # 53 pruebas unitarias (parser + addon + rutas + verificador + extracción), sin red
 npm run check   # node --check sobre todo el motor
-npm run test:live   # comprobación real contra las 7 fuentes (necesita red)
+npm run test:live   # comprobación real contra las 13 fuentes (necesita red)
 SOURCE=eja,tvgarden npm run test:live   # solo algunas fuentes
 npm run verify  # sondeo de señales y listas limpias (necesita red)
 ```
