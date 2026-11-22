@@ -38,34 +38,17 @@ jobs:
             out.push('grupos: '+JSON.stringify(Object.entries(grupos).sort((a,b)=>b[1]-a[1]).slice(0,12)));
             const paises={};
             for(const i of items) paises[i.attrs['tvg-country']]=(paises[i.attrs['tvg-country']]||0)+1;
-            out.push('países: '+JSON.stringify(paises));
+            out.push('paises: '+JSON.stringify(paises));
             out.push('cabecera: '+t.split('\n')[0]);
             out.push('ejemplo: '+t.split('\n').slice(1,4).join(' ~ '));
-            fs.writeFileSync('m3u-audit.txt', out.join('\n')+'\n');
+            fs.writeFileSync('sonda-resultado.txt', out.join('\n')+'\n'+'\n=== RESUMEN ===\n'+fs.readFileSync('pl.log','utf8').split('\n').slice(-7).join('\n')+'\n');
           " || true
-      - uses: actions/upload-artifact@v4
-        continue-on-error: true
-        if: always()
-        with:
-          name: sonda
-          path: |
-            pl.log
-            m3u-audit.txt
-          if-no-files-found: ignore
-      # La auditoría se imprime en el log: es lo único que se puede leer desde
-      # fuera cuando el almacenamiento de artefactos no es accesible.
-      - name: Imprimir auditoría
+      - name: Publicar resultado
         if: always()
         run: |
-          {
-            echo "### Auditoría del M3U"
-            echo '```'
-            cat m3u-audit.txt 2>/dev/null || echo "sin auditoria"
-            echo '```'
-            echo "### Resumen"
-            echo '```'
-            tail -6 pl.log 2>/dev/null || true
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
-          echo "auditoria publicada en el summary"
-
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          test -f sonda-resultado.txt || echo "sin resultado" > sonda-resultado.txt
+          git add -f sonda-resultado.txt
+          git diff --cached --quiet && echo sin-cambios || git commit -m "Sonda (resultado generado)"
+          git push
