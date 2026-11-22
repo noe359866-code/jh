@@ -67,6 +67,7 @@ En Stremio: **Addons → Instalar desde URL → pega la URL**. El addon declara 
 | TV · España | `espana` | `skip` |
 | TV · Latinoamérica | `latinoamerica` | `skip` |
 | TV · Deportes | `deportes` | `skip` |
+| TV · Caídos (verificador) | `caidos` | `skip` |
 
 Cada canal es un `meta` con póster (si la fuente lo trae), país, categoría y las
 fuentes que lo aportan. Las señales se entregan como HLS directo; cuando el origen
@@ -82,6 +83,9 @@ reproductor de Stremio los use.
 | Latinoamérica | `/playlist/latam.m3u` | solo Latinoamérica |
 | Deportes | `/playlist/deportes.m3u` | solo deportes |
 
+Los canales caídos (según el verificador) se excluyen de todas ellas; añade
+`?dead=1` para incluirlos.
+
 Ejemplo:
 
 ```
@@ -92,11 +96,66 @@ https://TU-DOMINIO/playlist/es.m3u?pages=1
 - `?pages=1` resuelve además las **fuentes de página** (TVEnVivo y DaddyLive) antes de
   escribir la lista. Sin el parámetro solo se publican medios directos, que es lo más
   rápido y estable.
-- La respuesta lleva `X-Channel-Count` y se cachea 5 minutos.
+- La respuesta lleva `X-Channel-Count` (y `X-Checked-At` si hay informe de salud) y
+  se cachea 5 minutos.
 - Cada entrada incluye `tvg-id`, `tvg-logo`, `group-title` (`España · Deportes`,
   `Latinoamérica · Noticias`…), y `#EXTVLCOPT` con `Referer`/`User-Agent` cuando la
   fuente los exige.
 - `/playlists.json` da recuentos por lista y `/config` el estado de cada fuente.
+
+## Verificador de señales (canales caídos)
+
+No todos los canales que publican las webs siguen emitiendo. El servidor los
+**sondea** y quita de las listas solo los que están demostrablemente muertos.
+
+**Qué se considera caído** (para no borrar canales buenos por error):
+
+| Resultado del sondeo | Veredicto | ¿Se elimina? |
+|---|---|---|
+| `404`, `410`, `451`, DNS roto | **caído** | sí |
+| `401`, `403`, `429`, `503` | bloqueado (límite o geobloqueo) | no |
+| timeout / sin firma inesperada | tiempo agotado (sin confirmar) | no |
+| fuente de catálogo o página sin resolutor | desconocido | no |
+
+El sondeo pide solo los primeros 8 KB de cada medio, reintenta una vez los fallos
+de red/tiempo, reutiliza el resultado cuando el mismo medio aparece en varios
+canales y tiene un presupuesto total de tiempo: lo que no cabe se reintenta en la
+siguiente pasada. Si el propio entorno se queda sin salida a internet, el informe
+se marca **no concluyente** y no se usa para filtrar.
+
+**Medición real** (22/11/2026, 1.764 canales sondeados en 170 s):
+
+| Vivos | Caídos | Bloqueados | Tiempo agotado |
+|---:|---:|---:|---:|
+| 1.655 | **109** | 291 | 95 |
+
+De los 109 caídos, 81 eran `404` y 28 dominios que ya no resuelven.
+
+**En Stremio**: los caídos desaparecen de los catálogos normales y de las listas;
+se pueden revisar en el catálogo **`TV · Caídos (verificador)`**, donde cada ficha
+explica el motivo. También está `GET /health/dead.json`.
+
+**En M3U**: se excluyen por defecto. `?dead=1` los devuelve para depurar.
+
+Control:
+
+- El informe se calcula **al arrancar** (en segundo plano, sin retrasar el
+  `listen`) y se guarda en `reports/health.json`; tras un reinicio se reutiliza
+  mientras tenga menos de 6 h.
+- `?check=1` en una lista o en `/health.json` fuerza un sondeo nuevo (con
+  presupuesto de 25 s; si tarda más se responde con el informe anterior).
+- Desactivar: `createApp({ checker: null })`.
+
+```bash
+npm run verify                 # informe + listas sin caídos en reports/
+LIMIT=40 npm run verify        # muestra rápida
+CONCURRENCY=32 npm run verify  # más paralelismo
+FAIL_ON_DEAD=1 npm run verify  # exit 1 si hay caídos (CI estricta)
+```
+
+Deja `reports/health.json`, `reports/dead.txt` y copias `reports/playlist-*.m3u`
+ya filtradas. El workflow `verify.yml` lo ejecuta a diario a las 04:47 UTC y
+publica los artefactos.
 
 ## Rutas HTTP
 
@@ -107,7 +166,9 @@ https://TU-DOMINIO/playlist/es.m3u?pages=1
 | `GET /meta/tv/:id.json` | metadatos de un canal |
 | `GET /stream/tv/:id.json` | señales reproducibles de un canal |
 | `GET /playlist/:variant.m3u` | listas M3U (`all`, `es`, `latam`, `deportes`) |
-| `GET /playlists.json` | índice de listas con recuentos |
+| `GET /playlists.json` | índice de listas con recuentos y salud |
+| `GET /health.json` | informe del verificador (vivos, caídos, bloqueados) |
+| `GET /health/dead.json` | canales caídos en formato Stremio |
 | `GET /config` | estado y tiempos de cada fuente |
 | `GET /stream/page?url=` | resuelve una página de origen (solo `tvenvivo.org` y `thedaddy.li`) |
 | `GET /` | portada con enlaces |
@@ -140,10 +201,11 @@ español de EE. UU. Todos los canales se etiquetan con su país de origen.
 ## Verificación
 
 ```bash
-npm test        # 20 pruebas unitarias (parser + addon + rutas HTTP), sin red
+npm test        # 33 pruebas unitarias (parser + addon + rutas + verificador), sin red
 npm run check   # node --check sobre todo el motor
 npm run test:live   # comprobación real contra las 7 fuentes (necesita red)
 SOURCE=eja,tvgarden npm run test:live   # solo algunas fuentes
+npm run verify  # sondeo de señales y listas limpias (necesita red)
 ```
 
 `test:live` escribe `reports/live-check.json` (sin URLs ni tokens), imprime un resumen
@@ -182,8 +244,10 @@ engines/live/text.js         limpieza de nombres, slugs e identificadores
 engines/live/catalog.js      recolección, caché con TTL y fusión de fuentes
 engines/live/m3u.js          generación y lectura de listas M3U
 engines/live/addon.js        manifiesto, catálogos, meta y streams
+engines/live/checker.js      verificador de señales (caído / bloqueado / sin confirmar)
 engines/live/sources/*.js    un recolector por web
 scripts/live-check.js        verificación real contra las siete fuentes
+scripts/verify.js            sondeo de cada canal + listas sin caídos
 test/                        pruebas unitarias con instantáneas de HTML/JSON
 ```
 

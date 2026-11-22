@@ -376,3 +376,46 @@ test('el informe incluye recuento de bloqueados y no confirmados', async () => {
   assert.equal(resumen.unconfirmed, resumen.checked);
   assert.equal(resumen.ratio, 0);
 });
+
+
+test('verifyNow usa los ids normalizados del catálogo (regresión)', async () => {
+  const catalog = fakeCatalog();
+  const checker = createChecker({ get: async () => {}, channels: CHANNELS, probe: fakeProbe(['muerto.example']) });
+  const app = createApp({ catalog, checker, autoVerify: false });
+  const server = app.listen(0, '127.0.0.1');
+  await once(server, 'listening');
+  try {
+    const base = `http://127.0.0.1:${server.address().port}`;
+    const report = await app.locals.verifyNow();
+    assert.equal(report.dead, 1);
+    // El id real del catálogo es `es-viva` (slug del nombre), no el de entrada.
+    const muertos = await (await fetch(base + '/health/dead.json')).json();
+    assert.equal(muertos.total, 1, 'el informe debe casar con los ids del catálogo');
+    assert.equal(muertos.metas[0].id, 'es-viva');
+  } finally {
+    await new Promise(resolve => server.close(resolve));
+  }
+});
+
+
+test('un canal caído no ofrece medios inválidos en /stream', async () => {
+  const report = {
+    checkedAt: '2026-01-01T00:00:00.000Z',
+    results: {
+      'es-la-1': { ok: true, dead: false, via: 'direct', attempts: [{ status: 200 }] },
+      'es-viva': { ok: false, dead: true, via: 'direct', attempts: [{ status: 404, error: 'HTTP 404' }] }
+    }
+  };
+  const channels = applyReport(CHANNELS, report);
+  const viva = channels.find(channel => channel.id === 'es-viva');
+  assert.deepEqual(await addon.streams(viva), [], 'sin web de origen → sin opciones');
+
+  const conWeb = { ...viva, externalUrl: 'https://livelive24.com/?ch=9' };
+  const opciones = await addon.streams(conWeb);
+  assert.equal(opciones.length, 1);
+  assert.equal(opciones[0].externalUrl, 'https://livelive24.com/?ch=9');
+  assert.match(opciones[0].title, /señal caída/);
+
+  const vivaOk = channels.find(channel => channel.id === 'es-la-1');
+  assert.equal((await addon.streams(vivaOk)).length, 1, 'un canal vivo mantiene sus medios');
+});

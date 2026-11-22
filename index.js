@@ -103,10 +103,15 @@ function createApp({
     }
   }
 
-  /** Verifica todo el catálogo y deja el resultado listo para las rutas. */
+  /**
+   * Verifica todo el catálogo y deja el resultado listo para las rutas.
+   * Carga el catálogo primero: los ids de los canales los normaliza el catálogo
+   * (slug del nombre), así que la lista debe salir de él y no de fuera.
+   */
   async function verifyNow(list) {
     if (!checker) return null;
-    const report = await checker.run({ force: true, list });
+    const target = list || (await catalog.load()).channels;
+    const report = await checker.run({ force: true, list: target });
     catalog.setHealth(report);
     playlistCache.clear();
     persistHealth(report);

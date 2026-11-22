@@ -1,8 +1,10 @@
 // Verificador de señales en directo.
 //
-// Un canal está "caído" cuando todas sus URLs responden mal (404, 403, HTML en
-// vez de medio, DNS roto…). Es "desconocido" cuando no hay forma de comprobarlo:
-// fuentes de catálogo (solo enlace a la web) o páginas de origen sin resolutor.
+// Un canal está "caído" solo cuando TODAS sus URLs dan un estado de muerte
+// (404/410/451, dominio que no resuelve). Un 403/429/401 es "bloqueado" y un
+// timeout es "sin confirmar": en ambos casos el canal puede seguir vivo desde una
+// IP residencial o más tarde, así que no se elimina. Es "desconocido" cuando no
+// hay forma de comprobarlo (fuente de catálogo o página sin resolutor).
 // Nunca se marca caído un canal que no se pudo comprobar.
 //
 // El sondeo se hace bajo demanda (no bloquea el arranque) con tres límites:

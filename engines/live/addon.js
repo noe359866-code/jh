@@ -87,6 +87,18 @@ function streamTitle(stream, channel) {
 
 /** Reproduce: directos tal cual; `page` se resuelve con el resolutor indicado. */
 async function streams(channel, { resolvePage } = {}) {
+  // Canal marcado caído por el verificador: no se ofrecen medios que no
+  // responden. Si tiene web de origen, se deja como último recurso.
+  if (channel.dead) {
+    if (channel.externalUrl) {
+      return [{
+        name: 'Web original',
+        title: `${channel.name} · señal caída (${channel.health ? channel.health.error || 'no responde' : 'no responde'})`,
+        externalUrl: channel.externalUrl
+      }];
+    }
+    return [];
+  }
   const out = [];
   for (const stream of channel.streams || []) {
     if (stream.kind === 'page') {
