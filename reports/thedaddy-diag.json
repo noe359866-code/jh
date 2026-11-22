@@ -32,7 +32,7 @@
  {
   "step": "watch",
   "status": 200,
-  "length": 25458,
+  "length": 25349,
   "iframes": [
    "https://thedaddy.li/stream/stream-531.php",
    "https://thedaddy.li/stream/stream-531.php",
@@ -170,5 +170,15 @@
   "status": 200,
   "length": 657574,
   "iframe": "https://optimserve.shop/play.html#1/531"
+ },
+ {
+  "step": "alt-embed",
+  "url": "https://waterera.net/e/ul201lvsd924c",
+  "error": "HTTP 403"
+ },
+ {
+  "step": "alt-embed",
+  "url": "https://optimserve.shop/play.html#1/531",
+  "error": "HTTP 404"
  }
 ]
