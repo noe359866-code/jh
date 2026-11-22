@@ -12,18 +12,23 @@ compatible.
 
 Medido el **22/11/2026** ejecutando `npm run test:live` contra las siete fuentes:
 
-| Fuente | Modo | Canales | Reproducibles | Notas |
-|---|---|---:|---:|---|
-| iptvcat.net | directo | 1.170 | 1.170 | mini‑M3U firmadas por tarjeta (`data-clipboard-text`) |
-| tvgarden.world | directo | 1.211 | 1.186 | API JSON por país (`/api/tv/countries/<cc>.json`) |
-| eja.tv | directo | 699 | 699 | paginación `?offset=` de 6 en 6, filtro `language=spa` |
-| globalfreetv.com | directo | 243 | 243 | HTML SSR; 45 canales/país por límite de peticiones |
-| tvenvivo.org | página | 70 | 25 | requiere resolver `core.php?canal=` |
-| thedaddy.li | página | 29 | 0 | el CDN solo emite token a navegador real → mejor esfuerzo |
-| livelive24.com | catálogo | 29 | 0 | solo publica la página del canal (`externalUrl`) |
+| Fuente | Modo | Canales | Notas |
+|---|---|---:|---|
+| tvgarden.world | directo | 1.211 | API JSON por país (`/api/tv/countries/<cc>.json`) |
+| iptvcat.net | directo | 1.170 | mini‑M3U firmadas por tarjeta (`data-clipboard-text`) |
+| eja.tv | directo | 699 | paginación `?offset=` de 6 en 6, filtro `language=spa` |
+| globalfreetv.com | directo | 243 | HTML SSR; 45 canales/país por límite de peticiones |
+| tvenvivo.org | página | 70 | requiere resolver `core.php?canal=` |
+| thedaddy.li | página | 29 | el CDN solo emite token a navegador real → mejor esfuerzo |
+| livelive24.com | catálogo | 29 | solo publica la página del canal (`externalUrl`) |
 
-**Total: 1.870 canales · 1.845 con medio reproducible · 336 de España · 1.534 de Latinoamérica.**
-`playlistEntries` = 2.830 entradas M3U (un canal puede aportar varias señales).
+**Total: 1.857 canales únicos · 1.832 con medio reproducible o resoluble ·
+323 de España · 1.534 de Latinoamérica · 2.830 entradas M3U** (un canal puede
+aportar varias señales).
+
+En la misma pasada se comprobaron 10 canales al azar: **6 devolvieron una firma HLS
+válida** (`#EXTM3U`) y los 4 restantes eran de DaddyLive, que no resuelve sin
+navegador (ver limitaciones).
 
 Estas cifras cambian a diario: las fuentes son webs de terceros y publican y retiran
 señales sin aviso. El endpoint `/config` devuelve el estado de cada fuente en el
