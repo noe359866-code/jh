@@ -47,9 +47,11 @@ async function main() {
 
   const checker = createChecker({ get, resolvePage, channels: loaded.channels, concurrency: CONCURRENCY, budgetMs: BUDGET_MS });
   const report = await checker.run({ limit: LIMIT });
+  const bloqueados = Object.values(report.results).filter(result => result.blocked).length;
+  const sinConfirmar = Object.values(report.results).filter(result => result.unconfirmed).length;
   console.log(`Verificación: ${report.total} canales en ${Math.round(report.durationMs / 1000)} s · ` +
-    `vivos ${report.alive} · caídos ${report.dead} · bloqueados ${blocked.length} · ` +
-    `tiempo agotado ${lento.length} · sin verificar ${report.unknown} · omitidos ${report.skipped}`);
+    `vivos ${report.alive} · caídos ${report.dead} · bloqueados ${bloqueados} · ` +
+    `tiempo agotado ${sinConfirmar} · sin verificar ${report.unknown} · omitidos ${report.skipped}`);
   if (report.selfCheck.inconclusive) {
     console.warn(`Aviso: solo el ${Math.round(report.selfCheck.ratio * 100)}% de las señales verificables responden ` +
       `(${report.selfCheck.informative} medibles, ${report.selfCheck.throttled} limitadas por 403/429). ` +
@@ -58,8 +60,6 @@ async function main() {
 
   const channels = checker.apply(loaded.channels);
   const dead = channels.filter(channel => channel.dead);
-  const blocked = channels.filter(channel => channel.health && channel.health.ok && channel.health.reason === 'bloqueado');
-  const lento = channels.filter(channel => channel.health && channel.health.ok && channel.health.reason === 'sin confirmar');
   const written = {};
 
   // Informe completo: solo ids y motivos, sin URLs.
@@ -72,13 +72,13 @@ async function main() {
       checked: report.total,
       alive: report.alive,
       dead: report.dead,
-      blocked: blocked.length,
-      unconfirmed: lento.length,
+      blocked: bloqueados,
+      unconfirmed: sinConfirmar,
       unknown: report.unknown,
       skipped: report.skipped
     },
-    blocked: blocked.length,
-    unconfirmed: lento.length,
+    blocked: bloqueados,
+    unconfirmed: sinConfirmar,
     dead: dead.map(channel => ({
       id: channel.id,
       name: channel.name,
