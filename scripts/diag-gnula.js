@@ -426,7 +426,16 @@ async function faseApi2() {
   }
   // La ruta relativa que aparece como URL=... se resuelve contra la página y se
   // pide como haría el player (con su Referer). Solo se informa la forma.
-  const relativa = /URL\s*=\s*["']([^"']*apistream[^"']*)["']/i.exec(cuerpo);
+  // La página asigna la ruta por concatenación (URL=apistream); se prueban
+  // varias formas: comillas, sin comillas y base64.
+  const relativa = /URL\s*=\s*(?:["']([^"']*apistream[^"']*)["']|([A-Za-z0-9\/._?=&%:-]*apistream[A-Za-z0-9\/._?=&%:-]*))/i.exec(cuerpo);
+  const rutaAsignada = relativa ? (relativa[1] || relativa[2]) : null;
+  if (rutaAsignada) {
+    console.log(`ruta-asignada-forma: ${rutaAsignada.replace(/[A-Za-z0-9]/g, 'x')}`);
+    // ¿Hay literales cercanos que se concatenen? Se muestran redactados.
+    const indice = cuerpo.indexOf(rutaAsignada);
+    console.log(`contexto-asignacion: ${redactar(cuerpo.slice(Math.max(0, indice - 240), indice + 240))}`);
+  }
   if (relativa) {
     const objetivo = new URL(relativa[1], destino).href;
     console.log(`api-ruta-forma: ${new URL(objetivo).pathname.replace(/[A-Za-z0-9]/g, 'x')}${new URL(objetivo).search ? '?query' : ''}`);
