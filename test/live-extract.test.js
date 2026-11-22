@@ -126,3 +126,35 @@ test('la fuente se resuelve por nombre visible y no por id (regresión)', () => 
   assert.equal(resolveSource(byId, 'desconocido.tv'), null);
   assert.equal(resolveSource(byId, null), null);
 });
+
+
+test('penalización: un origen sin resultados deja de intentarse un tiempo', async () => {
+  const stats = new Map();
+  const canal = () => structuredClone(PAGE_CHANNEL);
+  const falla = async () => {
+    const counts = await enrich([canal()], {
+      get: async () => ({}),
+      byId: byId(null),          // la cadena no devuelve nada
+      probe: HLS_PROBE,
+      stats,
+      pauseMs: 0,
+      penaltyAfter: 2,
+      penaltyMs: 60000,
+      now: () => 1000
+    });
+    return counts;
+  };
+
+  const primera = await falla();
+  assert.equal(primera.failed, 1);
+  assert.equal(primera.penalizedSources.length, 0);
+
+  const segunda = await falla();
+  assert.equal(segunda.failed, 1);
+
+  // Tras dos pasadas sin acierto el origen queda penalizado.
+  const tercera = await falla();
+  assert.equal(tercera.targets, 0);
+  assert.equal(tercera.candidates, 1);
+  assert.deepEqual(tercera.penalizedSources, ['tvenvivo.org']);
+});

@@ -45,7 +45,10 @@ async function main() {
     sources: require('../engines/live/sources').sources,
     fetchGet: get,
     // Misma extracción de embeds que el servidor.
-    extract: (channels, options) => require('../engines/live/extract').enrich(channels, { ...options, byId: require('../engines/live/sources').byId })
+    extract: (channels, options) => {
+      const ex = require('../engines/live/extract');
+      return ex.enrich(channels, { ...options, byId: require('../engines/live/sources').byId, stats: ex.sharedStats });
+    }
   });
   const loaded = await catalog.load({ force: true });
   console.log(`Catálogo: ${loaded.counts.total} canales (${loaded.counts.playable} con medio directo)`);

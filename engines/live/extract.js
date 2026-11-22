@@ -34,7 +34,11 @@ const DEFAULTS = {
   budgetMs: 100000,
   probeTimeoutMs: 6000,
   // Pausa entre canales del mismo origen para no disparar su limitador.
-  pauseMs: 250
+  pauseMs: 250,
+  // Si un origen no entrega ni un HLS en varias recolecciones seguidas, se deja
+  // de intentar un tiempo: gastar 90 s por vuelta para 0 resultados no compensa.
+  penaltyAfter: 2,
+  penaltyMs: 6 * 60 * 60 * 1000
 };
 
 function hasDirect(channel) {
@@ -129,11 +133,36 @@ async function enrich(channels, {
   probeTimeoutMs = DEFAULTS.probeTimeoutMs,
   pauseMs = DEFAULTS.pauseMs,
   wait = ms => new Promise(resolve => setTimeout(resolve, ms)),
+  penaltyAfter = DEFAULTS.penaltyAfter,
+  penaltyMs = DEFAULTS.penaltyMs,
+  // Estado entre recolecciones (penalizaciones). Inyectable para pruebas.
+  stats = new Map(),
   now = Date.now,
   status = null
 } = {}) {
-  const targets = extractable(channels);
-  const counts = { targets: targets.length, extracted: 0, failed: 0, skipped: 0, bySource: {}, reasons: {} };
+  const nowMs = () => now();
+  const penalized = name => {
+    const entry = stats.get(name);
+    return Boolean(entry && entry.until && entry.until > nowMs());
+  };
+  const all = extractable(channels);
+  const targets = all.filter(channel => {
+    const page = (channel.streams || []).find(stream => stream.kind === 'page');
+    return !penalized((page && page.source) || 'desconocida');
+  });
+  const counts = {
+    targets: targets.length,
+    candidates: all.length,
+    extracted: 0,
+    failed: 0,
+    skipped: 0,
+    penalizedSources: [...new Set(all.map(channel => {
+      const page = (channel.streams || []).find(stream => stream.kind === 'page');
+      return (page && page.source) || 'desconocida';
+    }).filter(penalized))],
+    bySource: {},
+    reasons: {}
+  };
   if (!targets.length) return counts;
   const startedAt = now();
 
@@ -168,6 +197,19 @@ async function enrich(channels, {
       counts.skipped++;
     }
   });
+
+  // Penalizar orígenes que no dieron ni un HLS en esta pasada: gastar el
+  // presupuesto completo cada recolección para cero resultados no compensa.
+  for (const [name, data] of Object.entries(counts.bySource)) {
+    if (!data.fallidos && !data.extraidos) continue;
+    const prev = stats.get(name) || { fails: 0, until: 0 };
+    if (data.extraidos > 0) {
+      stats.set(name, { fails: 0, until: 0 });
+      continue;
+    }
+    const fails = prev.fails + 1;
+    stats.set(name, { fails, until: fails >= penaltyAfter ? now() + penaltyMs : 0 });
+  }
 
   return counts;
 }
@@ -313,7 +355,10 @@ async function genericResolve(pageUrl, { get, maxHops = 3 } = {}) {
   return null;
 }
 
+// Penalizaciones compartidas entre recolecciones del mismo proceso.
+const sharedStats = new Map();
+
 module.exports = {
   enrich, extractChannel, extractable, hasDirect, genericResolve,
-  findHlsLiteral, findHlsDeep, resolveSource, DEFAULTS
+  findHlsLiteral, findHlsDeep, resolveSource, sharedStats, DEFAULTS
 };

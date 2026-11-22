@@ -70,7 +70,7 @@ const PLAYLISTS = {
 
 // Enriquecimiento de embeds para el catálogo por defecto: resuelve el HLS de
 // tvenvivo/thedaddy al recolectar, con presupuesto propio.
-const defaultExtract = (channels, options) => extractor.enrich(channels, { ...options, byId });
+const defaultExtract = (channels, options) => extractor.enrich(channels, { ...options, byId, stats: extractor.sharedStats });
 
 function createApp({
   catalog = createCatalog({
