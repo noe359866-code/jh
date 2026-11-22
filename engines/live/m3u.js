@@ -61,7 +61,9 @@ async function buildM3u(channels, {
     const base = channel.epgId || channel.id;
     if (!base) continue;
     const vistos = nombres.get(base) || new Set();
-    vistos.add(channel.name || channel.id);
+    // Se compara el nombre normalizado: la misma cadena llega escrita como
+    // "Bigtime - Películas Gratis" y "Bigtime Peliculas Gratis".
+    vistos.add(slug(channel.name || channel.id, 'canal'));
     nombres.set(base, vistos);
   }
   const compartido = base => (nombres.get(base) || new Set()).size > 1;

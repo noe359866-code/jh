@@ -230,6 +230,14 @@ test('m3u: dos canales con el mismo tvg-id no se pisan, pero las señales sí lo
   const ids2 = parseM3u(dosCanales.body).map(item => item.attrs['tvg-id']);
   assert.equal(new Set(ids2).size, 2, 'dos canales distintos no pueden compartir tvg-id');
   assert.ok(ids2.every(id => id.startsWith('13C.cl-')), 'conservan el id de EPG como prefijo');
+
+  // La misma cadena con dos grafías no es un conflicto: conserva su id de EPG.
+  const grafias = await buildM3u([
+    { id: 'es-big-1', name: 'Bigtime - Películas Gratis', country: 'ES', origin: 'ES', category: 'Generalista', sources: ['x'], epgId: 'ESBC2700003T8', streams: [{ url: 'https://x/1.m3u8', kind: 'hls' }] },
+    { id: 'es-big-2', name: 'Bigtime Peliculas Gratis', country: 'ES', origin: 'ES', category: 'Generalista', sources: ['y'], epgId: 'ESBC2700003T8', streams: [{ url: 'https://x/2.m3u8', kind: 'hls' }] }
+  ], {});
+  const ids3 = parseM3u(grafias.body).map(item => item.attrs['tvg-id']);
+  assert.deepEqual(ids3, ['ESBC2700003T8', 'ESBC2700003T8']);
 });
 
 test('buildM3u resuelve las páginas en paralelo y conserva el orden', async () => {
