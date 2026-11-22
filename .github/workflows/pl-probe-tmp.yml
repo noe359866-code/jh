@@ -32,7 +32,12 @@ jobs:
             out.push('sin group-title: '+items.filter(i=>!i.attrs['group-title']).length);
             out.push('sin tvg-id: '+items.filter(i=>!i.attrs['tvg-id']).length);
             const ids=items.map(i=>i.attrs['tvg-id']);
-            out.push('ids duplicados: '+(ids.length-new Set(ids).size));
+            out.push('senales con id repetido: '+(items.length-new Set(ids).size));
+            const porId={};
+            for(const i of items){ const id=i.attrs['tvg-id']; (porId[id]=porId[id]||new Set()).add(i.attrs['tvg-name']); }
+            const compartidos=Object.entries(porId).filter(([,n])=>n.size>1);
+            out.push('ids compartidos por canales distintos: '+compartidos.length);
+            out.push('ejemplos: '+JSON.stringify(compartidos.slice(0,6).map(([id,n])=>[id,[...n].slice(0,3)])));
             const grupos={};
             for(const i of items) grupos[i.attrs['group-title']]=(grupos[i.attrs['group-title']]||0)+1;
             out.push('grupos: '+JSON.stringify(Object.entries(grupos).sort((a,b)=>b[1]-a[1]).slice(0,12)));
