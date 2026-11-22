@@ -35,7 +35,8 @@ const fakeCatalog = () => createCatalog({
 
 async function withServer(catalog, callback, options = {}) {
   // Sin verificador salvo que la prueba lo pida: así no hay red ni esperas.
-  const app = createApp({ catalog, checker: null, ...options });
+  // `options` va primero para que sus claves no pisen el `checker: null`.
+  const app = createApp({ catalog, ...options, checker: options.checker ?? null });
   const server = app.listen(0, '127.0.0.1');
   await once(server, 'listening');
   try {

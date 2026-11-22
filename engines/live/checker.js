@@ -257,7 +257,8 @@ function createChecker({
     if (!force && report && fresh()) return { ...report, cached: true };
     if (pending) return pending;
     const startedAt = now();
-    const source = list ? list : (typeof channels === 'function' ? channels() : channels);
+    let source = list;
+    if (!source) source = typeof channels === 'function' ? await channels() : channels;
     const targets = checkable(source).slice(0, Number.isFinite(limit) && limit > 0 ? limit : undefined);
     const results = {};
     const skipped = [];

@@ -44,7 +44,11 @@ function mergeSources(results) {
     }
   }
   return [...byKey.values()]
-    .map(channel => ({ ...channel, playable: channel.streams.length > 0 }))
+    // `playable` = hay al menos un medio real (no basta una página a resolver).
+    .map(channel => ({
+      ...channel,
+      playable: channel.streams.some(stream => stream.kind !== 'page' && /^https?:\/\//i.test(stream.url || ''))
+    }))
     .sort((a, b) => a.name.localeCompare(b.name, 'es'));
 }
 
@@ -114,6 +118,10 @@ function createCatalog({
         // Nunca romper la recolección por un embed roto.
         status._extract = { ok: false, error: error.message, ms: now() - extractStarted };
       }
+      // La extracción puede convertir una página en medio directo: recalcular.
+      for (const channel of channels) {
+        channel.playable = channel.streams.some(stream => stream.kind !== 'page' && /^https?:\/\//i.test(stream.url || ''));
+      }
     }
     // Todas las fuentes pueden caer a la vez: en ese caso no se cachea un
     // catálogo vacío, porque sustituiría a uno bueno y publicaría listas M3U sin
@@ -138,20 +146,25 @@ function createCatalog({
     };
   }
 
-  // Informe de salud aplicado al catálogo (sin volver a recolectar). Se guarda
-  // aparte de `cache` para que `load()` no tenga que repetir el sondeo cada vez.
+  // Informe de salud aplicado al catálogo (sin volver a recolectar). El resultado
+  // se cachea junto al informe del que sale: `load()` puede llamarse decenas de
+  // veces por minuto y no debe reconstruir la lista cada vez.
+  let healthView = null;
   function withHealth(entry) {
     if (!entry) return entry;
     const health = healthReport;
     if (!health || !health.results) return entry;
+    if (healthView && healthView.loadedAt === entry.loadedAt && healthView.report === health) return healthView.view;
     const channels = applyReport(entry.channels, health);
     const dead = channels.filter(channel => channel.dead).length;
-    return {
+    const view = {
       ...entry,
       channels,
       health: summarize(channels, health),
       counts: { ...entry.counts, dead, alive: entry.counts.total - dead }
     };
+    healthView = { loadedAt: entry.loadedAt, report: health, view };
+    return view;
   }
 
   async function load({ force = false } = {}) {
@@ -181,8 +194,12 @@ function createCatalog({
   const self = {
     load,
     peek: () => withHealth(cache),
-    reset: () => { cache = null; healthReport = null; },
-    setHealth: (health) => { healthReport = health || null; },
+    reset: () => { cache = null; healthReport = null; healthView = null; },
+    setHealth: (health) => {
+      healthReport = health || null;
+      healthView = null;
+      if (cache) cache.stale = false;
+    },
     health: () => healthReport
   };
   return self;

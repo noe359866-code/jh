@@ -84,7 +84,15 @@ function createApp({
   logger = console,
   // Verificador de señales. Se puede inyectar (pruebas) o desactivar con
   // `checker: null`; por defecto verifica bajo demanda con `get`.
-  checker = createChecker({ get, resolvePage: resolve, logger }),
+  // `channels` se resuelve perezosamente del catálogo: al construir `createApp`
+  // el catálogo aún no ha recolectado y una lista vacía dejaría canales sin
+  // informe (y por tanto sin veredicto de salud).
+  checker = createChecker({
+    get,
+    resolvePage: resolve,
+    channels: async () => (await catalog.load()).channels,
+    logger
+  }),
   // Persistencia opcional del informe (`{ read, write }`). El servidor real usa
   // `reports/health.json` para no re-sondear todo tras un reinicio.
   healthStore = null,
@@ -160,6 +168,8 @@ function createApp({
         if (report) return await catalog.load();
         logger.warn('[checker] verificación lenta: se responde con el informe anterior');
       }
+      // Solo se responde con el informe existente: la verificación va siempre en
+      // segundo plano para no bloquear rutas de lista (ni pruebas ni usuarios).
       if (!checker.peek() || !checker.fresh()) verifyInBackground(loaded.channels);
       return loaded;
     } catch (error) {
@@ -291,8 +301,11 @@ function createApp({
         id,
         name: definition.label,
         url: `${base}/playlist/${id}.m3u`,
+        // Cuenta lo que la lista entrega de verdad: medio directo o página que
+        // el servidor sabe resolver.
         channels: loaded.channels.filter(definition.filter)
-          .filter(channel => channel.playable && !channel.dead).length,
+          .filter(channel => !channel.dead)
+          .filter(channel => channel.playable || channel.streams.some(stream => stream.kind === 'page')).length,
         withDeadUrl: `${base}/playlist/${id}.m3u?dead=1`
       }))
     });
