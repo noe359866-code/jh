@@ -47,31 +47,35 @@ function extractable(channels) {
  * Extrae el HLS de un canal y, si responde, lo antepone a sus medios.
  * Devuelve `'extracted' | 'failed' | 'skipped'`.
  */
-async function extractChannel(channel, { get, byId, probe = probeMedia, probeTimeoutMs = DEFAULTS.probeTimeoutMs } = {}) {
+async function extractChannel(channel, { get, byId, probe = probeMedia, probeTimeoutMs = DEFAULTS.probeTimeoutMs, diag = null } = {}) {
+  const note = reason => {
+    if (diag) diag.reason = reason;
+    return reason;
+  };
   const page = (channel.streams || []).find(stream => stream.kind === 'page');
   if (!page) return 'skipped';
   // `stream.source` es el nombre visible (`tvenvivo.org`), no el id del registro
   // (`tvenvivo`): se resuelve por id y, si no, por nombre.
   const source = resolveSource(byId, page.source);
-  if (!source || typeof source.resolve !== 'function') return 'skipped';
+  if (!source || typeof source.resolve !== 'function') return note('sin resolutor para la fuente');
 
   let resolved = null;
   try {
     resolved = await source.resolve(page.url, { get });
-  } catch {
-    return 'failed';
+  } catch (error) {
+    return note(`cadena de embed: ${String(error.message).slice(0, 60)}`);
   }
-  if (!resolved || !/^https?:\/\//i.test(resolved.url || '')) return 'failed';
+  if (!resolved || !/^https?:\/\//i.test(resolved.url || '')) return note('la cadena no expone m3u8');
 
   // Sin firma HLS no se publica: sería anunciar un medio que no reproduce (el CDN
   // de DaddyLive devuelve 403 a cualquier cliente que no sea un navegador real).
   let result;
   try {
     result = await probe(resolved.url, { get, referer: resolved.referer, timeoutMs: probeTimeoutMs, retries: 0 });
-  } catch {
-    return 'failed';
+  } catch (error) {
+    return note(`sondeo: ${String(error.message).slice(0, 60)}`);
   }
-  if (!result || !result.ok) return 'failed';
+  if (!result || !result.ok) return note(`HLS no responde (${result && result.status !== undefined ? result.status : 'sin estado'})`);
 
   channel.streams.unshift({
     url: resolved.url,
@@ -99,7 +103,7 @@ async function enrich(channels, {
   status = null
 } = {}) {
   const targets = extractable(channels);
-  const counts = { targets: targets.length, extracted: 0, failed: 0, skipped: 0 };
+  const counts = { targets: targets.length, extracted: 0, failed: 0, skipped: 0, bySource: {}, reasons: {} };
   if (!targets.length) return counts;
   const startedAt = now();
 
@@ -109,11 +113,19 @@ async function enrich(channels, {
       return;
     }
     let outcome;
+    const diag = {};
     try {
-      outcome = await extractChannel(channel, { get, byId, probe, probeTimeoutMs });
-    } catch {
+      outcome = await extractChannel(channel, { get, byId, probe, probeTimeoutMs, diag });
+    } catch (error) {
       outcome = 'failed';
+      diag.reason = `excepción: ${String(error.message).slice(0, 60)}`;
     }
+    // Diagnóstico: qué fuente falla y por qué (sin URLs).
+    const page = (channel.streams || []).find(stream => stream.kind === 'page');
+    const key = (page && page.source) || 'desconocida';
+    counts.bySource[key] = counts.bySource[key] || { extraidos: 0, fallidos: 0, omitidos: 0 };
+    counts.bySource[key][outcome === 'extracted' ? 'extraidos' : outcome === 'failed' ? 'fallidos' : 'omitidos']++;
+    if (diag.reason) counts.reasons[diag.reason] = (counts.reasons[diag.reason] || 0) + 1;
     if (outcome === 'extracted') {
       counts.extracted++;
       if (status) status[channel.sources[0]] = { ...(status[channel.sources[0]] || {}), extracted: (status[channel.sources[0]] && status[channel.sources[0]].extracted || 0) + 1 };

@@ -53,6 +53,8 @@ async function main() {
     const ex = loaded.status._extract;
     console.log(`Extracción de embeds: ${ex.extracted} HLS extraídos de ${ex.targets} canales con página ` +
       `(fallidos ${ex.failed}, omitidos ${ex.skipped}, ${Math.round((ex.ms || 0) / 1000)} s)`);
+    if (ex.bySource) console.log('  por fuente:', JSON.stringify(ex.bySource));
+    if (ex.reasons) console.log('  motivos:', JSON.stringify(ex.reasons));
   }
 
   const extractStats = loaded.status._extract || null;
