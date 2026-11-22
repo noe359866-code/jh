@@ -109,6 +109,19 @@ async function main() {
       out.push({ step: 'alternate', url, status: response.status, length: response.text.length, iframe: (response.text.match(/<iframe[^>]*\bsrc="([^"]+)"/i) || [])[1] || null });
     } catch (error) {
       out.push({ step: 'alternate', url, error: error.message });
+      continue;
+    }
+  }
+
+  // Rutas alternativas de reproductor: ¿exponen un m3u8 directo?
+  const altEmbeds = [`https://waterera.net/e/ul201lvsd924c`, `https://optimserve.shop/play.html#1/${first.id}`];
+  for (const embedAlt of altEmbeds) {
+    try {
+      const response = await get(embedAlt.split('#')[0], { referer: `https://thedaddy.li/cast/stream-${first.id}.php`, headers: { Origin: 'https://thedaddy.li', 'Sec-Fetch-Dest': 'iframe', 'Sec-Fetch-Site': 'cross-site' } });
+      const matches = [...response.text.matchAll(/https?:[^"'\s<>\\]+?\.m3u8[^"'\s<>\\]*/g)].map(m => m[0]).slice(0, 3);
+      out.push({ step: 'alt-embed', url: embedAlt, status: response.status, length: response.text.length, m3u8: matches, src: (response.text.match(/(?:const|var|let)\s+SRC\s*=\s*["']([^"']+)/i) || [])[1] || null });
+    } catch (error) {
+      out.push({ step: 'alt-embed', url: embedAlt, error: error.message });
     }
   }
 }
