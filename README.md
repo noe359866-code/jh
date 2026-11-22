@@ -18,9 +18,9 @@ Medido el **22/11/2026** ejecutando `npm run test:live` contra las siete fuentes
 | iptvcat.net | directo | 1.170 | mini‑M3U firmadas por tarjeta (`data-clipboard-text`) |
 | eja.tv | directo | 699 | paginación `?offset=` de 6 en 6, filtro `language=spa` |
 | globalfreetv.com | directo | 243 | HTML SSR; 45 canales/país por límite de peticiones |
-| tvenvivo.org | página | 70 | requiere resolver `core.php?canal=` |
-| thedaddy.li | página | 29 | el CDN solo emite token a navegador real → mejor esfuerzo |
-| livelive24.com | catálogo | 29 | solo publica la página del canal (`externalUrl`) |
+| tvenvivo.org | embed | 70 | cadena `core.php`/iframe; hoy la resuelve JavaScript |
+| thedaddy.li | embed | 29 | el CDN solo emite token a un navegador real |
+| livelive24.com | embed | 29 | el reproductor es un blogspot sin HLS estático |
 
 **Total: 1.857 canales únicos · 1.832 con medio reproducible o resoluble ·
 323 de España · 1.534 de Latinoamérica · 2.830 entradas M3U** (un canal puede
@@ -160,6 +160,38 @@ Deja `reports/health.json`, `reports/dead.txt` y copias `reports/playlist-*.m3u`
 ya filtradas. El workflow `verify.yml` lo ejecuta a diario a las 04:47 UTC y
 publica los artefactos.
 
+## Extracción de HLS de los embeds
+
+Las fuentes con reproductor (`tvenvivo`, `thedaddy`, `livelive24`) no publican el
+`.m3u8` en el HTML: dan una página con un iframe. El servidor **intenta extraer el
+HLS al recolectar**, no solo al reproducir:
+
+1. Sigue la cadena documentada de cada fuente (`core.php`, `watch.php`, blogspot).
+2. Si falla, usa un extractor genérico que busca el `.m3u8` en:
+   URL literal, barras escapadas (`https:\/\/…`), base64, JSON escapado,
+   rutas relativas, `<video>`, `<source>` y hasta 3 iframes anidados.
+3. Solo publica el HLS si el medio responde con **firma HLS** (los primeros 4 KB).
+4. Si no, el canal conserva su enlace de página y se resuelve al reproducir.
+
+Límites: 3 canales en paralelo, pausa entre canales, reintento ante `403/429`,
+presupuesto de 100 s y `EXTRACT_HLS=0` para desactivarla. Un origen que no entrega
+ni un HLS en dos recolecciones seguidas queda **penalizado 6 h** (no se gasta el
+presupuesto en él y se reintenta más tarde).
+
+**Resultado medido** (22/11/2026): de **124 canales con embed, 0 HLS extraídos**.
+Los motivos, verificados con sonda:
+
+| Fuente | Qué devuelve realmente |
+|---|---|
+| tvenvivo | el iframe regional responde un *loader* de 1.9 KB que monta el reproductor con JavaScript; `core.php` ya no expone `var src` |
+| thedaddy | `dembed.st` responde **403** salvo con un navegador real; el CDN también |
+| livelive24 | la página de blogspot (24 KB) no tiene iframes ni `.m3u8` |
+
+Es decir: **esos canales no se pueden resolver sin ejecutar JavaScript**, y el
+proyecto no lo hace (sin navegador headless, sin cookies, sin CAPTCHAs). La
+extracción queda implementada y probada; en cuanto un origen vuelva a servir el
+HLS de forma estática, se publicará automáticamente sin tocar código.
+
 ## Rutas HTTP
 
 | Ruta | Descripción |
@@ -189,9 +221,9 @@ con `stale: true` y `staleReason`.
 | iptvcat.net | directo | listado por país (`spain__9`, `mexico__6`…), 100 filas, mini‑M3U en `data-clipboard-text` |
 | tvgarden.world | directo | API JSON por país con `stream_urls[]` |
 | globalfreetv.com | directo | HTML SSR: `channel:$R[n]={…}` + `streams:$R[m]=[…]` con `url` y `http_referrer` |
-| tvenvivo.org | página | `core.php?canal=<slug>` → iframe → `var src = "…m3u8"` |
-| thedaddy.li | página | `watch.php?id=N` → `stream-N.php` → embed → `const SRC` |
-| livelive24.com | catálogo | `tv.json`, solo enlaces a la página del canal |
+| tvenvivo.org | embed | `core.php?canal=<slug>` → iframe → `var src = "…m3u8"` |
+| thedaddy.li | embed | `watch.php?id=N` → `stream-N.php` → embed → `const SRC` |
+| livelive24.com | embed | reproductor intermedio (blogspot) → `.m3u8` literal si existe |
 
 **Modos:** `directo` = el canal ya trae una URL de medio; `página` = hay que resolver
 una cadena de iframes al reproducir; `catálogo` = la fuente solo aporta el nombre y el
@@ -204,7 +236,7 @@ español de EE. UU. Todos los canales se etiquetan con su país de origen.
 ## Verificación
 
 ```bash
-npm test        # 33 pruebas unitarias (parser + addon + rutas + verificador), sin red
+npm test        # 44 pruebas unitarias (parser + addon + rutas + verificador + extracción), sin red
 npm run check   # node --check sobre todo el motor
 npm run test:live   # comprobación real contra las 7 fuentes (necesita red)
 SOURCE=eja,tvgarden npm run test:live   # solo algunas fuentes
@@ -248,6 +280,7 @@ engines/live/catalog.js      recolección, caché con TTL y fusión de fuentes
 engines/live/m3u.js          generación y lectura de listas M3U
 engines/live/addon.js        manifiesto, catálogos, meta y streams
 engines/live/checker.js      verificador de señales (caído / bloqueado / sin confirmar)
+engines/live/extract.js      extracción de HLS de embeds al recolectar
 engines/live/sources/*.js    un recolector por web
 scripts/live-check.js        verificación real contra las siete fuentes
 scripts/verify.js            sondeo de cada canal + listas sin caídos

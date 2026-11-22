@@ -331,6 +331,7 @@ function createApp({
         staleReason: loaded.staleReason || null
       },
       health: loaded.health || null,
+      extract: loaded.status._extract || null,
       sources: loaded.status
     });
   });
