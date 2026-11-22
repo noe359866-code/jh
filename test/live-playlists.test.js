@@ -99,13 +99,13 @@ test('lista CineCity real: tolera líneas EXTINF sin `#`', () => {
 });
 
 test('las seis listas y la de USA están registradas', () => {
-  for (const id of ['cinecity', 'telechancho', 'iptvchile', 'samsungtvplus', 'pluto', 'd9kod', 'usa']) {
+  for (const id of ['cinecity', 'telechancho', 'iptvchile', 'samsungtvplus', 'pluto', 'd9kod', 'usa', 'iptvorg']) {
     const source = byId(id);
     assert.ok(source, `falta la fuente ${id}`);
     assert.equal(typeof source.collect, 'function');
   }
-  // Trece fuentes con red + la de Estados Unidos (iptv-org).
-  assert.equal(sources.length, 14);
+  // Trece fuentes con red, la de Estados Unidos y las listas por país.
+  assert.equal(sources.length, 15);
 });
 
 test('collect deduplica por URL de medio y tolera listas caídas', async () => {
