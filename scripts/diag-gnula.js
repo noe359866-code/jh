@@ -114,7 +114,8 @@ const ejecutar = fase === 'unpack' ? faseUnpack
     : fase === 'vars' ? faseVariables
       : fase === 'players' ? fasePlayers
         : fase === 'vidara' ? faseVidara
-      : async () => { await faseVidara(); await faseVariables(); await faseUnpack(); await fasePlayers(); };
+          : fase === 'apividara' ? faseApiVidara
+      : async () => { await faseApiVidara(); await faseVidara(); };
 
 ejecutar().catch(error => {
   console.error(`diagnóstico falló: ${error.message}`);
@@ -373,4 +374,33 @@ async function faseVidara() {
   }).filter(Boolean))];
   console.log(`scripts=[${scripts.join(',')}]`);
   console.log(`etiquetas=[${[...new Set([...cuerpo.matchAll(/<([a-z][a-z0-9]*)/gi)].map(m => m[1].toLowerCase()))].slice(0, 12).join(',')}]`);
+}
+
+// ---------------------------------------------------------------------------
+// Fase 6: llamada a la API de vidara (contexto y respuesta)
+// ---------------------------------------------------------------------------
+// La página de vidara trae `URL=apistream...` y una fuente `es.sammierkelima.com`
+// con la forma de un fichero .m3u8. Aquí se ve cómo se pide esa API y qué
+// devuelve, con literales redactados y sin publicar la ruta del fichero.
+async function faseApiVidara() {
+  const { desempacar, leerPlayer } = require('../engines/sites/gnula');
+  const fetcher = createFetcher({ allowedHosts: [...hostsPermitidos({})], maxBytes: 4 * 1024 * 1024 });
+  const html = await fetcher.getText(FICHA);
+  const player = leerPlayer(html);
+  const url = new URL(`${player.prefijo}${player.id}${player.sufijo}${encodeURIComponent(player.token)}`, FICHA).href;
+  const datos = desempacar(JSON.parse(await fetcher.getText(url, { Accept: 'application/json', Referer: FICHA })).p);
+  const destino = datos.langs[0].servers.find(s => /vidara/.test(s.src)).src;
+  const cuerpo = await fetcher.getText(destino, { Referer: FICHA });
+
+  for (const m of cuerpo.matchAll(/.{0,200}(?:apistream|sammierkelima).{0,260}/g)) {
+    console.log(`contexto: ${redactar(m[0])}`);
+  }
+  // Forma del endpoint apistream (ruta y parámetros, sin valores).
+  for (const m of cuerpo.matchAll(/["']([^"']*apistream[^"']*)["']/g)) {
+    console.log(`api: ${m[1].replace(/[A-Za-z0-9]/g, 'x')}`);
+  }
+  // Parámetros con los que se llama (nombres y de dónde salen).
+  for (const m of cuerpo.matchAll(/(?:fetch|open|src\s*=|href\s*=)\s*[(=]?\s*([^;]{0,180}apistream[^;]{0,180})/g)) {
+    console.log(`llamada: ${redactar(m[1])}`);
+  }
 }
