@@ -3,6 +3,7 @@ on:
   push:
     paths:
       - '.github/workflows/extract-probe-tmp.yml'
+      - 'scripts/embed-diag.js'
       - 'engines/live/extract.js'
       - 'engines/live/catalog.js'
       - 'scripts/verify.js'
@@ -23,13 +24,16 @@ jobs:
       - run: npm ci
       - name: Extracción real de embeds
         run: node scripts/verify.js 2>&1 | tee reports-extract.log || true
+      - name: Diagnóstico de embeds
+        run: node scripts/embed-diag.js > reports-embed.log 2>&1 || true
       - name: Publicar
         if: always()
         run: |
           node -e "const fs=require('fs');fs.mkdirSync('reports',{recursive:true});" 
           tail -c 3000 reports-extract.log > reports/extract-log.txt 2>/dev/null || true
+          tail -c 6000 reports-embed.log > reports/embed-log.txt 2>/dev/null || true
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -f reports/extract-log.txt
+          git add -f reports/extract-log.txt reports/embed-log.txt
           git diff --cached --quiet && echo sin-cambios || git commit -m "Log de extracción (generado)"
           git push
