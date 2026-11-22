@@ -2,8 +2,6 @@ name: Sites live extraction
 on:
   push:
     paths:
-      - 'engines/live/**'
-      - 'scripts/live-check.js'
       - '.github/workflows/sites-live.yml'
 
 permissions:
@@ -12,22 +10,39 @@ permissions:
 jobs:
   live:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: node scripts/live-check.js || true
-      - name: Publicar salida
+      - name: Traza de resolución thedaddy
+        run: |
+          node -e '
+            const { get } = require("./engines/live/http");
+            const td = require("./engines/live/sources/thedaddy");
+            (async () => {
+              const html = await get(td.listUrl ? td.listUrl() : "https://thedaddy.li/24-7-channels.php").then(r => r.text);
+              const items = td.parseList(html).filter(i => td.isSpanishSignal(i.name));
+              const out = [{ step: "list", items: items.length, sample: items.slice(0, 5) }];
+              const first = items[0];
+              if (first) {
+                const watchUrl = "https://thedaddy.li/watch.php?id=" + first.id;
+                const watch = await get(watchUrl, { referer: "https://thedaddy.li/" });
+                out.push({ step: "watch", status: watch.status, len: watch.text.length, iframes: [...watch.text.matchAll(/<iframe[^>]*src="([^"]+)"/gi)].map(m => m[1]).slice(0, 3) });
+                const resolved = await td.resolve(watchUrl, { get }).catch(e => ({ error: e.message }));
+                out.push({ step: "resolve", resolved });
+              }
+              require("fs").mkdirSync("reports", { recursive: true });
+              require("fs").writeFileSync("reports/thedaddy-diag.json", JSON.stringify(out, null, 1));
+              console.log(JSON.stringify(out, null, 1).slice(0, 4000));
+            })().catch(e => { console.error(e); process.exit(1); });
+          '
+      - name: Publicar diagnóstico
         if: always()
         run: |
-          mkdir -p reports
-          node -e "const fs=require('fs');const f='reports/live-check.json';const s=fs.existsSync(f)?JSON.parse(fs.readFileSync(f,'utf8')):{missing:true};fs.writeFileSync('reports/live-check-summary.txt',JSON.stringify(s,null,1));"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -f reports/live-check-summary.txt
-          git diff --cached --quiet && echo sin-cambios || git commit -m "Salida de verificación en vivo (generado)"
+          git add -f reports/thedaddy-diag.json
+          git diff --cached --quiet && echo sin-cambios || git commit -m "Diagnóstico thedaddy (generado)"
           git push
