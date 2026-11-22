@@ -245,6 +245,9 @@ eja.tv, iptvcat, TV Garden, Global Free TV, TVEnVivo, DaddyLive y Live24.</p>
 <p>Añade <code>?pages=1</code> a una lista para resolver también las fuentes que
 requieren una petición extra (TVEnVivo y DaddyLive); sin ese parámetro solo se
 publican medios directos.</p>
+<p class="nota">DaddyLive y Live24 funcionan como <strong>mejor esfuerzo</strong>: su CDN
+solo entrega los tokens a un navegador real, así que esos canales pueden requerir
+abrir la página del origen.</p>
 <p>El estado real de las fuentes está en <a href="/config">/config</a>.</p>
 </html>`);
   });
