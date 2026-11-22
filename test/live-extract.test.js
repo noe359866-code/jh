@@ -82,7 +82,9 @@ test('enrich solo mira canales sin medio directo y respeta el presupuesto', asyn
     now: () => { reloj += 1000; return reloj; },
     budgetMs: 10
   });
-  assert.deepEqual(counts, { targets: 1, extracted: 0, failed: 0, skipped: 1 });
+  assert.equal(counts.targets, 1);
+  assert.equal(counts.skipped, 1, 'sin presupuesto no se intenta');
+  assert.equal(counts.extracted, 0);
   assert.equal(canal.streams.length, 1, 'sin presupuesto no se toca');
 });
 

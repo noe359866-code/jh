@@ -45,19 +45,21 @@ function extractable(channels) {
 
 /**
  * Extrae el HLS de un canal y, si responde, lo antepone a sus medios.
- * Devuelve `'extracted' | 'failed' | 'skipped'`.
+ * Devuelve `'extracted' | 'failed' | 'skipped'`; el motivo detallado se escribe
+ * en `diag.reason` (para diagnóstico, nunca en el resultado público).
  */
 async function extractChannel(channel, { get, byId, probe = probeMedia, probeTimeoutMs = DEFAULTS.probeTimeoutMs, diag = null } = {}) {
-  const note = reason => {
+  // El estado público es siempre 'failed'/'skipped'; el motivo va a `diag`.
+  const note = (reason, outcome = 'failed') => {
     if (diag) diag.reason = reason;
-    return reason;
+    return outcome;
   };
   const page = (channel.streams || []).find(stream => stream.kind === 'page');
   if (!page) return 'skipped';
   // `stream.source` es el nombre visible (`tvenvivo.org`), no el id del registro
   // (`tvenvivo`): se resuelve por id y, si no, por nombre.
   const source = resolveSource(byId, page.source);
-  if (!source || typeof source.resolve !== 'function') return note('sin resolutor para la fuente');
+  if (!source || typeof source.resolve !== 'function') return note('sin resolutor para la fuente', 'skipped');
 
   let resolved = null;
   try {
@@ -152,7 +154,25 @@ function unescapeJsUrl(value) {
     .replace(/&amp;/g, '&');
 }
 
-function findHlsLiteral(text) {
+/** Quita barras invertidas y signos de cierre que arrastra el regex. */
+function trimUrl(url) {
+  return String(url)
+    .replace(/[\\'"<>\s]+$/, '')
+    .replace(/\\+$/, '')
+    // `…/i.m3u8&t=2` → `…/i.m3u8?t=2` (query sin `?` por el escapado).
+    .replace(/(\.m3u8)&/i, '$1?');
+}
+
+function absolutize(url, base) {
+  if (!base) return url;
+  try {
+    return new URL(url, base).href;
+  } catch {
+    return url;
+  }
+}
+
+function findHlsLiteral(text, { base = null } = {}) {
   const raw = String(text || '');
 
   // A) Cadena entrecomillada. El `.m3u8` puede ser el final de la URL o llevar
@@ -161,12 +181,51 @@ function findHlsLiteral(text) {
   if (quoted) {
     const cleaned = unescapeJsUrl(quoted[1]);
     const decoded = /^https?%3A/i.test(cleaned) ? decodeURIComponent(cleaned) : cleaned;
-    if (/^https?:\/\//i.test(decoded)) return decoded;
+    if (/^https?:\/\//i.test(decoded)) return trimUrl(decoded);
   }
 
   // B) Sin comillas (atributo `src`, `file:` de un JSON…).
   const bare = raw.match(/(https?:\/\/[^"'<>\s]{0,1500}?\.m3u8[^"'<>\s]{0,600})/i);
-  return bare ? unescapeJsUrl(bare[1]) : null;
+  if (bare) return trimUrl(unescapeJsUrl(bare[1]));
+
+  // C) Ruta relativa dentro de un reproductor (`file: "/hls/x/index.m3u8"`).
+  const relative = raw.match(/["'](\/(?!\/)[^"'<>\s]{0,600}?\.m3u8[^"'<>\s]{0,300})["']/i);
+  if (relative) return trimUrl(absolutize(unescapeJsUrl(relative[1]), base));
+
+  return null;
+}
+
+/**
+ * Muchos reproductores no escriben la URL: la guardan en base64 o en un JSON
+ * escapado (`{\"sources\":[{…}]}`). Se intentan ambos envoltorios envolviendo
+ * el texto decodificado.
+ */
+function findHlsDeep(text, { base = null } = {}) {
+  const direct = findHlsLiteral(text, { base });
+  if (direct) return direct;
+  const raw = String(text || '');
+
+  // Base64 con un `.m3u8` dentro (solo cadenas largas y válidas).
+  for (const match of raw.matchAll(/["']([A-Za-z0-9+/=]{40,4000})["']/g)) {
+    try {
+      const decoded = Buffer.from(match[1], 'base64').toString('utf8');
+      if (decoded.includes('.m3u8')) {
+        const found = findHlsLiteral(decoded, { base });
+        if (found) return found;
+      }
+    } catch { /* no era base64 */ }
+  }
+
+  // JSON escapado dentro de una cadena (\"file\":\"https:\/\/…m3u8\").
+  if (raw.includes('\\"') || raw.includes('%22')) {
+    // `\/` y `\u0026` primero, comillas escapadas después: si se sustituyen al
+    // revés queda una barra suelta al final de la URL.
+    const unescaped = unescapeJsUrl(raw).replace(/\\"/g, '"').replace(/%22/g, '"');
+    const found = findHlsLiteral(unescaped, { base });
+    if (found) return found;
+  }
+
+  return null;
 }
 
 /**
@@ -191,13 +250,14 @@ async function genericResolve(pageUrl, { get, maxHops = 3 } = {}) {
 
     // 1) HLS literal en el HTML o en el JS del reproductor. Las barras suelen
     // venir escapadas (`https:\/\/…`) dentro de una cadena de JavaScript.
-    const url = findHlsLiteral(text);
+    const url = findHlsDeep(text, { base: current });
     if (url) {
       return { url, referer: new URL(current).origin + '/' };
     }
 
-    // 2) Siguiente iframe del reproductor.
-    const iframe = (text.match(/<iframe[^>]*\bsrc="([^"]+)"/i) || [])[1];
+    // 2) Siguiente iframe del reproductor. Algunos usan `data-src` o van en un
+    // `<video><source>`.
+    const iframe = (text.match(/<iframe[^>]*\b(?:data-)?src=["']([^"']+)["']/i) || [])[1];
     if (!iframe) return null;
     const next = new URL(iframe.replace(/&amp;/g, '&'), current);
     // Los embeds de blogspot/google no llevan a un reproductor propio.
@@ -208,4 +268,7 @@ async function genericResolve(pageUrl, { get, maxHops = 3 } = {}) {
   return null;
 }
 
-module.exports = { enrich, extractChannel, extractable, hasDirect, genericResolve, findHlsLiteral, resolveSource, DEFAULTS };
+module.exports = {
+  enrich, extractChannel, extractable, hasDirect, genericResolve,
+  findHlsLiteral, findHlsDeep, resolveSource, DEFAULTS
+};
