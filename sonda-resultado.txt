@@ -1,22 +1,19 @@
-ERROR EN LA AUDITORIA
-node:fs:440
-    return binding.readFileUtf8(path, stringToFlags(options.flag));
-                   ^
+bytes: 3051226 | entradas: 6499
+sin URL http: 0
+sin tvg-country: 0
+sin group-title: 0
+sin tvg-id: 0
+ids duplicados: 2814
+grupos: [["Latinoamérica · Generalista",1147],["España · Generalista",853],["Argentina · Generalista",409],["Chile · Generalista",395],["Perú · Generalista",391],["Colombia · Generalista",384],["México · Generalista",356],["Estados Unidos · Generalista",318],["República Dominicana · Generalista",251],["Bolivia · Generalista",185],["Costa Rica · Generalista",171],["Paraguay · Generalista",164]]
+paises: {"ES":1048,"CR":171,"AR":613,"LATAM":1382,"DO":253,"VE":136,"CL":398,"MX":382,"PE":392,"US":390,"PY":164,"CO":384,"PA":34,"BO":185,"SV":57,"HN":127,"EC":158,"PR":81,"GT":98,"NI":24,"UY":16,"CU":6}
+cabecera: #EXTM3U
+ejemplo: #EXTINF:-1 tvg-id="ES26000025M" tvg-name="¡Hola! Play" tvg-logo="https://tvpnlogopeu.samsungcloud.tv/platform/image/sourcelogo/vc/00/02/34/ES26000025M_20241210T052650SQUARE.png" group-title="España · Generalista" tvg-country="ES" source="Samsung TV Plus ES",¡Hola! Play ~ #EXTVLCOPT:http-user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 ~ https://jmp2.uk/stvp-ES26000025M
 
-Error: ENOENT: no such file or directory, open 'reports/playlist-all.m3u'
-    at Object.readFileSync (node:fs:440:20)
-    at [eval]:4:14
-    at runScriptInThisContext (node:internal/vm:209:10)
-    at node:internal/process/execution:446:12
-    at [eval]-wrapper:6:24
-    at runScriptInContext (node:internal/process/execution:444:60)
-    at evalFunction (node:internal/process/execution:279:30)
-    at evalTypeScript (node:internal/process/execution:291:3)
-    at node:internal/main/eval_string:74:3 {
-  errno: -2,
-  code: 'ENOENT',
-  syscall: 'open',
-  path: 'reports/playlist-all.m3u'
-}
+=== RESUMEN ===
+Extracción de embeds: 0 HLS extraídos de 432 canales con página (fallidos 106, omitidos 326, 109 s)
+  por fuente: {"cinecity":{"extraidos":0,"fallidos":0,"omitidos":43},"D9Kod":{"extraidos":0,"fallidos":0,"omitidos":121},"Free-TV":{"extraidos":0,"fallidos":0,"omitidos":10},"Estados Unidos (iptv-org)":{"extraidos":0,"fallidos":0,"omitidos":8},"Pluto TV":{"extraidos":0,"fallidos":0,"omitidos":4},"thedaddy.li":{"extraidos":0,"fallidos":15,"omitidos":0},"iptv-org AR":{"extraidos":0,"fallidos":0,"omitidos":1},"livelive24.com":{"extraidos":0,"fallidos":21,"omitidos":0},"tvenvivo.org":{"extraidos":0,"fallidos":70,"omitidos":0},"telechancho":{"extraidos":0,"fallidos":0,"omitidos":1},"iptv-org NI":{"extraidos":0,"fallidos":0,"omitidos":2}}
+  motivos: {"sin resolutor para la fuente":190,"cadena de embed: HTTP 403":8,"la cadena no expone m3u8":91,"cadena de embed: fetch failed":7}
+Verificación: 3867 canales en 196 s · vivos 3354 · caídos 513 · bloqueados 862 · tiempo agotado 460 · sin verificar 0 · omitidos 1583
+Listas escritas en reports/: all (6499), es (1014), latam (5061), deportes (191), us (390), mx (382), ar (613), co (384), cl (398), pe (392), ve (136), ec (158), gt (98), hn (127), sv (57), ni (24), cr (171), pa (34), cu (6), do (253), pr (81), uy (16), py (164), bo (185)
+Países con canales vivos: Internacional 1670 · ES 768 · AR 511 · US 280 · CL 256 · DO 238 · MX 238 · PE 202 · CO 129 · BO 84 · PY 76 · HN 75 · EC 75 · CR 72 · VE 72 · GT 50 · PR 43 · SV 41 · PA 24 · NI 21 · UY 8 · CU 4
 
-Node.js v22.23.5
