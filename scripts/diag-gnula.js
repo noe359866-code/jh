@@ -14,6 +14,12 @@ const { hostsPermitidos } = require('../engines/sites');
 const BASE = 'https://ww3.gnulahd.nu';
 const FICHA = `${BASE}/ver/godzilla-minus-zero/`;
 
+// Forma de una cadena: se conserva la puntuación y cada letra/dígito pasa a x.
+// Sirve para ver la estructura de una URL sin publicar sus valores.
+function formaCadena(cadena) {
+  return String(cadena).replace(/[A-Za-z0-9]/g, 'x').replace(/(x)\1{3,}/g, '$1..');
+}
+
 // Redacción: fuera literales de cadena, tokens y valores largos.
 function redactar(fragmento) {
   return String(fragmento)
@@ -155,6 +161,11 @@ async function faseUnpack() {
   }
 
   if (!pid || !tok) return;
+  // La URL se arma en el tema con dos literales; se muestra su forma (sin
+  // valores) para no adivinar la ruta.
+  for (const llamada of html.matchAll(/fetch\((['"])([^'"]*)\1\s*\+\s*_gnrdPid\s*\+\s*(['"])([^'"]*)\3/g)) {
+    console.log(`url-forma: ${formaCadena(llamada[2])} + <pid> + ${formaCadena(llamada[4])} + <tok>`);
+  }
   // Sondeo real del endpoint con los parámetros que usa el cliente.
   const url = `${BASE}/wp-json/gnrd/v1/${pid.valor}?tok=${encodeURIComponent(tok.valor)}`;
   try {
