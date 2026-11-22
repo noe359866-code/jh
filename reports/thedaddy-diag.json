@@ -32,7 +32,7 @@
  {
   "step": "watch",
   "status": 200,
-  "length": 25510,
+  "length": 25458,
   "iframes": [
    "https://thedaddy.li/stream/stream-531.php",
    "https://thedaddy.li/stream/stream-531.php",
@@ -107,6 +107,54 @@
  {
   "step": "media",
   "variant": "referer-thedaddy",
+  "error": "HTTP 403"
+ },
+ {
+  "step": "token",
+  "tokenUrl": "https://edge.wedd48c.top/api/playlist-token?slug=premium531",
+  "variant": "referer-embed-origin",
+  "error": "HTTP 403"
+ },
+ {
+  "step": "token",
+  "tokenUrl": "https://edge.wedd48c.top/api/playlist-token?slug=premium531",
+  "variant": "referer-embed",
+  "error": "HTTP 403"
+ },
+ {
+  "step": "token",
+  "tokenUrl": "https://edge.wedd48c.top/api/playlist-token?slug=premium531",
+  "variant": "referer-self-origin",
+  "error": "HTTP 403"
+ },
+ {
+  "step": "token",
+  "tokenUrl": "https://edge.wedd48c.top/api/playlist-token?slug=premium531",
+  "variant": "sin-cabeceras",
+  "error": "HTTP 403"
+ },
+ {
+  "step": "token",
+  "tokenUrl": "https://edge.wedd48c.top/api/playlist-token?slug=premium531&id=531",
+  "variant": "referer-embed-origin",
+  "error": "HTTP 403"
+ },
+ {
+  "step": "token",
+  "tokenUrl": "https://edge.wedd48c.top/api/playlist-token?slug=premium531&id=531",
+  "variant": "referer-embed",
+  "error": "HTTP 403"
+ },
+ {
+  "step": "token",
+  "tokenUrl": "https://edge.wedd48c.top/api/playlist-token?slug=premium531&id=531",
+  "variant": "referer-self-origin",
+  "error": "HTTP 403"
+ },
+ {
+  "step": "token",
+  "tokenUrl": "https://edge.wedd48c.top/api/playlist-token?slug=premium531&id=531",
+  "variant": "sin-cabeceras",
   "error": "HTTP 403"
  },
  {
