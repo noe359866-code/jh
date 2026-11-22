@@ -217,6 +217,21 @@ async function faseUnpack() {
           const servidores = (lang.servers || []).map(sv => `${sv.title || '?'}→${host(sv.src)}`);
           console.log(`lang label=${JSON.stringify(lang.label)} flag=${JSON.stringify(lang.flag)} servidores=[${servidores.join(', ')}]`);
         }
+        // Forma del enlace de cada servidor (esquema, host y si lleva código),
+        // para saber si hace falta transformarlo antes de resolverlo.
+        for (const lang of datos.langs || []) {
+          for (const sv of lang.servers || []) {
+            let descripcion = '?';
+            try {
+              const u = new URL(sv.src);
+              const partes = u.pathname.split('/').filter(Boolean);
+              descripcion = `${u.protocol}//${u.hostname} partes=${partes.length}`
+                + ` largos=[${partes.map(x => x.length).join(',')}]`
+                + `${u.search ? ' query=si' : ''}${u.hash ? ' hash=si' : ''}`;
+            } catch { descripcion = 'no-url'; }
+            console.log(`src ${JSON.stringify(sv.title)} ${descripcion}`);
+          }
+        }
         const hostsDl = [...new Set((datos.dl || []).map(d => host(d.url)))];
         console.log(`descargas=${(datos.dl || []).length} hosts-dl=[${hostsDl.join(',')}]`);
       }
