@@ -420,42 +420,32 @@ async function faseApi2() {
   const cuerpo = await fetcher.getText(destino, { Referer: FICHA });
   console.log(`vidara bytes=${cuerpo.length}`);
 
-  // Estructura: puntuación intacta y cada palabra como x<largo>.
+  // Estructura: puntuación intacta, palabra -> x<largo>.
   const estructura = (texto) => String(texto).replace(/[A-Za-z0-9_]+/g, t => `x${t.length}`);
-  const apariciones = [...cuerpo.matchAll(/[^\n]{0,140}apistream[^\n]{0,200}/g)];
-  console.log(`apariciones=${apariciones.length}`);
-  for (const m of apariciones.slice(0, 3)) console.log(`estructura: ${estructura(m[0])}`);
+  for (const aguja of ['URL=', 'stream', 'sammierkelima', 'jwplayer', 'sources', 'm3u8']) {
+    const marcas = [...cuerpo.matchAll(new RegExp(aguja.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'))];
+    console.log(`aguja=${aguja} apariciones=${marcas.length}`);
+    for (const m of marcas.slice(0, 2)) {
+      console.log(`  ${estructura(cuerpo.slice(Math.max(0, m.index - 120), m.index + 200))}`);
+    }
+  }
+  // Rutas relativas entrecomilladas que parezcan endpoints.
+  const rutas = [...new Set([...cuerpo.matchAll(/["'](\/[\w./-]{3,80})["']/g)].map(m => m[1]))];
+  console.log(`rutas-relativas=[${rutas.map(r => estructura(r)).slice(0, 10).join(' | ')}]`);
 
-  // Cómo se asigna la ruta: con comillas, sin comillas o por concatenación.
-  for (const patron of [
-    /URL\s*=\s*["']([^"']*apistream[^"']*)["']/i,
-    /URL\s*=\s*([A-Za-z0-9/._?=&%:-]*apistream[A-Za-z0-9/._?=&%:-]*)/i,
-    /(?:var|let|const)\s+(\w*url\w*)\s*=\s*["']([^"']*apistream[^"']*)["']/i
-  ]) {
-    const m = patron.exec(cuerpo);
-    if (m) {
-      const ruta = m[m.length - 1];
-      console.log(`asignacion-forma: ${estructura(ruta)}`);
-      console.log(`contexto: ${redactar(cuerpo.slice(Math.max(0, m.index - 200), m.index + 220))}`);
-      // Se pide la ruta como la resolvería el player y se describe la respuesta.
-      for (const [nombre, cabeceras] of [['referer-ficha', { Referer: FICHA }], ['referer-player', { Referer: destino }]]) {
-        try {
-          const objetivo = new URL(ruta, destino).href;
-          const respuesta = await fetcher.getText(objetivo, { ...cabeceras, Accept: 'application/json, text/plain, */*' });
-          const hosts = [...new Set([...respuesta.matchAll(/https?:\/\/([a-z0-9.-]+)\/[^\s"'<>]*\.m3u8/gi)].map(x => x[1]))];
-          let claves = '';
-          try {
-            const json = JSON.parse(respuesta);
-            claves = Array.isArray(json) ? `array(${json.length})` : Object.keys(json).sort().join(',');
-          } catch { /* no es JSON */ }
-          console.log(`api ${nombre} -> bytes=${respuesta.length} claves=[${claves}]`
-            + ` señales=${[/\.m3u8/.test(respuesta) ? 'm3u8' : '', /"file"|'file'/.test(respuesta) ? 'file' : ''].filter(Boolean).join('+') || '-'}`
-            + ` hosts-m3u8=[${hosts.join(',')}]`);
-        } catch (error) {
-          console.log(`api ${nombre} -> ${error.message.slice(0, 100)}`);
-        }
-      }
-      break;
+  // Prueba las rutas relativas que huelen a API/source, con el Referer del player.
+  for (const ruta of rutas.filter(r => /api|stream|source|player|v1|get|data/i.test(r)).slice(0, 4)) {
+    try {
+      const respuesta = await fetcher.getText(new URL(ruta, destino).href, { Referer: destino, Accept: 'application/json, text/plain, */*' });
+      const hosts = [...new Set([...respuesta.matchAll(/https?:\/\/([a-z0-9.-]+)\/[^\s"'<>]*\.m3u8/gi)].map(x => x[1]))];
+      let claves = '';
+      try {
+        const json = JSON.parse(respuesta);
+        claves = Array.isArray(json) ? `array(${json.length})` : Object.keys(json).sort().join(',');
+      } catch { /* no JSON */ }
+      console.log(`prueba ${estructura(ruta)} -> bytes=${respuesta.length} claves=[${claves}] hosts-m3u8=[${hosts.join(',')}]`);
+    } catch (error) {
+      console.log(`prueba ${estructura(ruta)} -> ${error.message.slice(0, 80)}`);
     }
   }
 }
