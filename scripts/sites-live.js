@@ -55,7 +55,9 @@ const CAMPOS_SANEADOS = [
   'idiomas', 'servidores', 'etiquetas', 'formularios', 'campos', 'endpoints',
   'acciones', 'ids', 'propio', 'otrosFrames',
   // Gnula: estado del player y hosts de sus servidores (nunca sus rutas)
-  'pid', 'token', 'descifrado', 'idiomas', 'hosts'
+  'pid', 'token', 'descifrado', 'idiomas', 'hosts',
+  // Atribución por servidor: quién devolvió HLS y quién MP4
+  'servidor', 'fuente', 'tipo'
 ];
 // Eventos permitidos en el reporte: solo etapa y host. Nunca paths, queries,
 // HTML, cuerpos ni tokens.
@@ -103,6 +105,13 @@ function eventoSanitizado(evento) {
   if (evento.stage === 'gnula') {
     for (const clave of ['pid', 'token']) if (typeof evento[clave] === 'boolean') limpio[clave] = evento[clave];
   }
+  // Qué servidor entregó media verificada y de qué tipo (hls | mp4).
+  if (evento.stage === 'fuente') {
+    if (evento.tipo === 'hls' || evento.tipo === 'mp4') limpio.tipo = evento.tipo;
+    for (const clave of ['servidor', 'idioma', 'fuente']) {
+      if (evento[clave]) limpio[clave] = String(evento[clave]).slice(0, 40);
+    }
+  }
   if (evento.stage === 'servidores') {
     if (typeof evento.descifrado === 'boolean') limpio.descifrado = evento.descifrado;
     if (Number.isFinite(evento.idiomas)) limpio.idiomas = evento.idiomas;
@@ -147,6 +156,9 @@ function eventoSanitizado(evento) {
     if (!PERMITIDOS.has(clave)) delete limpio[clave];
   }
   for (const [clave, valor] of Object.entries(limpio)) {
+    // Un tipo de media es una etiqueta cerrada: no pasa por el redactor de
+    // texto (que borraría la '?' de cualquier otra cadena, no este caso).
+    if (clave === 'tipo') continue;
     if (typeof valor === 'string') {
       limpio[clave] = valor
         .replace(/\?[^\s"'<>]*/g, '')
@@ -169,7 +181,9 @@ async function main(report) {
   for (const pageUrl of urls) {
     const entry = {
       site: null, host: null, success: false, verifiedMedia: 0, error: null,
-      pages: 0, candidates: 0, frames: 0, verified: 0, blockedHosts: [], stages: {}
+      pages: 0, candidates: 0, frames: 0, verified: 0, blockedHosts: [], stages: {},
+      // Atribución: una fila por servidor que entregó media verificada.
+      fuentes: []
     };
     try {
       // Validar antes de cualquier petición de red para fallar rápido.
@@ -199,6 +213,15 @@ async function main(report) {
                 entry.frames += limpio.frames || 0;
               }
               if (limpio.stage === 'candidate' && limpio.verified) entry.verified++;
+              if (limpio.stage === 'fuente') {
+                const clave = `${limpio.servidor || '?'}|${limpio.idioma || ''}|${limpio.host || ''}|${limpio.tipo || ''}`;
+                if (!entry.fuentes.some(f => f.clave === clave)) {
+                  entry.fuentes.push({
+                    clave, servidor: limpio.servidor || '', idioma: limpio.idioma || '',
+                    host: limpio.host || '', tipo: limpio.tipo || ''
+                  });
+                }
+              }
               if ((limpio.stage === 'blocked-frame' || limpio.stage === 'blocked-host') && limpio.host
                 && !entry.blockedHosts.includes(limpio.host)) entry.blockedHosts.push(limpio.host);
               if (limpio.host) {
@@ -220,6 +243,12 @@ async function main(report) {
       }
       entry.success = streams.length > 0;
       entry.verifiedMedia = streams.length;
+      // Resumen por tipo: el reporte responde "quién devuelve HLS o MP4".
+      // Se guarda solo la etiqueta (servidor/idioma/host/tipo): la URL del
+      // medio nunca entra en el reporte.
+      entry.hls = entry.fuentes.filter(f => f.tipo === 'hls').length;
+      entry.mp4 = entry.fuentes.filter(f => f.tipo === 'mp4').length;
+      entry.servidores = [...new Set(entry.fuentes.map(f => f.servidor).filter(Boolean))];
       if (streams.length) anyVerified = true;
       console.log(`${proveedor.clave}: ${streams.length ? `${streams.length} verified HLS/MP4 response(s)` : 'no verified HLS/MP4 found'}`);
     } catch (error) {

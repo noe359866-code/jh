@@ -55,7 +55,9 @@ jobs:
             const fs = require('fs');
             const r = JSON.parse(fs.readFileSync('reports/sites-live.json', 'utf8'));
             const porSitio = r.tested.map(t => t.site + '=' + (t.success ? t.verifiedMedia + ' medios' : 'sin medios')
-              + ' [paginas=' + (t.pages ?? 0) + ' candidatos=' + (t.candidates ?? 0) + ' frames=' + (t.frames ?? 0) + ' verificados=' + (t.verified ?? 0) + ']'
+              + ' [paginas=' + (t.pages ?? 0) + ' candidatos=' + (t.candidates ?? 0) + ' frames=' + (t.frames ?? 0) + ' verificados=' + (t.verified ?? 0)
+              + ' hls=' + (t.hls ?? 0) + ' mp4=' + (t.mp4 ?? 0)
+              + (t.servidores?.length ? ' servidores=' + t.servidores.join(',') : '') + ']'
               + (t.blockedHosts?.length ? ' bloqueados=' + t.blockedHosts.join(',') : '')
               + (t.stages && Object.keys(t.stages).length
                 ? ' [' + Object.entries(t.stages).map(([etapa, hosts]) => etapa + ':' + hosts.join('+')).join(' ') + ']'
@@ -108,9 +110,15 @@ jobs:
                 + ' endpoints=' + JSON.stringify(e.endpoints) + ' acciones=' + JSON.stringify(e.acciones)
                 + ' ids=' + JSON.stringify(e.ids) + ' campos=' + JSON.stringify(e.campos)
                 + ' formularios=' + JSON.stringify(e.formularios)).join(' , ');
+            // Quién devuelve cada tipo de media: lo que pide el resumen.
+            const fuentes = (r.events || []).filter(e => e.stage === 'fuente')
+              .map(e => (e.idioma ? e.idioma + '/' : '') + (e.servidor || e.host) + '<' + e.host + '>=' + e.tipo);
+            const quien = fuentes.length
+              ? 'quien-devuelve=' + fuentes.join(' , ')
+              : 'quien-devuelve=ninguno (ningún player entregó HLS ni MP4 verificable en esta ejecución)';
             const etapas = {};
             for (const e of r.events || []) etapas[e.stage] = (etapas[e.stage] || 0) + 1;
-            const resumen = 'success=' + r.success + ' :: ' + porSitio + (diag ? ' :: ' + diag : '') + (anubisIntentos ? ' :: anubis=' + anubisIntentos : '')
+            const resumen = 'success=' + r.success + ' :: ' + quien + ' :: ' + porSitio + (diag ? ' :: ' + diag : '') + (anubisIntentos ? ' :: anubis=' + anubisIntentos : '')
               + (sinMedia ? ' :: sinMedia=' + sinMedia : '') + (loaders ? ' :: loader=' + loaders : '') + (formas ? ' :: loaderForma=' + formas : '') + (gnula ? ' :: gnula=' + gnula : '') + (servidoresApi ? ' :: api=' + servidoresApi : '') + (playerFailed ? ' :: player-failed=' + playerFailed : '') + (pistas ? ' :: pistas=' + pistas : '') + (sinPistas ? ' :: sin-pistas=' + sinPistas : '') + (humanos ? ' :: verificacion-humana=' + humanos : '') + (muertos ? ' :: mirror-muerto=' + muertos : '') + (fallos ? ' :: fallos=' + fallos : '') + ' :: etapas=' + JSON.stringify(etapas);
             fs.appendFileSync(process.env.GITHUB_OUTPUT || '/dev/null', 'resumen=' + resumen + '\n');
             console.log(resumen);

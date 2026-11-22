@@ -126,10 +126,30 @@ async function resolver(request, options = {}) {
 
   const streams = [];
   const yaVistos = new Set();
-  const agregar = (stream, etiqueta) => {
+  // Qué servidor entregó cada stream: el reporte en vivo lo usa para decir
+  // quién devolvió HLS y quién MP4, no solo cuántos medios hay en total.
+  const entregados = [];
+  const agregar = (stream, etiqueta, servidor) => {
     const limpia = sanitizarUrl(stream.url);
     if (!limpia || yaVistos.has(limpia)) return false;
     yaVistos.add(limpia);
+    // La firma ya se verificó: la extensión de la URL dice el tipo. Si no
+    // declara extensión, el medio es HLS (una playlist) salvo que sea MP4.
+    let tipo = 'hls';
+    try {
+      const ruta = new URL(limpia).pathname;
+      if (/\.mp4$/i.test(ruta)) tipo = 'mp4';
+      else if (/\.m3u8$/i.test(ruta)) tipo = 'hls';
+      else if (typeof stream.tipo === 'string') tipo = stream.tipo;
+    } catch { /* URL ya validada */ }
+    if (servidor) {
+      entregados.push({
+        servidor: servidor.servidor || '', idioma: servidor.idioma || '',
+        host: (() => { try { return new URL(servidor.url).hostname.replace(/^www\./, ''); } catch { return ''; } })(),
+        tipo
+      });
+      emitir({ stage: 'fuente', host: entregados[entregados.length - 1].host, servidor: servidor.servidor, idioma: servidor.idioma, tipo });
+    }
     streams.push({
       name: proveedor.nombre,
       title: etiqueta || stream.titulo || proveedor.titulo || 'HLS / MP4',
@@ -181,11 +201,11 @@ async function resolver(request, options = {}) {
       const presupuesto = Math.min(restante, PRESUPUESTO_SERVIDOR);
       const registry = registryPara(presupuesto);
       const resueltos = await registry.resolver(servidor.url, contexto);
-      for (const stream of resueltos) agregar(stream, servidor.etiqueta);
+      for (const stream of resueltos) agregar(stream, servidor.etiqueta, servidor);
       if (!resueltos.length && consumo.restante() > 0) {
         const generico = await registryPara(Math.min(consumo.restante(), PRESUPUESTO_SERVIDOR))
           .resolver(servidor.url, { ...contexto, soloGenerico: true });
-        for (const stream of generico) agregar(stream, servidor.etiqueta);
+        for (const stream of generico) agregar(stream, servidor.etiqueta, servidor);
       }
     } catch (error) {
       const host = new URL(servidor.url).hostname;
@@ -195,6 +215,9 @@ async function resolver(request, options = {}) {
       else emitir({ stage: 'resolver-failed', host, error: error.message });
     }
   }
+  // `entregados` describe qué servidor dio qué tipo de media. Se expone en el
+  // reporte en vivo; la lista de streams de Stremio sigue siendo `streams`.
+  Object.defineProperty(streams, 'entregados', { value: entregados, enumerable: false });
   return streams;
 }
 

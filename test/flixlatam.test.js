@@ -419,3 +419,64 @@ test('Gnula: si la API no descifra, cae a las pistas del HTML y lo informa', asy
   assert.equal(pistas.total, 1);
   assert.deepEqual(streams, []);
 });
+
+// ---------------------------------------------------------------------------
+// Atribución: qué servidor devuelve HLS y cuál MP4
+// ---------------------------------------------------------------------------
+test('cada medio se atribuye al servidor que lo entregó, con su tipo', async () => {
+  // Dos servidores descifrados: uno publica un HLS y otro un MP4.
+  const embed = paginaEmbed69({
+    grupos: [{ idioma: 'LAT', servidores: [['Voe', 'https://voe.sx/e/uno'], ['Streamwish', 'https://streamwish.to/e/dos']] }]
+  });
+  const fetchImpl = async (destino) => {
+    const url = String(destino);
+    // La ficha lleva el iframe del reproductor; el reproductor, el dataLink.
+    if (url.includes('flixlatam.com')) return new Response(FICHA);
+    if (url.includes('embed69.org')) return new Response(embed);
+    if (url.includes('voe.sx')) {
+      return new Response('<html><script>var src="https://cdn.example/uno.m3u8";</script></html>');
+    }
+    if (url.includes('streamwish.to')) {
+      return new Response('<html><script>var src="https://cdn.example/dos.mp4";</script></html>');
+    }
+    if (url.endsWith('.m3u8')) return new Response(HLS);
+    return new Response(MP4);
+  };
+  const eventos = [];
+  const streams = await resolver({ url: 'https://flixlatam.com/pelicula/atribucion' }, {
+    lookupImpl, fetchImpl,
+    allowedHosts: [...hostsPermitidos({}), 'cdn.example'],
+    onEvent: evento => eventos.push(evento)
+  });
+
+  const fuentes = eventos.filter(e => e.stage === 'fuente');
+  assert.equal(fuentes.length, streams.length, 'cada medio verificado deja su evento');
+  const porHost = Object.fromEntries(fuentes.map(f => [f.host, f.tipo]));
+  assert.equal(porHost['voe.sx'], 'hls');
+  assert.equal(porHost['streamwish.to'], 'mp4');
+  assert.equal(fuentes.find(f => f.host === 'voe.sx').idioma, 'Latino');
+  assert.equal(fuentes.find(f => f.host === 'voe.sx').servidor, 'Voe');
+
+  // La lista de streams conserva su forma (name/title/url) sin campos extra.
+  for (const stream of streams) assert.deepEqual(Object.keys(stream).sort(), ['name', 'title', 'url']);
+  // Y la atribución va aparte, para el reporte.
+  assert.equal(streams.entregados.length, streams.length);
+  assert.deepEqual(streams.entregados.map(e => e.tipo).sort(), ['hls', 'mp4']);
+});
+
+test('el reporte en vivo publica la atribución sin URLs de media', async () => {
+  const { eventoSanitizado, CAMPOS_SANEADOS } = require('../scripts/sites-live');
+  assert.ok(CAMPOS_SANEADOS.includes('fuente'));
+  assert.ok(CAMPOS_SANEADOS.includes('servidor'));
+  const limpio = eventoSanitizado({
+    stage: 'fuente', host: 'voe.sx', servidor: 'Servidor 4', idioma: 'Latino', tipo: 'hls',
+    // Campos que NO deben pasar nunca:
+    url: 'https://cdn.example/secreto.m3u8?token=abc', titulo: 'x'
+  });
+  assert.equal(limpio.stage, 'fuente');
+  assert.equal(limpio.host, 'voe.sx');
+  assert.equal(limpio.servidor, 'Servidor 4');
+  assert.equal(limpio.tipo, 'hls');
+  assert.equal(limpio.url, undefined);
+  assert.equal(JSON.stringify(limpio).includes('m3u8'), false);
+});
