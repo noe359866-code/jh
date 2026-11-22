@@ -1,64 +1,65 @@
 {
- "startedAt": "2026-11-22T04:12:12.137Z",
+ "startedAt": "2026-11-22T04:15:56.424Z",
  "ok": true,
  "sources": {
   "tvgarden": {
-   "country": "do",
-   "channels": 161,
+   "country": "pr",
+   "channels": 28,
    "mode": "direct",
    "ok": true,
    "entries": 1211,
-   "ms": 968
+   "ms": 813
   },
   "tvenvivo": {
    "channels": 70,
    "mode": "page",
    "ok": true,
    "entries": 70,
-   "ms": 901
+   "ms": 805
   },
   "eja": {
    "mode": "direct",
    "ok": false,
    "entries": 0,
-   "error": "fetch failed",
-   "ms": 928
+   "error": "Solo se permite HTTPS",
+   "ms": 901
   },
   "livelive24": {
    "channels": 29,
    "mode": "catalog",
    "ok": true,
    "entries": 29,
-   "ms": 1012
+   "ms": 991
   },
   "thedaddy": {
    "listed": 59,
    "mode": "page",
    "ok": true,
    "entries": 59,
-   "ms": 1144
+   "ms": 1053
   },
   "iptvcat": {
+   "country": "spain__9",
+   "rows": 100,
    "mode": "direct",
-   "ok": false,
-   "entries": 0,
-   "error": "fetch failed",
-   "ms": 1148
+   "ok": true,
+   "entries": 1170,
+   "ms": 3311
   },
   "globalfreetv": {
    "country": "ES",
-   "channels": 60,
+   "channels": 45,
    "mode": "direct",
    "ok": true,
-   "entries": 265,
-   "ms": 27589
+   "entries": 243,
+   "ms": 22003
   }
  },
  "totals": {
-  "total": 1471,
-  "playable": 1445,
-  "es": 311,
-  "latam": 1160
+  "total": 1809,
+  "playable": 1784,
+  "es": 346,
+  "latam": 1463
  },
  "checks": [
   {
@@ -91,31 +92,31 @@
    "signature": true
   },
   {
-   "channel": "latam-13-festival",
-   "source": "tvgarden.world",
-   "signature": false
+   "channel": "latam-opa-1080i",
+   "source": "iptvcat.net",
+   "signature": true
   },
   {
-   "channel": "latam-13-humor",
-   "source": "tvgarden.world",
-   "signature": false
+   "channel": "latam-perfil",
+   "source": "iptvcat.net",
+   "signature": true
   },
   {
-   "channel": "latam-13-kids",
-   "source": "tvgarden.world",
-   "signature": false
+   "channel": "es-101tv-antequera",
+   "source": "iptvcat.net",
+   "signature": true
   },
   {
-   "channel": "latam-13-realities",
-   "source": "tvgarden.world",
-   "signature": false
+   "channel": "latam-123tv",
+   "source": "iptvcat.net",
+   "signature": true
   },
   {
-   "channel": "latam-13c",
-   "source": "tvgarden.world",
-   "signature": false
+   "channel": "es-12tv",
+   "source": "iptvcat.net",
+   "signature": true
   }
  ],
- "playlistEntries": 1453,
- "finishedAt": "2026-11-22T04:12:41.538Z"
+ "playlistEntries": 2602,
+ "finishedAt": "2026-11-22T04:16:19.901Z"
 }
