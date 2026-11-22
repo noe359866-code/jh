@@ -70,7 +70,8 @@ async function main() {
       name: channel.name,
       country: channel.country,
       sources: channel.sources,
-      status: channel.health && channel.health.error,
+      status: channel.health && channel.health.status,
+      error: channel.health && channel.health.error,
       attempts: channel.health && channel.health.attempts
     }))
   };

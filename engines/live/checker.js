@@ -137,7 +137,8 @@ function applyReport(channels, report) {
         ok: result.ok,
         via: result.via || null,
         attempts: (result.attempts || []).length,
-        error: result.error || null
+        status: firstAttemptWith(result, 'status').status ?? null,
+        error: firstAttemptWith(result, 'error').error || null
       }
     };
   });

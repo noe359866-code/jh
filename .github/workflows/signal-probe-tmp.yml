@@ -3,6 +3,8 @@ on:
   push:
     paths:
       - '.github/workflows/signal-probe-tmp.yml'
+      - 'engines/live/checker.js'
+      - 'scripts/verify.js'
 
 permissions:
   contents: write
