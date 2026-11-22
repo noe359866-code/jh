@@ -113,6 +113,7 @@ const ejecutar = fase === 'unpack' ? faseUnpack
   : fase === 'rutas' ? principal
     : fase === 'vars' ? faseVariables
       : fase === 'players' ? fasePlayers
+        : fase === 'vidara' ? faseVidara
       : async () => { await faseVariables(); await faseUnpack(); await fasePlayers(); };
 
 ejecutar().catch(error => {
@@ -316,4 +317,60 @@ async function fasePlayers() {
       }
     }
   }
+}
+
+// ---------------------------------------------------------------------------
+// Fase 5: forma de la fuente en la página de vidara (sin publicar la URL)
+// ---------------------------------------------------------------------------
+async function faseVidara() {
+  const { desempacar, leerPlayer } = require('../engines/sites/gnula');
+  const fetcher = createFetcher({ allowedHosts: [...hostsPermitidos({})], maxBytes: 4 * 1024 * 1024 });
+  const html = await fetcher.getText(FICHA);
+  const player = leerPlayer(html);
+  const url = new URL(`${player.prefijo}${player.id}${player.sufijo}${encodeURIComponent(player.token)}`, FICHA).href;
+  const datos = desempacar(JSON.parse(await fetcher.getText(url, { Accept: 'application/json', Referer: FICHA })).p);
+  const destino = datos.langs[0].servers.find(s => /vidara/.test(s.src)).src;
+
+  const cuerpo = await fetcher.getText(destino, { Referer: FICHA });
+  console.log(`vidara bytes=${cuerpo.length}`);
+
+  // Claves JSON y valores con forma de ruta de media.
+  const claves = new Set();
+  for (const m of cuerpo.matchAll(/["']([a-zA-Z_$][\w$]{1,20})["']\s*:/g)) claves.add(m[1]);
+  console.log(`claves-json=[${[...claves].filter(k => /file|src|url|hls|source|stream|video|m3u|play|token|hash|id/i.test(k)).sort().join(',')}]`);
+
+  for (const m of cuerpo.matchAll(/(?:file|src|source|hls|url|stream)\s*[:=]\s*["']([^"']{4,300})["']/gi)) {
+    const valor = m[1];
+    let forma = `str(${valor.length})`;
+    try {
+      const u = new URL(valor, destino);
+      forma = `url(host=${u.hostname} partes=[${u.pathname.split('/').filter(Boolean).map(x => x.length)}]${u.search ? ' query' : ''})`;
+    } catch { /* no es URL absoluta */ }
+    // Sin esquema: mostrar la forma de la ruta (extensiones y largos).
+    if (!/^https?:/i.test(valor)) {
+      forma += ` patron=${valor.replace(/[A-Za-z0-9]/g, 'x').slice(0, 60)}`;
+    }
+    console.log(`fuente ${m[0].slice(0, 18).replace(/[^\w:=\s]/g, '')} -> ${forma}`);
+  }
+
+  // Cadenas base64 largas que decodifican a texto con aspecto de ruta.
+  for (const m of cuerpo.matchAll(/["']([A-Za-z0-9+/=]{24,400})["']/g)) {
+    try {
+      const claro = Buffer.from(m[1], 'base64').toString('utf8');
+      if (/^[\x20-\x7e]+$/.test(claro) && /[/:]/.test(claro)) {
+        console.log(`base64(${m[1].length}) -> ${claro.replace(/[A-Za-z0-9]/g, 'x').slice(0, 80)}`);
+      }
+    } catch { /* no es base64 legible */ }
+  }
+
+  // Dónde aparece "humano".
+  for (const m of cuerpo.matchAll(/.{0,90}human.{0,90}/gi)) {
+    console.log(`humano: ${redactar(m[0])}`);
+  }
+  // Scripts propios y etiquetas de player.
+  const scripts = [...new Set([...cuerpo.matchAll(/<script[^>]+src=["']([^"']+)["']/gi)].map(m => {
+    try { return new URL(m[1], destino).hostname; } catch { return ''; }
+  }).filter(Boolean))];
+  console.log(`scripts=[${scripts.join(',')}]`);
+  console.log(`etiquetas=[${[...new Set([...cuerpo.matchAll(/<([a-z][a-z0-9]*)/gi)].map(m => m[1].toLowerCase()))].slice(0, 12).join(',')}]`);
 }
