@@ -1,0 +1,4565 @@
+{
+  "checkedAt": "2026-11-22T11:28:09.853Z",
+  "durationMs": 206970,
+  "inconclusive": false,
+  "extraction": {
+    "targets": 644,
+    "candidates": 644,
+    "extracted": 0,
+    "failed": 106,
+    "skipped": 538,
+    "penalizedSources": [],
+    "bySource": {
+      "Samsung TV Plus ES": {
+        "extraidos": 0,
+        "fallidos": 0,
+        "omitidos": 93
+      },
+      "cinecity": {
+        "extraidos": 0,
+        "fallidos": 0,
+        "omitidos": 36
+      },
+      "D9Kod": {
+        "extraidos": 0,
+        "fallidos": 0,
+        "omitidos": 120
+      },
+      "Pluto TV": {
+        "extraidos": 0,
+        "fallidos": 0,
+        "omitidos": 33
+      },
+      "thedaddy.li": {
+        "extraidos": 0,
+        "fallidos": 13,
+        "omitidos": 0
+      },
+      "iptv-chile": {
+        "extraidos": 0,
+        "fallidos": 0,
+        "omitidos": 1
+      },
+      "livelive24.com": {
+        "extraidos": 0,
+        "fallidos": 23,
+        "omitidos": 0
+      },
+      "tvenvivo.org": {
+        "extraidos": 0,
+        "fallidos": 70,
+        "omitidos": 0
+      },
+      "telechancho": {
+        "extraidos": 0,
+        "fallidos": 0,
+        "omitidos": 1
+      }
+    },
+    "reasons": {
+      "sin resolutor para la fuente": 284,
+      "cadena de embed: HTTP 403": 7,
+      "la cadena no expone m3u8": 93,
+      "cadena de embed: fetch failed": 6
+    },
+    "ms": 129641
+  },
+  "totals": {
+    "checked": 3393,
+    "alive": 2990,
+    "dead": 403,
+    "blocked": 642,
+    "unconfirmed": 664,
+    "unknown": 0,
+    "skipped": 314
+  },
+  "blocked": 642,
+  "unconfirmed": 664,
+  "dead": [
+    {
+      "id": "es-hola-play",
+      "name": "¡HOLA! Play",
+      "country": "ES",
+      "sources": [
+        "pluto"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-00s-replay",
+      "name": "00S REPLAY",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-13-deportes",
+      "name": "13 Deportes",
+      "country": "LATAM",
+      "sources": [
+        "iptvchile"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-13max-television",
+      "name": "13Max Television",
+      "country": "LATAM",
+      "sources": [
+        "globalfreetv"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 2
+    },
+    {
+      "id": "latam-1980-channel",
+      "name": "1980 Channel",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "es-24-horas-internacional",
+      "name": "24 Horas Internacional",
+      "country": "ES",
+      "sources": [
+        "globalfreetv"
+      ],
+      "status": "red",
+      "error": "getaddrinfo ENOTFOUND rtvelivestream.akamaized.net",
+      "attempts": 1
+    },
+    {
+      "id": "latam-282-nip-tuck",
+      "name": "282 Nip/Tuck",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-4dmas-noticias-tv",
+      "name": "4Dmas Noticias TV",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-5-emergency-rescue",
+      "name": "5 Emergency Rescue",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-80s-rewind",
+      "name": "80S Rewind",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-90-s-kids",
+      "name": "90's Kids",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-90s-throwback",
+      "name": "90S Throwback",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-a7-tv",
+      "name": "A7 TV",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": "red",
+      "error": "getaddrinfo ENOTFOUND 183.bozztv.com",
+      "attempts": 1
+    },
+    {
+      "id": "latam-adrenalina-pura-tv",
+      "name": "Adrenalina Pura TV",
+      "country": "LATAM",
+      "sources": [
+        "cinecity",
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 2
+    },
+    {
+      "id": "latam-ae-radio",
+      "name": "AE Radio",
+      "country": "LATAM",
+      "sources": [
+        "cinecity"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-ae-radio-tv",
+      "name": "AE Radio TV",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-aguacate-tv",
+      "name": "Aguacate TV",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden",
+        "eja"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-aire-de-santa-fe",
+      "name": "Aire de Santa Fe",
+      "country": "LATAM",
+      "sources": [
+        "cinecity"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-aire-de-santa-fe",
+      "name": "Aire de Santa Fe",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden",
+        "iptvcat",
+        "globalfreetv"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-alpha-tv",
+      "name": "Alpha TV",
+      "country": "LATAM",
+      "sources": [
+        "cinecity"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 2
+    },
+    {
+      "id": "latam-amaga-television",
+      "name": "Amaga Television",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-america-s-next-top-model",
+      "name": "America's Next Top Model",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-american-crimes",
+      "name": "American Crimes",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-animaux",
+      "name": "Animaux",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "es-anime-max",
+      "name": "Anime Max",
+      "country": "ES",
+      "sources": [
+        "pluto"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-antares-television",
+      "name": "Antares Television",
+      "country": "LATAM",
+      "sources": [
+        "globalfreetv"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "es-antena-3-spain",
+      "name": "Antena 3 Spain",
+      "country": "ES",
+      "sources": [
+        "thedaddy"
+      ],
+      "status": "red",
+      "error": "fetch failed",
+      "attempts": 1
+    },
+    {
+      "id": "es-aragon-tv",
+      "name": "Aragon TV",
+      "country": "ES",
+      "sources": [
+        "globalfreetv"
+      ],
+      "status": "red",
+      "error": "getaddrinfo ENOTFOUND cartv.streaming.aranova.es",
+      "attempts": 1
+    },
+    {
+      "id": "latam-archivos-forenses",
+      "name": "Archivos Forenses",
+      "country": "LATAM",
+      "sources": [
+        "cinecity"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-as-tartarugas-ninja",
+      "name": "As Tartarugas Ninja",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-atacama-tv",
+      "name": "Atacama TV",
+      "country": "LATAM",
+      "sources": [
+        "globalfreetv"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-avc-hd",
+      "name": "AVC HD",
+      "country": "LATAM",
+      "sources": [
+        "globalfreetv"
+      ],
+      "status": "red",
+      "error": "fetch failed",
+      "attempts": 1
+    },
+    {
+      "id": "latam-awsn",
+      "name": "AWSN",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-ayni-tv",
+      "name": "AYNI TV",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-baby-shark",
+      "name": "Baby Shark",
+      "country": "LATAM",
+      "sources": [
+        "cinecity"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-bamos-tv",
+      "name": "BAMOS TV",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "es-barca-tv-spain",
+      "name": "Barca TV Spain",
+      "country": "ES",
+      "sources": [
+        "thedaddy"
+      ],
+      "status": "red",
+      "error": "fetch failed",
+      "attempts": 1
+    },
+    {
+      "id": "latam-bbc-dinos-24-7",
+      "name": "BBC Dinos 24/7",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "es-bbc-drama",
+      "name": "BBC Drama",
+      "country": "ES",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-beach-day-by-wb-v",
+      "name": "Beach Day by WB (vᴘɴ )",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-best-of-the-drew-barrymore-show",
+      "name": "Best of The Drew Barrymore Show",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-bet-pluto-tv",
+      "name": "Bet Pluto tv",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "es-beteve",
+      "name": "Beteve",
+      "country": "ES",
+      "sources": [
+        "globalfreetv"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 2
+    },
+    {
+      "id": "latam-beyond-belief-fact-or-fiction",
+      "name": "Beyond Belief Fact or Fiction",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-beyond-history",
+      "name": "Beyond History",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-big-brother",
+      "name": "Big Brother",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-bob-esponja",
+      "name": "Bob Esponja",
+      "country": "LATAM",
+      "sources": [
+        "cinecity",
+        "samsungtvplus"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-bolivision",
+      "name": "Bolivision",
+      "country": "LATAM",
+      "sources": [
+        "cinecity"
+      ],
+      "status": "red",
+      "error": "getaddrinfo ENOTFOUND alba-bo-bolivision-bolivision.stream.mediatiquestream.com",
+      "attempts": 1
+    },
+    {
+      "id": "latam-bravo-the-real-housewives-vault",
+      "name": "Bravo The Real HouseWives Vault",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-britain-s-next-top-model",
+      "name": "Britain's Next Top Model",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-britbox-mysteries",
+      "name": "BritBox Mysteries",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "es-burrianateve",
+      "name": "BurrianaTeVe",
+      "country": "ES",
+      "sources": [
+        "globalfreetv"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-cable-sur-tv",
+      "name": "Cable Sur TV",
+      "country": "LATAM",
+      "sources": [
+        "globalfreetv"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-cadena-103",
+      "name": "Cadena 103",
+      "country": "LATAM",
+      "sources": [
+        "cinecity"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-cadena-tv",
+      "name": "Cadena TV",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden",
+        "eja"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-cali-tv",
+      "name": "Cali TV",
+      "country": "LATAM",
+      "sources": [
+        "cinecity"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-calitv",
+      "name": "CaliTV",
+      "country": "LATAM",
+      "sources": [
+        "globalfreetv"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 2
+    },
+    {
+      "id": "latam-camaras-de-villa-gesell-la-pinocha",
+      "name": "Cámaras de Villa Gesell (La Pinocha)",
+      "country": "LATAM",
+      "sources": [
+        "telechancho"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-canal-14-codazzi",
+      "name": "Canal 14 Codazzi",
+      "country": "LATAM",
+      "sources": [
+        "globalfreetv"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-canal-2-salta",
+      "name": "Canal 2 Salta",
+      "country": "LATAM",
+      "sources": [
+        "globalfreetv"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "es-canal-4-mallorca",
+      "name": "Canal 4 Mallorca",
+      "country": "ES",
+      "sources": [
+        "globalfreetv"
+      ],
+      "status": "red",
+      "error": "fetch failed",
+      "attempts": 1
+    },
+    {
+      "id": "latam-canal-5-pico-truncado",
+      "name": "Canal 5 Pico Truncado",
+      "country": "LATAM",
+      "sources": [
+        "globalfreetv"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-canal-6-entre-rios-tv",
+      "name": "Canal 6 Entre Rios TV",
+      "country": "LATAM",
+      "sources": [
+        "globalfreetv"
+      ],
+      "status": "red",
+      "error": "getaddrinfo ENOTFOUND ythls.armelin.one",
+      "attempts": 1
+    },
+    {
+      "id": "latam-canal-6-panadish",
+      "name": "Canal 6 Panadish",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": "red",
+      "error": "fetch failed",
+      "attempts": 1
+    },
+    {
+      "id": "latam-canal-9-cosespu",
+      "name": "Canal 9 Cosespu",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-canal-9-litoral",
+      "name": "Canal 9 Litoral",
+      "country": "LATAM",
+      "sources": [
+        "globalfreetv"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-canal-9-litoral-entre-rios",
+      "name": "Canal 9 Litoral (Entre Rios)",
+      "country": "LATAM",
+      "sources": [
+        "cinecity"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-canal-scn",
+      "name": "Canal SCN",
+      "country": "LATAM",
+      "sources": [
+        "globalfreetv"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-canal-u",
+      "name": "Canal U",
+      "country": "LATAM",
+      "sources": [
+        "globalfreetv"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-capital-21",
+      "name": "Capital 21",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-caso-cerrado",
+      "name": "Caso Cerrado",
+      "country": "LATAM",
+      "sources": [
+        "cinecity"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-cbs-sports-golazo",
+      "name": "CBS Sports Golazo",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-cbs-sports-hq",
+      "name": "CBS Sports HQ",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-cbs-uefa-champions-league",
+      "name": "CBS UEFA Champions League",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-ceacom-tv",
+      "name": "CEACOM TV",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden",
+        "eja"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-celeb-reality",
+      "name": "Celeb Reality",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-cgtn",
+      "name": "CGTN",
+      "country": "LATAM",
+      "sources": [
+        "cinecity"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-cheers-frasier",
+      "name": "Cheers + Frasier",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-chilecito-tv-la-rioja",
+      "name": "Chilecito TV (La Rioja)",
+      "country": "LATAM",
+      "sources": [
+        "cinecity"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-chip-jo-feels-like-home-by-magnolia-network",
+      "name": "Chip & Jo Feels Like Home by Magnolia Network",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "es-cine-aventura",
+      "name": "Cine Aventura",
+      "country": "ES",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-cine-classicos",
+      "name": "Cine Classicos",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "es-cine-drama",
+      "name": "Cine Drama",
+      "country": "ES",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-cine-terror",
+      "name": "Cine Terror",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-cirque-du-soleil",
+      "name": "Cirque du Soleil",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "red",
+      "error": "getaddrinfo ENOTFOUND amg01439-amg01439c1-amgplt0201.playout.now3.amagi.tv",
+      "attempts": 1
+    },
+    {
+      "id": "latam-classic-car-auctions-by-history",
+      "name": "Classic Car Auctions by History",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-classic-tv-drama",
+      "name": "Classic TV Drama",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-clube-de-terror",
+      "name": "Clube de Terror",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-cmt-equal-play",
+      "name": "CMT Equal Play",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-cocina",
+      "name": "Cocina",
+      "country": "LATAM",
+      "sources": [
+        "cinecity"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-cold-case-files-by-a-e",
+      "name": "Cold Case Files by A&E",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-come-dine-with-me",
+      "name": "Come Dine With Me",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-comedy-central-animation",
+      "name": "Comedy Central Animation",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-comedy-central-roast",
+      "name": "Comedy Central Roast",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-comedy-central-south-park",
+      "name": "Comedy Central South Park",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-cops",
+      "name": "COPS",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-cosmic-frontiers",
+      "name": "Cosmic Frontiers",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-cpetv",
+      "name": "CPEtv",
+      "country": "LATAM",
+      "sources": [
+        "globalfreetv"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-crime-justice",
+      "name": "Crime & Justice",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-crime-360-by-a-e",
+      "name": "Crime 360 by A&E",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-criminal-minds",
+      "name": "Criminal Minds",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-csi",
+      "name": "CSI",
+      "country": "LATAM",
+      "sources": [
+        "cinecity",
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 2
+    },
+    {
+      "id": "latam-csi-miami",
+      "name": "CSI: Miami",
+      "country": "LATAM",
+      "sources": [
+        "cinecity",
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 2
+    },
+    {
+      "id": "es-cuatro-spain",
+      "name": "Cuatro Spain",
+      "country": "ES",
+      "sources": [
+        "thedaddy"
+      ],
+      "status": "red",
+      "error": "fetch failed",
+      "attempts": 1
+    },
+    {
+      "id": "latam-cult-films",
+      "name": "Cult Films",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-daria",
+      "name": "Daria",
+      "country": "LATAM",
+      "sources": [
+        "cinecity"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-dark-shadows",
+      "name": "Dark Shadows",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "es-dazn-1-spain",
+      "name": "DAZN 1 Spain",
+      "country": "ES",
+      "sources": [
+        "thedaddy"
+      ],
+      "status": "red",
+      "error": "fetch failed",
+      "attempts": 1
+    },
+    {
+      "id": "es-dazn-2-spain",
+      "name": "DAZN 2 Spain",
+      "country": "ES",
+      "sources": [
+        "thedaddy"
+      ],
+      "status": "red",
+      "error": "fetch failed",
+      "attempts": 1
+    },
+    {
+      "id": "es-dazn-3-spain",
+      "name": "DAZN 3 Spain",
+      "country": "ES",
+      "sources": [
+        "thedaddy"
+      ],
+      "status": "red",
+      "error": "fetch failed",
+      "attempts": 1
+    },
+    {
+      "id": "es-dazn-4-spain",
+      "name": "DAZN 4 Spain",
+      "country": "ES",
+      "sources": [
+        "thedaddy"
+      ],
+      "status": "red",
+      "error": "fetch failed",
+      "attempts": 1
+    },
+    {
+      "id": "latam-dazn-ringside",
+      "name": "DAZN Ringside",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-dazn-tv",
+      "name": "DAZN tv",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-dcc-making-the-team",
+      "name": "DCC Making the Team",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-death-note",
+      "name": "Death Note",
+      "country": "LATAM",
+      "sources": [
+        "cinecity"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-desenhos-classicos",
+      "name": "Desenhos Clássicos",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-detetives-medicos",
+      "name": "Detetives Médicos",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "es-dfb-play-tv",
+      "name": "DFB Play TV",
+      "country": "ES",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-diario-hechicera",
+      "name": "Diario Hechicera",
+      "country": "LATAM",
+      "sources": [
+        "globalfreetv"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-dios-tv-talanga",
+      "name": "Dios Tv Talanga",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-discovery-turbo-tv-v",
+      "name": "Discovery Turbo tv (vᴘɴ )",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-dmj",
+      "name": "DMJ",
+      "country": "LATAM",
+      "sources": [
+        "globalfreetv"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-documentary",
+      "name": "Documentary+",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-dp-world-tour-golf",
+      "name": "DP World Tour Golf",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-dynasty",
+      "name": "Dynasty",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "es-e-sports",
+      "name": "E Sports",
+      "country": "ES",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-ebony-drama-by-lionsgate",
+      "name": "Ebony Drama by Lionsgate",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-eclipse-tv",
+      "name": "Eclipse TV",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-egm-channel",
+      "name": "EGM Channel",
+      "country": "LATAM",
+      "sources": [
+        "globalfreetv"
+      ],
+      "status": "red",
+      "error": "getaddrinfo ENOTFOUND paneltv.online",
+      "attempts": 1
+    },
+    {
+      "id": "latam-el-puerto-tv",
+      "name": "El Puerto TV",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "es-en-vivo-06-fox-sports-premium",
+      "name": "EN VIVO 06 Fox Sports Premium ▶",
+      "country": "ES",
+      "sources": [
+        "tvenvivo"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "es-en-vivo-08-movistar-la-liga",
+      "name": "EN VIVO 08 Movistar La Liga ▶",
+      "country": "ES",
+      "sources": [
+        "tvenvivo"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "es-en-vivo-09-movistar-liga-de-campeones",
+      "name": "EN VIVO 09 Movistar Liga de Campeones ▶",
+      "country": "ES",
+      "sources": [
+        "tvenvivo"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "es-en-vivo-29-fox-sports-3",
+      "name": "EN VIVO 29 Fox Sports 3 ▶",
+      "country": "ES",
+      "sources": [
+        "tvenvivo"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "es-en-vivo-32-fox-sports-3-mexico",
+      "name": "EN VIVO 32 Fox Sports 3 Mexico ▶",
+      "country": "ES",
+      "sources": [
+        "tvenvivo"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-escape-to-the-country",
+      "name": "Escape to the Country",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-et-live-entertainment-tonight",
+      "name": "ET Live Entertainment Tonight",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-extreme-jobs-by-lionsgates-v",
+      "name": "Extreme Jobs By Lionsgates (vᴘɴ )",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-family-movie-club",
+      "name": "Family Movie Club",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-family-ties",
+      "name": "Family Ties",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-farra-play",
+      "name": "Farra Play",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-ficcao-cientifica",
+      "name": "Ficção Científica",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-filmelier-tv",
+      "name": "Filmelier TV",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-filmes-aventura",
+      "name": "Filmes Aventura",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-filmes-sucessos",
+      "name": "Filmes Sucessos",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-flicks-of-fury",
+      "name": "Flicks of Fury",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-ftf-sports",
+      "name": "FTF Sports",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "red",
+      "error": "getaddrinfo ENOTFOUND d35j504z0x2vu2.cloudfront.net",
+      "attempts": 1
+    },
+    {
+      "id": "latam-fubo-sports-network",
+      "name": "Fubo Sports Network",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-garfield-and-friends",
+      "name": "Garfield and Friends",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-geekdot",
+      "name": "Geekdot",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "red",
+      "error": "fetch failed",
+      "attempts": 1
+    },
+    {
+      "id": "latam-ghost-hunters",
+      "name": "Ghost Hunters",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-girovisual",
+      "name": "Girovisual",
+      "country": "LATAM",
+      "sources": [
+        "globalfreetv"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-gogo-gadget",
+      "name": "GoGO Gadget",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "es-gol-play-spain",
+      "name": "GOL PLAY Spain",
+      "country": "ES",
+      "sources": [
+        "thedaddy"
+      ],
+      "status": "red",
+      "error": "fetch failed",
+      "attempts": 1
+    },
+    {
+      "id": "latam-golfpass",
+      "name": "GolfPass",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-gu-immortali-van-damme-vs-lunogreen",
+      "name": "gu immortali van Damme vs lunogreen",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-hallmark-holiday-favorites",
+      "name": "Hallmark Holiday Favorites",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-haunt-tv",
+      "name": "Haunt tv",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-hbo-boxing-by-wbtv",
+      "name": "HBO Boxing by WBtv",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-heliconia-radio-tv",
+      "name": "Heliconia Radio TV",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-hispantv",
+      "name": "HispanTV",
+      "country": "LATAM",
+      "sources": [
+        "cinecity"
+      ],
+      "status": "red",
+      "error": "getaddrinfo ENOTFOUND live.presstv.ir",
+      "attempts": 1
+    },
+    {
+      "id": "latam-historias-de-ultratumba",
+      "name": "Historias de Ultratumba",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-horror-club",
+      "name": "Horror Club",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-huasco-television",
+      "name": "Huasco Television",
+      "country": "LATAM",
+      "sources": [
+        "globalfreetv"
+      ],
+      "status": "red",
+      "error": "getaddrinfo ENOTFOUND paneltv.online",
+      "attempts": 1
+    },
+    {
+      "id": "latam-i-almost-got-away-with-it",
+      "name": "I (Almost) Got Away with It",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-incroyables-transformations",
+      "name": "Incroyables Transformations",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-intervention-by-a-e",
+      "name": "Intervention by A&E",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-itv-deportes",
+      "name": "ITV Deportes",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-itv-deportes",
+      "name": "ITV Deportes",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden",
+        "iptvcat",
+        "globalfreetv"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-jimani-tv",
+      "name": "Jimani TV",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-jne-tv",
+      "name": "JNE TV",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": "red",
+      "error": "getaddrinfo ENOTFOUND lbgo.bozztv.com",
+      "attempts": 1
+    },
+    {
+      "id": "latam-kids-club",
+      "name": "Kids Club",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-la-familia-del-barrio",
+      "name": "La Familia del Barrio",
+      "country": "LATAM",
+      "sources": [
+        "cinecity"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-la-hermandad-salsera",
+      "name": "La Hermandad Salsera",
+      "country": "LATAM",
+      "sources": [
+        "globalfreetv"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-la-red",
+      "name": "La Red",
+      "country": "LATAM",
+      "sources": [
+        "iptvchile"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-la-red",
+      "name": "La Red",
+      "country": "LATAM",
+      "sources": [
+        "globalfreetv"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "es-la-sexta-spain",
+      "name": "La Sexta Spain",
+      "country": "ES",
+      "sources": [
+        "thedaddy"
+      ],
+      "status": "red",
+      "error": "fetch failed",
+      "attempts": 1
+    },
+    {
+      "id": "latam-la-voz-grupera-tv",
+      "name": "La Voz Grupera TV",
+      "country": "LATAM",
+      "sources": [
+        "globalfreetv"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "es-laliga-smartbank-tv",
+      "name": "LaLiga SmartBank TV",
+      "country": "ES",
+      "sources": [
+        "thedaddy"
+      ],
+      "status": "red",
+      "error": "fetch failed",
+      "attempts": 1
+    },
+    {
+      "id": "latam-lego-kids",
+      "name": "Lego Kids",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-lifetime-love-drama",
+      "name": "Lifetime Love & Drama",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-live-music",
+      "name": "Live Music",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-live-pd-presents",
+      "name": "Live PD Presents",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-living-with-evil-by-wbtv",
+      "name": "Living With Evil by WBtv",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-los-padrinos-magicos",
+      "name": "Los Padrinos Magicos",
+      "country": "LATAM",
+      "sources": [
+        "cinecity"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-los-simpson",
+      "name": "Los Simpson",
+      "country": "LATAM",
+      "sources": [
+        "cinecity"
+      ],
+      "status": "red",
+      "error": "fetch failed",
+      "attempts": 1
+    },
+    {
+      "id": "latam-love-island-danmark",
+      "name": "Love Island Danmark",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-love-island-usa",
+      "name": "Love Island USA",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-love-kills",
+      "name": "Love Kills",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-magic-kids",
+      "name": "Magic Kids",
+      "country": "LATAM",
+      "sources": [
+        "globalfreetv"
+      ],
+      "status": "red",
+      "error": "getaddrinfo ENOTFOUND magicstream.ddns.net",
+      "attempts": 1
+    },
+    {
+      "id": "latam-mais-um",
+      "name": "Mais Um",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "red",
+      "error": "fetch failed",
+      "attempts": 1
+    },
+    {
+      "id": "latam-malbec-play",
+      "name": "Malbec Play",
+      "country": "LATAM",
+      "sources": [
+        "globalfreetv"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-marla-vision",
+      "name": "Marla Vision",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-mas-fm",
+      "name": "Mas FM",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-mas-fm-95-9",
+      "name": "Más FM 95.9",
+      "country": "LATAM",
+      "sources": [
+        "eja"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-matched-married-meet-by-lifetime",
+      "name": "Matched Married Meet by Lifetime",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-medical-incredible",
+      "name": "Medical Incredible",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-metv-toons",
+      "name": "MeTV Toons",
+      "country": "LATAM",
+      "sources": [
+        "d9kod"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-midsomer-murders",
+      "name": "Midsomer Murders",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-military",
+      "name": "Military",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-million-dollar-listing-vault",
+      "name": "Million Dollar Listing Vault",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-modern-marvels-by-history",
+      "name": "Modern Marvels by History",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-monster-jam",
+      "name": "Monster Jam",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-montones-tv",
+      "name": "Montones TV",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": "red",
+      "error": "getaddrinfo ENOTFOUND lbgo.bozztv.com",
+      "attempts": 1
+    },
+    {
+      "id": "latam-moranguinho",
+      "name": "Moranguinho",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-more-tv-crime",
+      "name": "More tv Crime",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-motortrend-fast-tv",
+      "name": "MotorTrend Fast TV",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-moviesphere-by-lionsgate",
+      "name": "MovieSphere by Lionsgate",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "es-movistar-deportes-2-spain",
+      "name": "Movistar Deportes 2 Spain",
+      "country": "ES",
+      "sources": [
+        "thedaddy"
+      ],
+      "status": "red",
+      "error": "fetch failed",
+      "attempts": 1
+    },
+    {
+      "id": "es-movistar-deportes-3-spain",
+      "name": "Movistar Deportes 3 Spain",
+      "country": "ES",
+      "sources": [
+        "thedaddy"
+      ],
+      "status": "red",
+      "error": "fetch failed",
+      "attempts": 1
+    },
+    {
+      "id": "es-movistar-deportes-4-spain",
+      "name": "Movistar Deportes 4 Spain",
+      "country": "ES",
+      "sources": [
+        "thedaddy"
+      ],
+      "status": "red",
+      "error": "fetch failed",
+      "attempts": 1
+    },
+    {
+      "id": "es-movistar-deportes-spain",
+      "name": "Movistar Deportes Spain",
+      "country": "ES",
+      "sources": [
+        "thedaddy"
+      ],
+      "status": "red",
+      "error": "fetch failed",
+      "attempts": 1
+    },
+    {
+      "id": "latam-mtv-best-off",
+      "name": "MTV Best Off",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-mtv-biggest-pop",
+      "name": "MTV Biggest Pop",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-mtv-classic",
+      "name": "MTV Classic",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "es-mtv-flow-latino",
+      "name": "MTV Flow Latino",
+      "country": "ES",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-mtv-pluto",
+      "name": "MTV Pluto",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-mtv-rock",
+      "name": "MTV Rock",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-mtv-spankin-new",
+      "name": "MTV Spankin' New",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-murder-she-wrote",
+      "name": "Murder She Wrote",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-mysteria",
+      "name": "Mysteria",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-nande-portetepe-tv",
+      "name": "Nande Portetepe TV",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-naranja-tv",
+      "name": "Naranja TV",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-naruto",
+      "name": "Naruto",
+      "country": "LATAM",
+      "sources": [
+        "cinecity"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-nascar",
+      "name": "Nascar",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-ncis",
+      "name": "NCIS",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-neox-tv-salta",
+      "name": "Neox TV Salta",
+      "country": "LATAM",
+      "sources": [
+        "telechancho"
+      ],
+      "status": "red",
+      "error": "fetch failed",
+      "attempts": 1
+    },
+    {
+      "id": "latam-net-channel",
+      "name": "Net Channel",
+      "country": "LATAM",
+      "sources": [
+        "cinecity"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-netmovies-tv",
+      "name": "Netmovies TV",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-nfl",
+      "name": "NFL",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-nick-jr-club",
+      "name": "Nick Jr. Club",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-nickelodeon-bob-esponja",
+      "name": "Nickelodeon Bob Esponja",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-nickelodeon-classico",
+      "name": "Nickelodeon Clássico",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-nickelodeon-icarly",
+      "name": "Nickelodeon iCarly",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-nonstop-drama",
+      "name": "Nonstop Drama",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-notisur-tv",
+      "name": "Notisur TV",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "es-nova-s-serbia",
+      "name": "Nova S Serbia",
+      "country": "ES",
+      "sources": [
+        "thedaddy"
+      ],
+      "status": "red",
+      "error": "fetch failed",
+      "attempts": 1
+    },
+    {
+      "id": "es-nova-sport-bulgaria",
+      "name": "Nova Sport Bulgaria",
+      "country": "ES",
+      "sources": [
+        "thedaddy"
+      ],
+      "status": "red",
+      "error": "fetch failed",
+      "attempts": 1
+    },
+    {
+      "id": "es-nova-sport-serbia",
+      "name": "Nova Sport Serbia",
+      "country": "ES",
+      "sources": [
+        "thedaddy"
+      ],
+      "status": "red",
+      "error": "fetch failed",
+      "attempts": 1
+    },
+    {
+      "id": "es-nova-tv-bulgaria",
+      "name": "Nova TV Bulgaria",
+      "country": "ES",
+      "sources": [
+        "thedaddy"
+      ],
+      "status": "red",
+      "error": "fetch failed",
+      "attempts": 1
+    },
+    {
+      "id": "latam-nova-tv-star",
+      "name": "Nova TV Star",
+      "country": "LATAM",
+      "sources": [
+        "globalfreetv"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-novelas-mexico",
+      "name": "Novelas México",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-o-reino-infantil",
+      "name": "O Reino Infantil",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-oasis-rtv",
+      "name": "Oasis RTV",
+      "country": "LATAM",
+      "sources": [
+        "globalfreetv"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-oggy-e-as-baratas-tontas",
+      "name": "Oggy e as Baratas Tontas",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-oli-tv",
+      "name": "Oli TV",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-omega-tv",
+      "name": "Omega TV",
+      "country": "LATAM",
+      "sources": [
+        "eja"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "es-onda-valencia",
+      "name": "Onda Valencia",
+      "country": "ES",
+      "sources": [
+        "eja"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "es-onda-valencia-tv",
+      "name": "Onda Valencia TV",
+      "country": "ES",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-one-championship-tv",
+      "name": "One Championship tv",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-one-piece",
+      "name": "One Piece",
+      "country": "LATAM",
+      "sources": [
+        "cinecity"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-os-padrinhos-magicos",
+      "name": "Os Padrinhos Mágicos",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-outflix-movies",
+      "name": "OUTflix Movies",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-oxygen-true-crime-archives",
+      "name": "Oxygen True Crime Archives",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-pac-12-insider",
+      "name": "Pac 12 Insider",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-paramount-movie-channel",
+      "name": "Paramount Movie Channel",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-paranormal",
+      "name": "Paranormal",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-paranormal-state",
+      "name": "Paranormal State",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-pbr-velocity-series",
+      "name": "PBR Velocity Series",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-pegadinhas-just-for-laughs",
+      "name": "Pegadinhas Just for Laughs",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-pequeradio-tv",
+      "name": "Pequeradio TV",
+      "country": "LATAM",
+      "sources": [
+        "cinecity"
+      ],
+      "status": "red",
+      "error": "getaddrinfo ENOTFOUND 183.bozztv.com",
+      "attempts": 1
+    },
+    {
+      "id": "latam-peravia-vision",
+      "name": "Peravia Vision",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-pfl-mma",
+      "name": "PFL MMA",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-pga-tour",
+      "name": "PGA Tour",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-pixel-tv",
+      "name": "Pixel tv",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-planeta-tv",
+      "name": "Planeta TV",
+      "country": "LATAM",
+      "sources": [
+        "globalfreetv"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-pll-network",
+      "name": "PLL Network",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "red",
+      "error": "getaddrinfo ENOTFOUND apollo.production-public.tubi.io",
+      "attempts": 1
+    },
+    {
+      "id": "latam-pluto-action",
+      "name": "Pluto Action",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-pluto-action-movies",
+      "name": "Pluto Action Movies",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-pluto-classic-movies",
+      "name": "Pluto Classic Movies",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-pluto-comedia",
+      "name": "Pluto Comédia",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-pluto-comedy",
+      "name": "Pluto Comedy",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-pluto-crime-movies",
+      "name": "Pluto Crime Movies",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-pluto-fantastic-movies",
+      "name": "Pluto Fantastic Movies",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-pluto-horror",
+      "name": "Pluto Horror",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-pluto-paranormal",
+      "name": "Pluto Paranormal",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-pluto-reaction-movies",
+      "name": "Pluto Reaction Movies",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-pluto-sci-fi",
+      "name": "Pluto SCI FI",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-pluto-terror",
+      "name": "Pluto Terror",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-pluto-tv-anime",
+      "name": "Pluto TV Anime",
+      "country": "LATAM",
+      "sources": [
+        "cinecity"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-pluto-tv-cine-accion",
+      "name": "Pluto TV Cine Accion",
+      "country": "LATAM",
+      "sources": [
+        "cinecity"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-pluto-tv-cine-comedia",
+      "name": "Pluto TV Cine Comedia",
+      "country": "LATAM",
+      "sources": [
+        "cinecity"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-pluto-tv-cine-drama",
+      "name": "Pluto TV Cine Drama",
+      "country": "LATAM",
+      "sources": [
+        "cinecity"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-pluto-tv-cine-estelar",
+      "name": "Pluto TV Cine Estelar",
+      "country": "LATAM",
+      "sources": [
+        "cinecity",
+        "samsungtvplus"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-pluto-tv-cine-romance",
+      "name": "Pluto TV Cine Romance",
+      "country": "LATAM",
+      "sources": [
+        "cinecity"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-pluto-tv-cine-terror",
+      "name": "Pluto TV Cine Terror",
+      "country": "LATAM",
+      "sources": [
+        "cinecity"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-pluto-tv-e-sports",
+      "name": "Pluto TV E-Sports",
+      "country": "LATAM",
+      "sources": [
+        "cinecity"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-pluto-tv-estrellas-de-accion",
+      "name": "Pluto TV Estrellas de Accion",
+      "country": "LATAM",
+      "sources": [
+        "cinecity"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-pluto-tv-icons",
+      "name": "Pluto TV Icons",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-pluto-tv-movies",
+      "name": "Pluto TV Movies",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-pluto-tv-novelas",
+      "name": "Pluto TV Novelas",
+      "country": "LATAM",
+      "sources": [
+        "cinecity"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-pluto-tv-series",
+      "name": "Pluto TV Series",
+      "country": "LATAM",
+      "sources": [
+        "cinecity"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-pluto-tv-sherlock",
+      "name": "Pluto TV Sherlock",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-pokemon",
+      "name": "Pokemon",
+      "country": "LATAM",
+      "sources": [
+        "cinecity"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-popeye",
+      "name": "Popeye",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-porta-tv",
+      "name": "Porta tv",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-portlandia-v",
+      "name": "Portlandia (vᴘɴ )",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "red",
+      "error": "getaddrinfo ENOTFOUND amg00794-amcn-amg00794c1-tclideo-na-9781.playouts.now.amagi.tv",
+      "attempts": 1
+    },
+    {
+      "id": "latam-powernation",
+      "name": "PowerNation",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-pronto-socorro",
+      "name": "Pronto Socorro",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-pucon-tv",
+      "name": "Pucon TV",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden",
+        "iptvcat",
+        "eja"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 2
+    },
+    {
+      "id": "latam-qello-concerts",
+      "name": "Qello Concerts",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "es-radio-carnaval-tv",
+      "name": "Radio Carnaval TV",
+      "country": "ES",
+      "sources": [
+        "tvgarden",
+        "eja"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-radio-clasica-tv",
+      "name": "Radio Clasica TV",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-radio-mega-tv-amazonia",
+      "name": "Radio Mega TV Amazonia",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-radio-omega-tv",
+      "name": "Radio Omega TV",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "es-radio-television-marbella",
+      "name": "Radio Television Marbella",
+      "country": "ES",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-radio-universal",
+      "name": "Radio Universal",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-rakutentv-pelis-top",
+      "name": "RakutenTV Pelis Top",
+      "country": "LATAM",
+      "sources": [
+        "cinecity"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-raly-tv",
+      "name": "Raly TV",
+      "country": "LATAM",
+      "sources": [
+        "globalfreetv"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-rcr",
+      "name": "RCR",
+      "country": "LATAM",
+      "sources": [
+        "globalfreetv"
+      ],
+      "status": "red",
+      "error": "fetch failed",
+      "attempts": 1
+    },
+    {
+      "id": "latam-real-disaster-channel",
+      "name": "Real Disaster Channel",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 2
+    },
+    {
+      "id": "es-real-madrid-tv-spain",
+      "name": "Real Madrid TV Spain",
+      "country": "ES",
+      "sources": [
+        "thedaddy"
+      ],
+      "status": "red",
+      "error": "fetch failed",
+      "attempts": 1
+    },
+    {
+      "id": "latam-red-rubi",
+      "name": "Red Rubi",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-retro-magico",
+      "name": "Retro Magico",
+      "country": "LATAM",
+      "sources": [
+        "telechancho"
+      ],
+      "status": "red",
+      "error": "fetch failed",
+      "attempts": 1
+    },
+    {
+      "id": "latam-retro-plus",
+      "name": "Retro Plus",
+      "country": "LATAM",
+      "sources": [
+        "cinecity"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 2
+    },
+    {
+      "id": "latam-rocavision-tv",
+      "name": "Rocavision TV",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-rugrats",
+      "name": "Rugrats",
+      "country": "LATAM",
+      "sources": [
+        "cinecity",
+        "samsungtvplus"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-ryz-sports-network",
+      "name": "Ryz Sports Network",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-sft-combat",
+      "name": "SFT Combat",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-shout-movies-vpn",
+      "name": "Shout! Movies (vpn )",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-sitecom-legends",
+      "name": "Sitecom Legends",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-smithsonian-channel-selects",
+      "name": "Smithsonian Channel Selects",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-south-park",
+      "name": "South Park",
+      "country": "LATAM",
+      "sources": [
+        "cinecity"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-south-park-colecao-cartman",
+      "name": "South Park (Coleção Cartman)",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-south-park-colecao-kenny",
+      "name": "South Park (Coleção Kenny)",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-south-park-colecao-kyle",
+      "name": "South Park (Coleção Kyle)",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-south-park-colecao-stan",
+      "name": "South Park (Coleção Stan)",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-spike-outdoors",
+      "name": "Spike Outdoors",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-staff-picks",
+      "name": "Staff Picks",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-stingray-djazz",
+      "name": "Stingray dJAZZ",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "red",
+      "error": "getaddrinfo ENOTFOUND d35j504z0x2vu2.cloudfront.net",
+      "attempts": 1
+    },
+    {
+      "id": "latam-supercampeones",
+      "name": "Supercampeones",
+      "country": "LATAM",
+      "sources": [
+        "cinecity"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-supernatural-drama",
+      "name": "Supernatural Drama",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-tastemade",
+      "name": "Tastemade",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-tastemade-home",
+      "name": "Tastemade Home",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-tastemade-smokehouse",
+      "name": "Tastemade Smokehouse",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-tastemade-travel",
+      "name": "Tastemade Travel",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-tbs",
+      "name": "TBS",
+      "country": "LATAM",
+      "sources": [
+        "d9kod"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-tbs-west",
+      "name": "TBS West",
+      "country": "LATAM",
+      "sources": [
+        "d9kod"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-tele-2-web-retiro",
+      "name": "Tele 2 Web Retiro",
+      "country": "LATAM",
+      "sources": [
+        "globalfreetv"
+      ],
+      "status": "red",
+      "error": "fetch failed",
+      "attempts": 1
+    },
+    {
+      "id": "latam-tele-cinco-trelew-chubut",
+      "name": "Tele Cinco Trelew (Chubut)",
+      "country": "LATAM",
+      "sources": [
+        "cinecity"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-tele-fe-bolivia",
+      "name": "Tele Fe Bolivia",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-tele-posadas",
+      "name": "Tele Posadas",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-tele-san-jacinto",
+      "name": "Tele San Jacinto",
+      "country": "LATAM",
+      "sources": [
+        "globalfreetv"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-tele-uv",
+      "name": "Tele UV",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-telecauquenes",
+      "name": "TeleCauquenes",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": "red",
+      "error": "getaddrinfo ENOTFOUND lbgo.bozztv.com",
+      "attempts": 1
+    },
+    {
+      "id": "es-telecinco-spain",
+      "name": "Telecinco Spain",
+      "country": "ES",
+      "sources": [
+        "thedaddy"
+      ],
+      "status": "red",
+      "error": "fetch failed",
+      "attempts": 1
+    },
+    {
+      "id": "es-teledeporte-spain-tdp",
+      "name": "Teledeporte Spain (TDP)",
+      "country": "ES",
+      "sources": [
+        "thedaddy"
+      ],
+      "status": "red",
+      "error": "fetch failed",
+      "attempts": 1
+    },
+    {
+      "id": "latam-telemedios-canal-8",
+      "name": "Telemedios Canal 8",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-telemundo-novelas-clasicas",
+      "name": "Telemundo Novelas Clasicas",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-telerayo",
+      "name": "Telerayo",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-teleselva",
+      "name": "Teleselva",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden",
+        "eja",
+        "globalfreetv"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-telesol",
+      "name": "Telesol",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": "red",
+      "error": "fetch failed",
+      "attempts": 1
+    },
+    {
+      "id": "latam-teleunion",
+      "name": "Teleunion",
+      "country": "LATAM",
+      "sources": [
+        "cinecity"
+      ],
+      "status": "red",
+      "error": "fetch failed",
+      "attempts": 1
+    },
+    {
+      "id": "latam-terror-trash",
+      "name": "Terror Trash",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-that-s-90s00s",
+      "name": "That's 90s00s",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-that-s-rock",
+      "name": "That's ROCK",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-the-addams-family",
+      "name": "The Addams Family",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-the-amazing-race",
+      "name": "The Amazing Race",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-the-asylum",
+      "name": "The Asylum",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-the-challenge",
+      "name": "The Challenge",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-the-fbi-files",
+      "name": "The FBI Files",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-the-first-48",
+      "name": "The First 48",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "red",
+      "error": "getaddrinfo ENOTFOUND d3ja4g4lkxnrni.cloudfront.net",
+      "attempts": 1
+    },
+    {
+      "id": "latam-the-graham-norton-show",
+      "name": "The Graham Norton Show",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-the-jamie-oliver-channel",
+      "name": "The Jamie Oliver Channel",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-the-love-boat",
+      "name": "The Love Boat",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-the-nba-channel",
+      "name": "The NBA Channel",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-the-new-detectives",
+      "name": "The New Detectives",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-the-repair-shop-by-wb",
+      "name": "The Repair Shop by WB",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-the-tmz-channel-v",
+      "name": "The TMZ Channel (vᴘɴ )",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-the-twilight-zone",
+      "name": "The Twilight Zone",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-the-x-files",
+      "name": "The X Files",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-tigres-uanl-vs-america-2-stp",
+      "name": "Tigres UANL vs América 2 (STP)",
+      "country": "LATAM",
+      "sources": [
+        "d9kod"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-tl-estrella",
+      "name": "TL Estrella",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-tmn-tv",
+      "name": "TMN TV",
+      "country": "LATAM",
+      "sources": [
+        "globalfreetv"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-tna-wrestling-channel",
+      "name": "TNA Wrestling Channel",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-tnt-west",
+      "name": "TNT West",
+      "country": "LATAM",
+      "sources": [
+        "d9kod"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-top-fm-tv",
+      "name": "Top FM TV",
+      "country": "LATAM",
+      "sources": [
+        "eja"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-top-tv",
+      "name": "Top TV",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-tortues-ninja",
+      "name": "Tortues Ninja",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-trending-now",
+      "name": "Trending Now",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-triton-poker",
+      "name": "Triton Poker",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-true-crime-uk",
+      "name": "True Crime UK",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-true-lives-by-tv-studios",
+      "name": "True Lives By Tv Studios",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-trutv",
+      "name": "truTV",
+      "country": "LATAM",
+      "sources": [
+        "d9kod"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-trutv-west",
+      "name": "truTV West",
+      "country": "LATAM",
+      "sources": [
+        "d9kod"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-turma-da-monica",
+      "name": "Turma da Mônica",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-turner-classic-movies",
+      "name": "Turner Classic Movies",
+      "country": "LATAM",
+      "sources": [
+        "d9kod"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-tv-adventure",
+      "name": "TV Adventure",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-tv-azteca-deportes-premium",
+      "name": "TV Azteca Deportes Premium",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-tv-backcountry",
+      "name": "TV Backcountry",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "es-tv-cocina",
+      "name": "Tv Cocina",
+      "country": "ES",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-tv-filmes-nacionais",
+      "name": "TV Filmes Nacionais",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-tv-investigacao",
+      "name": "TV Investigação",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-tv-kaliente",
+      "name": "TV Kaliente",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": "red",
+      "error": "getaddrinfo ENOTFOUND lbgo.bozztv.com",
+      "attempts": 1
+    },
+    {
+      "id": "latam-tv-novelas",
+      "name": "TV Novelas",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-tv-oasis-monay",
+      "name": "TV Oasis Monay",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-tv-paranormal",
+      "name": "tv Paranormal",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-tv-peru",
+      "name": "TV Peru",
+      "country": "LATAM",
+      "sources": [
+        "globalfreetv"
+      ],
+      "status": "red",
+      "error": "fetch failed",
+      "attempts": 1
+    },
+    {
+      "id": "latam-tv-peru-noticias",
+      "name": "TV Peru Noticias",
+      "country": "LATAM",
+      "sources": [
+        "globalfreetv"
+      ],
+      "status": "red",
+      "error": "fetch failed",
+      "attempts": 1
+    },
+    {
+      "id": "latam-tv-publica-marcos-paz",
+      "name": "TV Publica Marcos Paz",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-tv-turbo",
+      "name": "TV Turbo",
+      "country": "LATAM",
+      "sources": [
+        "pluto"
+      ],
+      "status": "error",
+      "error": "Respuesta excede el límite de tamaño",
+      "attempts": 1
+    },
+    {
+      "id": "latam-tv-uct",
+      "name": "TV UCT",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden",
+        "globalfreetv"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "es-tv3-max-denmark",
+      "name": "TV3 Max Denmark",
+      "country": "ES",
+      "sources": [
+        "thedaddy"
+      ],
+      "status": "red",
+      "error": "fetch failed",
+      "attempts": 1
+    },
+    {
+      "id": "es-tv3-sport-denmark",
+      "name": "TV3 Sport Denmark",
+      "country": "ES",
+      "sources": [
+        "thedaddy"
+      ],
+      "status": "red",
+      "error": "fetch failed",
+      "attempts": 1
+    },
+    {
+      "id": "latam-tvenlinea",
+      "name": "TVenLinea",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    },
+    {
+      "id": "latam-tvgracia",
+      "name": "TVGracia",
+      "country": "LATAM",
+      "sources": [
+        "tvgarden"
+      ],
+      "status": 404,
+      "error": "HTTP 404",
+      "attempts": 1
+    }
+  ]
+}
