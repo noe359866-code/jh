@@ -21,8 +21,32 @@ const td = require('../engines/live/sources/thedaddy');
       iframes: [...watch.text.matchAll(/<iframe[^>]*\bsrc="([^"]+)"/gi)].map(match => match[1]).slice(0, 3),
       snippets: [...watch.text.matchAll(/[^"'<>\\\s]{0,60}(?:m3u8|stream-?\d+\.php)[^"'<>\\\s]{0,60}/gi)].map(m => m[0]).slice(0, 5)
     });
-    const resolved = await td.resolve(watchUrl, { get }).catch(error => ({ error: error.message }));
-    out.push({ step: 'resolve', resolved });
+    const hops = [];
+    let currentUrl = watchUrl;
+    let referer = 'https://thedaddy.li/';
+    for (let hop = 0; hop < 4; hop++) {
+      let response;
+      try {
+        response = await get(currentUrl, { referer, allowHttp: true });
+      } catch (error) {
+        hops.push({ hop, url: currentUrl, error: error.message });
+        break;
+      }
+      const iframe = (response.text.match(/<iframe[^>]*\bsrc="([^"]+)"/i) || [])[1];
+      hops.push({
+        hop,
+        url: currentUrl,
+        status: response.status,
+        length: response.text.length,
+        iframe: iframe || null,
+        src: (response.text.match(/(?:const|var|let)\s+SRC\s*=\s*["']([^"']+)["']/i) || [])[1] || null,
+        title: (response.text.match(/<title>([^<]*)<\/title>/i) || [])[1] || null
+      });
+      if (!iframe) break;
+      referer = currentUrl;
+      currentUrl = new URL(iframe, currentUrl).href;
+    }
+    out.push({ step: 'hops', hops });
   }
   fs.mkdirSync('reports', { recursive: true });
   fs.writeFileSync(path.join('reports', 'thedaddy-diag.json'), JSON.stringify(out, null, 1));

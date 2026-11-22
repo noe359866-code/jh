@@ -45,9 +45,12 @@ function parseList(html) {
 // Señales de otros países que comparten nombre con las españolas.
 const FOREIGN = /\b(canada|usa|u\.s\.|united states|uk|ireland|india|pakistan|bangladesh|arab|turkey|france|germany|italy|portugal|brazil|brasil|netherlands|belgium|sweden|norway|poland|romania|greece|russia|ukraine|china|japan|korea|australia|south africa|nigeria|kenya|egypt|morocco)\b/i;
 
+// Sufijos de país/idioma que no son de habla hispana ("Nova HD CZ", "Nova Sport 3 SK").
+const FOREIGN_SUFFIX = /\b(cz|sk|de|at|ch|nl|be|dk|se|no|fi|pt|br|pl|hu|ro|bg|gr|tr|ru|ua|il|ir|sa|ae|pk|in|bd|lk|ng|ke|za|eg|ma|jp|kr|cn|tw|hk|th|vn|id|my|ph|au|nz)\s*$/i;
+
 function isSpanishSignal(name) {
   const clean = name.replace(/\s+/g, ' ').trim();
-  if (FOREIGN.test(clean)) return false;
+  if (FOREIGN.test(clean) || FOREIGN_SUFFIX.test(clean)) return false;
   return SPANISH_SIGNALS.some(pattern => pattern.test(clean));
 }
 
