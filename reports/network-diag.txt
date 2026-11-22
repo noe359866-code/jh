@@ -1,0 +1,4 @@
+{"url":"https://eja.tv/?country=es","addresses":[{"address":"142.132.219.43","family":4}],"status":200,"len":55568}
+{"url":"https://www.eja.tv/?country=es","addresses":[{"address":"142.132.219.43","family":4}],"status":200,"len":55886}
+{"url":"https://iptvcat.net/","addresses":[{"address":"77.73.68.22","family":4}],"status":200,"len":147036}
+{"url":"https://www.iptvcat.net/","addresses":[{"address":"77.73.68.22","family":4}],"status":200,"len":147290}
