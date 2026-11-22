@@ -62,6 +62,25 @@ async function main() {
     }
   }
 
+  // Con la combinación válida, extraer el SRC y comprobar si el medio responde.
+  try {
+    const ok = await get(embedUrl, { referer: playerUrl, headers: { Origin: 'https://thedaddy.li', 'Sec-Fetch-Dest': 'iframe', 'Sec-Fetch-Site': 'cross-site' } });
+    const src = (ok.text.match(/(?:const|var|let)\s+SRC\s*=\s*["']([^"']+)["']/i) || [])[1] || null;
+    out.push({ step: 'src', src });
+    if (src) {
+      for (const [name, headers] of [['sin-referer', {}], ['referer-embed', { referer: embedUrl }], ['referer-thedaddy', { referer: 'https://thedaddy.li/' }]]) {
+        try {
+          const probe = await get(src, { headers, maxBytes: 4096, timeoutMs: 10000 });
+          out.push({ step: 'media', variant: name, status: probe.status, length: probe.text.length, head: probe.text.slice(0, 80) });
+        } catch (error) {
+          out.push({ step: 'media', variant: name, error: error.message });
+        }
+      }
+    }
+  } catch (error) {
+    out.push({ step: 'src-error', error: error.message });
+  }
+
   for (const url of [`https://thedaddy.li/cast/stream-${first.id}.php`, `https://thedaddy.li/plus/stream-${first.id}.php`]) {
     try {
       const response = await get(url, { referer: watchUrl });

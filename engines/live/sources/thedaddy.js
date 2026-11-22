@@ -88,7 +88,12 @@ async function resolve(watchUrl, { get }) {
   const second = iframeUrl(player.text);
   if (!second) return null;
   const embedUrl = new URL(second, player.url).href;
-  const embed = await get(embedUrl, { referer: player.url });
+  // El embed exige `Origin` + `Sec-Fetch-Site` de iframe cross-site; sin ellas
+  // responde 403 aunque el Referer sea correcto.
+  const embed = await get(embedUrl, {
+    referer: player.url,
+    headers: { Origin: new URL(player.url).origin, 'Sec-Fetch-Dest': 'iframe', 'Sec-Fetch-Site': 'cross-site' }
+  });
   const url = srcFromEmbed(embed.text);
   if (!url) return null;
   return { url, referer: new URL(embedUrl).origin + '/' };
