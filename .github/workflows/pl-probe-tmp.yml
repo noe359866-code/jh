@@ -1,0 +1,55 @@
+name: Sonda temporal
+on:
+  push:
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Verificación completa
+        run: node scripts/verify.js 2>&1 | tee pl.log || true
+      - name: Auditoría del M3U real
+        run: |
+          node -e "
+            const fs=require('fs');
+            const {parseM3u}=require('./engines/live/m3u');
+            const t=fs.readFileSync('reports/playlist-all.m3u','utf8');
+            const items=parseM3u(t);
+            const out=[];
+            out.push('bytes: '+t.length+' | entradas: '+items.length);
+            out.push('sin URL http: '+items.filter(i=>!/^https?:/.test(i.url)).length);
+            out.push('sin tvg-country: '+items.filter(i=>!i.attrs['tvg-country']).length);
+            out.push('sin group-title: '+items.filter(i=>!i.attrs['group-title']).length);
+            out.push('sin tvg-id: '+items.filter(i=>!i.attrs['tvg-id']).length);
+            const ids=items.map(i=>i.attrs['tvg-id']);
+            out.push('ids duplicados: '+(ids.length-new Set(ids).size));
+            const grupos={};
+            for(const i of items) grupos[i.attrs['group-title']]=(grupos[i.attrs['group-title']]||0)+1;
+            out.push('grupos: '+JSON.stringify(Object.entries(grupos).sort((a,b)=>b[1]-a[1]).slice(0,12)));
+            const paises={};
+            for(const i of items) paises[i.attrs['tvg-country']]=(paises[i.attrs['tvg-country']]||0)+1;
+            out.push('países: '+JSON.stringify(paises));
+            out.push('cabecera: '+t.split('\n')[0]);
+            out.push('ejemplo: '+t.split('\n').slice(1,4).join(' ~ '));
+            fs.writeFileSync('reports/m3u-audit.txt', out.join('\n')+'\n');
+          " || true
+      - name: Publicar
+        if: always()
+        run: |
+          mkdir -p reports
+          tail -c 6000 pl.log > reports/pl-log.txt 2>/dev/null || true
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f reports/pl-log.txt reports/m3u-audit.txt reports/countries.json
+          git diff --cached --quiet && echo sin-cambios || git commit -m "Sonda (generado)"
+          git push
