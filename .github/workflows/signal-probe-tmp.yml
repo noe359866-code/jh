@@ -21,14 +21,15 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Verificar señales reales
-        run: node scripts/verify.js || true
+        run: node scripts/verify.js 2>&1 | tee reports/verify.log || true
       - name: Publicar informe
         if: always()
         run: |
           mkdir -p reports
           node -e "const fs=require('fs');const f='reports/health.json';const s=fs.existsSync(f)?JSON.parse(fs.readFileSync(f,'utf8')):{missing:true};fs.writeFileSync('reports/probe-health.json',JSON.stringify(s,null,1));"
+          tail -c 4000 reports/verify.log > reports/probe-verify-log.txt 2>/dev/null || true
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -f reports/probe-health.json
+          git add -f reports/probe-health.json reports/probe-verify-log.txt
           git diff --cached --quiet && echo sin-cambios || git commit -m "Informe de salud real (generado)"
           git push
