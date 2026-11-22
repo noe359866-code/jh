@@ -2,11 +2,12 @@
 //
 // La portada publica su parrilla de TV en `/tv.json`
 // (`{ channel_name, image, url, country, category }`). La `url` apunta a un
-// reproductor intermedio que hoy exige ejecutar JavaScript o resuelve a formatos
-// que Stremio no reproduce de forma fiable, así que se ingiere el catálogo
-// (para búsqueda y M3U) pero **no** se publican URLs de reproducción de esta
-// fuente: aparecen como "solo en la web de origen".
+// reproductor intermedio (blogspot) del que a veces se puede sacar el `.m3u8`
+// literal. Se intenta con el extractor genérico al recolectar; si no aparece,
+// el canal queda como "solo en la web de origen" y nunca se anuncia un medio
+// que no reproduce.
 const { cleanChannelName, channelKey } = require('../text');
+const { genericResolve } = require('../extract');
 
 const BASE = 'https://livelive24.com';
 const TV_JSON = `${BASE}/tv.json`;
@@ -48,8 +49,8 @@ async function collect({ get, onSource }) {
     origin: channel.country,
     category: channel.category,
     logo: channel.logo,
-    // Catálogo consultable; sin URL reproducible verificada.
-    streams: [],
+    // El reproductor intermedio se intenta resolver al recolectar.
+    streams: channel.pageUrl ? [{ url: channel.pageUrl, kind: 'page', source: 'livelive24.com' }] : [],
     externalUrl: channel.pageUrl || BASE,
     info: 'Enlace solo en la web original',
     key: channelKey(channel.name, channel.region)
@@ -58,4 +59,13 @@ async function collect({ get, onSource }) {
   return entries;
 }
 
-module.exports = { id: 'livelive24', name: 'livelive24.com', collect, parseTvJson, HISPANIC };
+/**
+ * Intenta sacar el HLS del reproductor intermedio (blogspot o similar).
+ * Devuelve `{ url, referer }` o `null`. Se usa desde la fase de extracción.
+ */
+async function resolve(pageUrl, { get }) {
+  if (!pageUrl) return null;
+  return genericResolve(pageUrl, { get, maxHops: 3 });
+}
+
+module.exports = { id: 'livelive24', name: 'livelive24.com', collect, resolve, parseTvJson, HISPANIC };

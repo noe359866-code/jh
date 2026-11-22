@@ -41,10 +41,21 @@ function resolvePage(stream) {
 }
 
 async function main() {
-  const catalog = createCatalog({ sources: require('../engines/live/sources').sources, fetchGet: get });
+  const catalog = createCatalog({
+    sources: require('../engines/live/sources').sources,
+    fetchGet: get,
+    // Misma extracción de embeds que el servidor.
+    extract: (channels, options) => require('../engines/live/extract').enrich(channels, { ...options, byId: require('../engines/live/sources').byId })
+  });
   const loaded = await catalog.load({ force: true });
   console.log(`Catálogo: ${loaded.counts.total} canales (${loaded.counts.playable} con medio directo)`);
+  if (loaded.status._extract) {
+    const ex = loaded.status._extract;
+    console.log(`Extracción de embeds: ${ex.extracted} HLS extraídos de ${ex.targets} canales con página ` +
+      `(fallidos ${ex.failed}, omitidos ${ex.skipped}, ${Math.round((ex.ms || 0) / 1000)} s)`);
+  }
 
+  const extractStats = loaded.status._extract || null;
   const checker = createChecker({ get, resolvePage, channels: loaded.channels, concurrency: CONCURRENCY, budgetMs: BUDGET_MS });
   const report = await checker.run({ limit: LIMIT });
   const bloqueados = Object.values(report.results).filter(result => result.blocked).length;
@@ -68,6 +79,7 @@ async function main() {
     checkedAt: report.checkedAt,
     durationMs: report.durationMs,
     inconclusive: report.selfCheck.inconclusive,
+    extraction: extractStats,
     totals: {
       checked: report.total,
       alive: report.alive,

@@ -100,12 +100,32 @@ test('thedaddy: filtra señales españolas y resuelve watch → player → embed
   assert.equal(resolved.referer, 'https://dembed.st/');
 });
 
-test('livelive24: solo canales hispanohablantes y sin URL de medio', async () => {
+test('livelive24: solo canales hispanohablantes, con página para extraer el HLS', async () => {
   const parsed = livelive24.parseTvJson(snap.live24Json);
   assert.deepEqual(parsed.map(channel => channel.name), ['DAZN F1 ES', 'Azteca 7']);
   assert.equal(parsed[0].region, 'ES');
   assert.equal(parsed[1].region, 'LATAM');
   const entries = await livelive24.collect({ get: text(snap.live24Json) });
-  assert.ok(entries.every(entry => entry.streams.length === 0));
+  // Se publica la página del reproductor (no una URL inventada): la fase de
+  // extracción intenta sacar el `.m3u8` y, si no puede, queda ese enlace.
   assert.ok(entries.every(entry => entry.externalUrl));
+  assert.ok(entries.every(entry => entry.streams.every(stream => stream.kind === 'page')));
+});
+
+test('livelive24: el extractor genérico saca el .m3u8 literal del reproductor', async () => {
+  const page = '<html><iframe src="https://player.example/embed/1"></iframe></html>';
+  const player = '<script>const hls = { file: "https:\\/\\/cdn.example\\/live\\/1\\/index.m3u8?token=ab" };</script>';
+  const get = async url => {
+    if (url.includes('player.example')) return { status: 200, text: player, url };
+    return { status: 200, text: page, url };
+  };
+  const resolved = await livelive24.resolve('https://blog.example/p/ntv.html?id=1', { get });
+  assert.equal(resolved.url, 'https://cdn.example/live/1/index.m3u8?token=ab');
+  assert.equal(resolved.referer, 'https://player.example/');
+
+  // Un iframe de blogspot no lleva a ningún reproductor: no se inventa nada.
+  const onlyBlog = await livelive24.resolve('https://blog.example/p/x.html', {
+    get: async url => ({ status: 200, text: '<a href="#">nada</a>', url })
+  });
+  assert.equal(onlyBlog, null);
 });

@@ -1,7 +1,8 @@
 // Registro de fuentes del catálogo de TV en español.
 //
 // `direct`  : el HTML/JSON expone URLs de medio reproducibles tal cual.
-// `page`    : requiere resolver una cadena al reproducir (bajo demanda).
+// `page`    : el HLS sale de un embed. Se extrae al recolectar (engines/live/
+//             extract.js); si el embed falla, queda como enlace resoluble.
 // `catalog` : solo catálogo/búsqueda; no hay URL de medio verificada.
 const sources = [
   require('./tvgarden'),

@@ -6,6 +6,7 @@ const { sources, byId } = require('./engines/live/sources');
 const { buildM3u } = require('./engines/live/m3u');
 const addon = require('./engines/live/addon');
 const { createChecker } = require('./engines/live/checker');
+const extractor = require('./engines/live/extract');
 
 const SITE_NAME = 'TV en Español';
 
@@ -67,8 +68,16 @@ const PLAYLISTS = {
   deportes: { label: 'Deportes', filter: channel => /deporte|sport/i.test(channel.category) }
 };
 
+// Enriquecimiento de embeds para el catálogo por defecto: resuelve el HLS de
+// tvenvivo/thedaddy al recolectar, con presupuesto propio.
+const defaultExtract = (channels, options) => extractor.enrich(channels, { ...options, byId });
+
 function createApp({
-  catalog = createCatalog({ sources, ...(catalogTtl() ? { ttlMs: catalogTtl() } : {}) }),
+  catalog = createCatalog({
+    sources,
+    ...(catalogTtl() ? { ttlMs: catalogTtl() } : {}),
+    extract: process.env.EXTRACT_HLS === '0' ? null : defaultExtract
+  }),
   resolve = resolvePage,
   playlistTtlMs = 5 * 60 * 1000,
   now = Date.now,
