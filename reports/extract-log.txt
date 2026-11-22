@@ -1,6 +1,6 @@
 Catálogo: 1860 canales (1736 con medio directo)
-Extracción de embeds: 0 HLS extraídos de 124 canales con página (fallidos 124, omitidos 0, 12 s)
-  por fuente: {"livelive24.com":{"extraidos":0,"fallidos":28,"omitidos":0},"thedaddy.li":{"extraidos":0,"fallidos":26,"omitidos":0},"tvenvivo.org":{"extraidos":0,"fallidos":70,"omitidos":0}}
-  motivos: {"la cadena no expone m3u8":98,"cadena de embed: HTTP 403":26}
-Verificación: 1860 canales en 135 s · vivos 1696 · caídos 164 · bloqueados 270 · tiempo agotado 135 · sin verificar 0 · omitidos 0
-Listas escritas en reports/: all (2681), es (295), latam (2386), deportes (1)
+Extracción de embeds: 0 HLS extraídos de 124 canales con página (fallidos 124, omitidos 0, 59 s)
+  por fuente: {"thedaddy.li":{"extraidos":0,"fallidos":26,"omitidos":0},"livelive24.com":{"extraidos":0,"fallidos":28,"omitidos":0},"tvenvivo.org":{"extraidos":0,"fallidos":70,"omitidos":0}}
+  motivos: {"cadena de embed: HTTP 403":25,"la cadena no expone m3u8":98,"cadena de embed: fetch failed":1}
+Verificación: 1860 canales en 186 s · vivos 1725 · caídos 135 · bloqueados 274 · tiempo agotado 164 · sin verificar 0 · omitidos 0
+Listas escritas en reports/: all (2712), es (299), latam (2413), deportes (1)
