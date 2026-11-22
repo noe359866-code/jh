@@ -49,7 +49,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           test -f sonda-resultado.txt || echo "sin resultado" > sonda-resultado.txt
-          git add -f sonda-resultado.txt
+          test -f pl.log && tail -c 4000 pl.log > sonda-log.txt || echo "sin log" > sonda-log.txt
+          git add -f sonda-resultado.txt sonda-log.txt
           test -f sonda-error.txt && git add -f sonda-error.txt || true
           git diff --cached --quiet && echo sin-cambios || git commit -m "Sonda (resultado generado)"
           git push
