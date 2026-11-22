@@ -170,6 +170,8 @@ async function faseUnpack() {
   }
   const [prefijo, sufijo] = [llamada[2], llamada[4]];
   console.log(`url-forma: ${formaCadena(prefijo)} + <pid> + ${formaCadena(sufijo)} + <tok>`);
+  // Nombre del parámetro del token (una letra): se informa, nunca su valor.
+  console.log(`parametro-token=${(sufijo.match(/[?&]([a-z0-9_-]{1,12})=$/i) || [, '?'])[1]}`);
   const url = new URL(`${prefijo}${pid.valor}${sufijo}${encodeURIComponent(tok.valor)}`, FICHA).href;
   try {
     const texto = await fetcher.getText(url, { Accept: 'application/json', Referer: FICHA, 'X-Requested-With': 'XMLHttpRequest' });
@@ -208,6 +210,15 @@ async function faseUnpack() {
           return typeof v;
         };
         console.log(`forma: ${forma(datos).slice(0, 2500)}`);
+        // Detalle útil para el proveedor: idiomas, servidores y hosts (nunca
+        // la ruta ni la query de cada servidor).
+        const host = (v) => { try { return new URL(v).hostname.replace(/^www\./, ''); } catch { return '?'; } };
+        for (const lang of datos.langs || []) {
+          const servidores = (lang.servers || []).map(sv => `${sv.title || '?'}→${host(sv.src)}`);
+          console.log(`lang label=${JSON.stringify(lang.label)} flag=${JSON.stringify(lang.flag)} servidores=[${servidores.join(', ')}]`);
+        }
+        const hostsDl = [...new Set((datos.dl || []).map(d => host(d.url)))];
+        console.log(`descargas=${(datos.dl || []).length} hosts-dl=[${hostsDl.join(',')}]`);
       }
     }
   } catch (error) {
