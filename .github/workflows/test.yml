@@ -1,4 +1,4 @@
-name: Addon protocol tests
+name: Addon tests
 
 on:
   push:
@@ -20,11 +20,12 @@ jobs:
       - run: npm run check
       - run: npm test
       - run: npm audit --omit=dev
+
   docker:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - run: docker build -t latino-addon:test .
-      - name: Check image imports and provider modules
-        run: docker run --rm latino-addon:test node -e "const {createApp} = require('./index'); createApp(); require('./engines/sites/extractor'); console.log('Image modules OK');"
+      - run: docker build -t tv-espanol:test .
+      - name: Check image loads the app and sources
+        run: docker run --rm tv-espanol:test node -e "const {createApp}=require('./index');createApp();require('./engines/live/sources');console.log('Módulos OK')"

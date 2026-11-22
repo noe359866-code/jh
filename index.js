@@ -1,71 +1,84 @@
 const express = require('express');
-const fs = require('node:fs');
 const path = require('node:path');
-const manifest = require('./manifest.json');
-const sitesProvider = require('./engines/sites');
-const { createResolverCache } = require('./engines/sites/cache');
+const { createCatalog } = require('./engines/live/catalog');
+const { get } = require('./engines/live/http');
+const { sources, byId } = require('./engines/live/sources');
+const { buildM3u } = require('./engines/live/m3u');
+const addon = require('./engines/live/addon');
 
-// Sample metadata only; these entries do not imply that a stream is available.
-const catalogs = {
-  movies: [
-    { id: 'tt0137523', type: 'movie', name: 'Fight Club', releaseInfo: '1999' },
-    { id: 'tt0816692', type: 'movie', name: 'Interstellar', releaseInfo: '2014' }
-  ],
-  series: [
-    { id: 'tt0944947', type: 'series', name: 'Game of Thrones', releaseInfo: '2011–2019' },
-    { id: 'tt8111088', type: 'series', name: 'The Mandalorian', releaseInfo: '2019–' }
-  ],
-  anime: [
-    { id: 'tt4644488', type: 'series', name: 'Dragon Ball Super', releaseInfo: '2015–2018' },
-    { id: 'tt13616990', type: 'series', name: 'Chainsaw Man', releaseInfo: '2022–' }
-  ]
+const SITE_NAME = 'TV en Español';
+
+// Resolutores por fuente para canales `kind:'page'` (se ejecutan bajo demanda,
+// nunca en el arranque). Solo se permite resolver páginas de las dos fuentes
+// cuyo reproductor es estable y público.
+const PAGE_RESOLVERS = {
+  'tvenvivo.org': {
+    host: 'www.tvenvivo.org',
+    resolve: async stream => byId('tvenvivo').resolve(stream.url, { get })
+  },
+  'thedaddy.li': {
+    host: 'thedaddy.li',
+    resolve: async stream => byId('thedaddy').resolve(stream.url, { get })
+  }
 };
 
-function validId(type, id) {
-  return type === 'movie' ? /^tt\d{7,}$/.test(id)
-    : type === 'series' && /^tt\d{7,}:[1-9]\d*:[1-9]\d*$/.test(id);
+function resolvePage(stream) {
+  const resolver = PAGE_RESOLVERS[stream.source];
+  if (!resolver) return Promise.resolve(null);
+  if (new URL(stream.url).hostname !== resolver.host) return Promise.resolve(null);
+  return resolver.resolve(stream);
 }
 
-// Explicit administrator-supplied media, not guessed player-page URLs.
-function validateStreams(config) {
-  if (!config || typeof config !== 'object' || Array.isArray(config)) {
-    throw new Error('Stream configuration must be an object');
-  }
-  for (const [key, streams] of Object.entries(config)) {
-    const separator = key.indexOf(':');
-    const type = key.slice(0, separator);
-    const id = key.slice(separator + 1);
-    if (separator < 0 || !validId(type, id) || !Array.isArray(streams)) {
-      throw new Error(`Invalid stream configuration key or list: ${key}`);
-    }
-    for (const stream of streams) {
-      if (!stream || typeof stream !== 'object' || Array.isArray(stream) || typeof stream.url !== 'string') {
-        throw new Error(`Invalid stream entry for ${key}`);
-      }
-      let url;
-      try { url = new URL(stream.url); } catch { /* Handled below. */ }
-      if (!url || !['https:', 'http:'].includes(url.protocol) || url.username || url.password
-        || !/\.(m3u8|mp4)$/i.test(url.pathname)
-        || (stream.name !== undefined && typeof stream.name !== 'string')
-        || (stream.title !== undefined && typeof stream.title !== 'string')) {
-        throw new Error(`Expected a direct HTTP(S) HLS/MP4 URL for ${key}`);
+/**
+ * Extrae el id y los extras de una ruta tipo
+ * `/catalog/tv/todos/genre=España&skip=100.json`.
+ */
+function parseRoute(raw, { withExtra = false } = {}) {
+  const withoutJson = raw.replace(/\.json$/i, '');
+  const parts = withoutJson.split('/').filter(Boolean);
+  const id = parts.shift() || '';
+  const extras = new Map();
+  if (withExtra) {
+    for (const part of parts.join('/').split('&')) {
+      if (!part) continue;
+      const index = part.indexOf('=');
+      if (index < 0) continue;
+      try {
+        extras.set(part.slice(0, index), decodeURIComponent(part.slice(index + 1).replace(/\+/g, ' ')));
+      } catch {
+        extras.set(part.slice(0, index), part.slice(index + 1));
       }
     }
   }
-  return config;
+  return { id, extras };
 }
 
-function loadStreams() {
-  const filename = process.env.STREAMS_FILE || path.join(__dirname, 'streams.json');
-  return validateStreams(JSON.parse(fs.readFileSync(filename, 'utf8')));
-}
+const PLAYLISTS = {
+  all: { label: 'Todos los canales', filter: () => true },
+  es: { label: 'España', filter: channel => channel.country === 'ES' },
+  latam: { label: 'Latinoamérica', filter: channel => channel.country === 'LATAM' },
+  deportes: { label: 'Deportes', filter: channel => /deporte|sport/i.test(channel.category) }
+};
 
-function createApp({ streams = loadStreams(), sites = sitesProvider } = {}) {
-  validateStreams(streams);
+function createApp({
+  catalog = createCatalog({ sources }),
+  resolve = resolvePage,
+  playlistTtlMs = 5 * 60 * 1000,
+  now = Date.now,
+  logger = console
+} = {}) {
   const app = express();
-  const resolveSites = createResolverCache(request => sites.resolve(request), {
-    keyFn: request => JSON.stringify([request.type || 'site', request.url])
-  });
+  const playlistCache = new Map();
+
+  async function channelsOr503(res) {
+    try {
+      return await catalog.load();
+    } catch (error) {
+      res.status(503).set('Retry-After', '30').json({ error: 'Catálogo temporalmente no disponible', detail: error.message });
+      return null;
+    }
+  }
+
   app.disable('x-powered-by');
   app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -74,83 +87,177 @@ function createApp({ streams = loadStreams(), sites = sitesProvider } = {}) {
     next();
   });
   app.options('*', (req, res) => res.sendStatus(204));
-  app.get('/manifest.json', (req, res) => res.json(manifest));
 
-  app.get('/catalog/:type/:id.json', (req, res) => {
-    const catalog = manifest.catalogs.find(c => c.type === req.params.type && c.id === req.params.id);
-    if (!catalog) return res.status(404).json({ error: 'Unknown catalog' });
-    return res.json({ metas: catalogs[catalog.id] });
+  app.get('/manifest.json', (req, res) => res.json(addon.manifest()));
+
+  // Catálogo: `/catalog/tv/todos.json`, `/catalog/tv/todos/skip=100.json`,
+  // `/catalog/tv/todos/genre=España&skip=100.json`.
+  app.get(/^\/catalog\/([^/]+)\/(.+)\.json$/, async (req, res) => {
+    const type = decodeURIComponent(req.params[0]);
+    if (type !== 'tv') return res.status(404).json({ error: 'Tipo no soportado' });
+    const { id, extras } = parseRoute(req.params[1], { withExtra: true });
+    if (!['todos', 'espana', 'latinoamerica', 'deportes'].includes(id)) {
+      return res.status(404).json({ error: 'Catálogo desconocido' });
+    }
+    const loaded = await channelsOr503(res);
+    if (!loaded) return undefined;
+    const genre = req.query.genre || extras.get('genre') || '';
+    const rawSkip = Number(req.query.skip ?? extras.get('skip') ?? 0);
+    const skip = Number.isFinite(rawSkip) && rawSkip > 0 ? Math.floor(rawSkip) : 0;
+    return res.json(addon.catalog(loaded.channels, id, typeof genre === 'string' ? genre : '', skip));
   });
 
-  app.get('/meta/:type/:id.json', (req, res) => {
-    const meta = Object.values(catalogs).flat().find(m => m.type === req.params.type && m.id === req.params.id);
-    if (!meta) return res.status(404).json({ error: 'Unknown title' });
-    if (meta.type === 'series') {
-      const prefix = `series:${meta.id}:`;
-      const videos = Object.entries(streams)
-        .filter(([key, sources]) => key.startsWith(prefix) && sources.length > 0)
-        .map(([key]) => {
-          const id = key.slice('series:'.length);
-          const [, season, episode] = id.split(':');
-          return {
-            id,
-            title: `Temporada ${season}, episodio ${episode}`,
-            season: Number(season),
-            episode: Number(episode)
-          };
-        })
-        .sort((a, b) => a.season - b.season || a.episode - b.episode);
-      return res.json({ meta: { ...meta, videos } });
-    }
-    return res.json({ meta });
+  // Express 4 (path-to-regexp 0.1) no admite comodines dentro de un segmento:
+  // las rutas de Stremio terminan en `.json` y se capturan con regex explícitas.
+  app.get(/^\/meta\/([^/]+)\/([^/]+?)(?:\.json)?$/, async (req, res) => {
+    if (req.params[0] !== 'tv') return res.status(404).json({ error: 'Tipo no soportado' });
+    const loaded = await channelsOr503(res);
+    if (!loaded) return undefined;
+    const channel = addon.findChannel(loaded.channels, req.params[1]);
+    if (!channel) return res.status(404).json({ error: 'Canal desconocido' });
+    return res.json({ meta: addon.toMeta(channel) });
   });
 
-  // Direct site resolution: stream-only. Validates the page URL, extracts
-  // verified HLS/MP4 candidates and returns { streams }. No catalogs, no
-  // metadata, no demo entries: an empty list means nothing verifiable found.
-  app.get('/stream/site', async (req, res) => {
-    const url = req.query.url;
-    if (typeof url !== 'string' || !url.trim()) {
-      return res.status(400).json({ error: 'Expected a url query parameter' });
-    }
-    // Validate before extraction so only request errors map to 400; network
-    // or provider failures during extraction map to 502.
-    const validarUrlSitio = sites.validarUrlSitio || sitesProvider.validarUrlSitio;
+  app.get(/^\/stream\/([^/]+)\/([^/]+?)(?:\.json)?$/, async (req, res) => {
+    const type = req.params[0];
+    const id = req.params[1];
+    if (type !== 'tv') return res.status(404).json({ error: 'Tipo no soportado' });
+    if (!addon.ID_PATTERN.test(id)) return res.status(400).json({ error: 'Identificador de canal inválido' });
+    let loaded;
     try {
-      validarUrlSitio(url);
+      loaded = await catalog.load();
     } catch (error) {
-      return res.status(400).json({ error: error.message });
+      logger.warn(`[stream] catálogo no disponible: ${error.message}`);
+      return res.json({ streams: [] });
     }
+    const channel = addon.findChannel(loaded.channels, id);
+    if (!channel) return res.json({ streams: [] });
     try {
-      const streams = await resolveSites({ url });
+      const streams = await addon.streams(channel, { resolvePage: resolve });
       return res.json({ streams });
     } catch (error) {
-      if (error.code === 'EXTRACTOR_BUSY') return res.status(503).set('Retry-After', '10').json({ error: 'Extractor busy' });
-      return res.status(502).json({ error: 'Extracción de stream del sitio fallida' });
+      logger.warn(`[stream] ${channel.id}: ${error.message}`);
+      return res.json({ streams: [] });
     }
   });
 
-  app.get('/stream/:type/:id.json', (req, res) => {
-    const { type, id } = req.params;
-    if (!manifest.types.includes(type)) return res.status(404).json({ error: 'Unsupported type' });
-    if (!validId(type, id)) return res.status(400).json({ error: 'Expected IMDb ID; series require :season:episode' });
-    const configured = (streams[`${type}:${id}`] || []).map(({ url, name, title }) => ({ url, name, title }));
-    return res.json({ streams: configured });
+  // Listas M3U. `?pages=1` intenta resolver las fuentes `kind:'page'`
+  // (tvenvivo, DaddyLive); sin ese parámetro solo se publican medios directos.
+  app.get('/playlist/:variant.m3u', async (req, res) => {
+    const variant = String(req.params.variant).toLowerCase();
+    const definition = PLAYLISTS[variant];
+    if (!definition) return res.status(404).json({ error: 'Lista desconocida' });
+    const includePages = req.query.pages === '1';
+    const cacheKey = `${variant}:${includePages ? 'pages' : 'direct'}`;
+    const hit = playlistCache.get(cacheKey);
+    if (hit && hit.expires > now()) {
+      res.type('application/vnd.apple.mpegurl').send(hit.body);
+      return undefined;
+    }
+    const loaded = await channelsOr503(res);
+    if (!loaded) return undefined;
+    const channels = loaded.channels.filter(definition.filter);
+    const { body, count } = await buildM3u(channels, {
+      resolve: includePages ? resolvePage : null,
+      siteName: SITE_NAME,
+      siteUrl: `${req.protocol}://${req.get('host')}`
+    });
+    if (playlistCache.size > 32) playlistCache.delete(playlistCache.keys().next().value);
+    playlistCache.set(cacheKey, { body, expires: now() + playlistTtlMs });
+    res.set('X-Channel-Count', String(count));
+    res.type('application/vnd.apple.mpegurl').send(body);
+    return undefined;
   });
 
-  app.get(['/', '/config'], (req, res) => {
-    res.type('html').send('<!doctype html><html lang="es"><meta charset="utf-8"><title>Addon Latino Stream</title><h1>Addon Latino Stream</h1><p>Catálogos de ejemplo: películas, series y anime (tipo series).</p><p>Incluye resolución de streams (mp4/HLS verificados) para documaniatv.com, flixlatam.com y poseidonhd2.co, con proveedores y resolvedores de reproductores: GET /stream/site?url=&lt;página del sitio&gt;. Solo devuelve streams, sin catálogos, metas ni demos.</p><p>El administrador puede configurar enlaces directos HLS/MP4 autorizados en streams.json o STREAMS_FILE. Consulta README.md.</p><a href="/manifest.json">Ver manifiesto para Stremio</a></html>');
+  app.get('/playlist.m3u', (req, res) => res.redirect(302, '/playlist/all.m3u'));
+
+  app.get('/playlists.json', async (req, res) => {
+    const base = `${req.protocol}://${req.get('host')}`;
+    const loaded = await channelsOr503(res);
+    if (!loaded) return undefined;
+    res.json({
+      updatedAt: new Date(loaded.loadedAt).toISOString(),
+      counts: loaded.counts,
+      playlists: Object.entries(PLAYLISTS).map(([id, definition]) => ({
+        id,
+        name: definition.label,
+        url: `${base}/playlist/${id}.m3u`,
+        channels: loaded.channels.filter(definition.filter).filter(channel => channel.playable).length
+      }))
+    });
+    return undefined;
   });
-  app.use((req, res) => res.status(404).json({ error: 'Not found' }));
+
+  app.get('/config', async (req, res) => {
+    let loaded = catalog.peek();
+    if (!loaded) {
+      try {
+        loaded = await catalog.load();
+      } catch (error) {
+        return res.status(503).json({ ok: false, error: error.message });
+      }
+    }
+    return res.json({
+      ok: true,
+      siteName: SITE_NAME,
+      catalog: { loadedAt: new Date(loaded.loadedAt).toISOString(), counts: loaded.counts },
+      sources: loaded.status
+    });
+  });
+
+  // Resolución explícita de una página de origen (mismo contrato que antes:
+  // solo devuelve `{ streams }`, sin catálogos ni metadatos).
+  app.get('/stream/page', async (req, res) => {
+    const url = req.query.url;
+    if (typeof url !== 'string' || !url.trim()) return res.status(400).json({ error: 'Falta el parámetro url' });
+    let parsed;
+    try {
+      parsed = new URL(url);
+    } catch {
+      return res.status(400).json({ error: 'URL inválida' });
+    }
+    if (parsed.protocol !== 'https:' || parsed.username || parsed.password) {
+      return res.status(400).json({ error: 'Se requiere HTTPS sin credenciales' });
+    }
+    const allowed = Object.values(PAGE_RESOLVERS).map(entry => entry.host);
+    if (!allowed.includes(parsed.hostname)) return res.status(400).json({ error: `Host no soportado: ${parsed.hostname}` });
+    try {
+      const stream = await resolve({ url: parsed.href, kind: 'page', source: parsed.hostname === 'thedaddy.li' ? 'thedaddy.li' : 'tvenvivo.org' });
+      return res.json({ streams: stream ? [{ name: SITE_NAME, title: 'HLS', url: stream.url }] : [] });
+    } catch (error) {
+      return res.status(502).json({ error: 'No se pudo resolver el canal', detail: error.message });
+    }
+  });
+
+  app.get('/', (req, res) => {
+    const base = `${req.protocol}://${req.get('host')}`;
+    res.type('html').send(`<!doctype html><html lang="es"><meta charset="utf-8">
+<title>${SITE_NAME} · Addon Stremio y listas M3U</title>
+<style>body{font-family:system-ui,sans-serif;max-width:46rem;margin:2rem auto;padding:0 1rem;line-height:1.6}
+code{background:#f2f2f2;padding:.1rem .3rem;border-radius:4px}</style>
+<h1>${SITE_NAME}</h1>
+<p>Canales de televisión en español (España y Latinoamérica) recopilados de
+eja.tv, iptvcat, TV Garden, Global Free TV, TVEnVivo, DaddyLive y Live24.</p>
+<h2>Stremio</h2>
+<p>Instala el addon con <a href="/manifest.json">${base}/manifest.json</a>.</p>
+<h2>Listas M3U</h2>
+<ul>${Object.entries(PLAYLISTS).map(([id, definition]) => `<li>${definition.label}: <a href="/playlist/${id}.m3u">${base}/playlist/${id}.m3u</a></li>`).join('')}</ul>
+<p>Añade <code>?pages=1</code> a una lista para resolver también las fuentes que
+requieren una petición extra (TVEnVivo y DaddyLive); sin ese parámetro solo se
+publican medios directos.</p>
+<p>El estado real de las fuentes está en <a href="/config">/config</a>.</p>
+</html>`);
+  });
+
+  app.use((req, res) => res.status(404).json({ error: 'No encontrado' }));
   return app;
 }
 
 if (require.main === module) {
   const port = process.env.PORT || 8080;
   createApp().listen(port, '0.0.0.0', () => {
-    console.log(`Latino Stream Addon running on port ${port}`);
+    console.log(`${SITE_NAME} addon escuchando en el puerto ${port}`);
   });
 }
 
-// Importing the app must not bind a port (tests and embedding).
-module.exports = { createApp, validateStreams };
+module.exports = { createApp, parseRoute, PLAYLISTS, SITE_NAME, path };

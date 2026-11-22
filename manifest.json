@@ -1,14 +1,21 @@
 {
-  "id": "com.latino.streamer",
-  "version": "2.0.0",
-  "name": "Addon Latino Stream",
-  "description": "Proveedores y resolvedores de reproductores en español: extrae mp4/HLS verificados de documaniatv, flixlatam y poseidonhd2. Solo resolución de streams, sin catálogos ni demos.",
+  "id": "org.tvespanol.live",
+  "version": "3.0.0",
+  "name": "TV en Español (directo)",
+  "description": "Canales de televisión en español (España y Latinoamérica) de eja.tv, iptvcat, TV Garden, Global Free TV, TVEnVivo, DaddyLive y Live24. Solo TV en directo, sin películas ni series.",
   "resources": ["catalog", "meta", "stream"],
-  "types": ["movie", "series"],
-  "idPrefixes": ["tt"],
+  "types": ["tv"],
+  "idPrefixes": ["es-", "latam-"],
   "catalogs": [
-    { "id": "movies", "name": "Películas (ejemplo)", "type": "movie" },
-    { "id": "series", "name": "Series (ejemplo)", "type": "series" },
-    { "id": "anime", "name": "Anime (ejemplo)", "type": "series" }
-  ]
+    {
+      "type": "tv",
+      "id": "todos",
+      "name": "TV en español · Todos",
+      "extra": [{ "name": "genre", "options": ["España", "Latinoamérica"] }, { "name": "skip" }]
+    },
+    { "type": "tv", "id": "espana", "name": "TV · España", "extra": [{ "name": "skip" }] },
+    { "type": "tv", "id": "latinoamerica", "name": "TV · Latinoamérica", "extra": [{ "name": "skip" }] },
+    { "type": "tv", "id": "deportes", "name": "TV · Deportes", "extra": [{ "name": "skip" }] }
+  ],
+  "behaviorHints": { "configurable": false, "configurationRequired": false }
 }
