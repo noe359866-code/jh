@@ -107,8 +107,10 @@ https://TU-DOMINIO/playlist/es.m3u?pages=1
 | `GET /stream/page?url=` | resuelve una página de origen (solo `tvenvivo.org` y `thedaddy.li`) |
 | `GET /` | portada con enlaces |
 
-Todas las respuestas llevan CORS abierto. Si el catálogo aún no está listo se
-devuelve `503` con `Retry-After`.
+Todas las respuestas llevan CORS abierto. Si la recolección falla por completo (o
+no está lista) se devuelve `503` con `Retry-After`. Un catálogo vacío nunca
+sustituye a la última copia buena: se sigue sirviendo esa copia y `/config` la marca
+con `stale: true` y `staleReason`.
 
 ## Fuentes y modos
 
@@ -133,7 +135,7 @@ español de EE. UU. Todos los canales se etiquetan con su país de origen.
 ## Verificación
 
 ```bash
-npm test        # 18 pruebas unitarias (parser + addon + rutas HTTP), sin red
+npm test        # 20 pruebas unitarias (parser + addon + rutas HTTP), sin red
 npm run check   # node --check sobre todo el motor
 npm run test:live   # comprobación real contra las 7 fuentes (necesita red)
 SOURCE=eja,tvgarden npm run test:live   # solo algunas fuentes

@@ -200,7 +200,12 @@ function createApp({
     return res.json({
       ok: true,
       siteName: SITE_NAME,
-      catalog: { loadedAt: new Date(loaded.loadedAt).toISOString(), counts: loaded.counts },
+      catalog: {
+        loadedAt: new Date(loaded.loadedAt).toISOString(),
+        counts: loaded.counts,
+        stale: Boolean(loaded.stale),
+        staleReason: loaded.staleReason || null
+      },
       sources: loaded.status
     });
   });

@@ -200,3 +200,33 @@ test('CORS y 404 consistente', async () => {
     assert.equal((await fetch(base + '/meta/movie/es-la-1.json')).status, 404);
   });
 });
+
+test('fallo total de fuentes: 503 en vez de playlist vacía', async () => {
+  const failing = createCatalog({
+    sources: [{ id: 'eja', collect: async () => { throw new Error('caída simulada'); } }],
+    fetchGet: async () => { throw new Error('sin red'); }
+  });
+  await withServer(failing, async base => {
+    for (const path of ['/playlist/all.m3u', '/catalog/tv/todos.json', '/playlists.json']) {
+      const response = await fetch(base + path);
+      assert.equal(response.status, 503, path);
+      assert.equal(response.headers.get('retry-after'), '30', path);
+    }
+  });
+});
+
+test('catálogo vacío no sustituye a la copia buena y se marca stale', async () => {
+  let empty = false;
+  const flaky = createCatalog({
+    ttlMs: 0,
+    sources: [{ id: 'eja', collect: async () => (empty ? [] : CHANNELS.slice(0, 2)) }],
+    fetchGet: async () => { throw new Error('sin red'); }
+  });
+  const first = await flaky.load();
+  assert.equal(first.counts.total, 2);
+  empty = true;
+  const second = await flaky.load();
+  assert.equal(second.stale, true);
+  assert.equal(second.counts.total, 2);
+  assert.match(second.staleReason, /Ninguna fuente devolvió canales/);
+});

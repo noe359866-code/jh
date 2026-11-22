@@ -93,6 +93,15 @@ function createCatalog({
     });
     await Promise.all(workers);
     const channels = mergeSources(results);
+    // Todas las fuentes pueden caer a la vez: en ese caso no se cachea un
+    // catálogo vacío, porque sustituiría a uno bueno y publicaría listas M3U sin
+    // canales. Se conserva el catálogo anterior y se informa del fallo.
+    if (!channels.length) {
+      const failed = Object.entries(status).filter(([, value]) => value && value.ok === false).map(([id, value]) => `${id}: ${value.error}`);
+      const error = new Error(failed.length ? `Ninguna fuente respondió (${failed.join('; ')})` : 'Ninguna fuente devolvió canales');
+      error.code = 'CATALOG_EMPTY';
+      throw error;
+    }
     return {
       channels,
       status,
@@ -120,6 +129,13 @@ function createCatalog({
     ]).then(result => {
       cache = result;
       return result;
+    }).catch(error => {
+      if (cache) {
+        // Con caché previa se sirve la última copia buena durante un ciclo más.
+        cache.stale = true;
+        return { ...cache, stale: true, staleReason: error.message };
+      }
+      throw error;
     }).finally(() => { pending = null; });
     return pending;
   }
