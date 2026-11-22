@@ -59,12 +59,28 @@
   "source": "livelive24",
   "canal": "DAZN F1 ES",
   "url": "<hesgoalsss.blogspot.com/p/ntv.html>",
-  "error": "HTTP 429"
+  "paso1": {
+   "length": 24460,
+   "iframes": [],
+   "m3u8": 0,
+   "scripts": 9,
+   "videoTags": 0,
+   "base64Blobs": 0,
+   "head": "<!DOCTYPE html> <html dir='ltr' lang='fr' xmlns='<www.w3.org/1999/xhtml>' xmlns:b='<www.google.com/2005/gml/b>' xmlns:data='<www.google.com/2005/gml/data>' xmlns:expr='<www.google.com/2005/gml/expr>'> <head> <style id='page-skin-1' type='text/css'> -------------------------------"
+  }
  },
  {
   "source": "livelive24",
   "canal": "DAZN 1 ES",
   "url": "<hesgoalsss.blogspot.com/p/ntv.html>",
-  "error": "HTTP 429"
+  "paso1": {
+   "length": 24460,
+   "iframes": [],
+   "m3u8": 0,
+   "scripts": 9,
+   "videoTags": 0,
+   "base64Blobs": 0,
+   "head": "<!DOCTYPE html> <html dir='ltr' lang='fr' xmlns='<www.w3.org/1999/xhtml>' xmlns:b='<www.google.com/2005/gml/b>' xmlns:data='<www.google.com/2005/gml/data>' xmlns:expr='<www.google.com/2005/gml/expr>'> <head> <style id='page-skin-1' type='text/css'> -------------------------------"
+  }
  }
 ]

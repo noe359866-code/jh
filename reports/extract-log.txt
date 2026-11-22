@@ -1,1 +1,6 @@
-La recolección del catálogo tardó demasiado
+Catálogo: 1860 canales (1736 con medio directo)
+Extracción de embeds: 0 HLS extraídos de 124 canales con página (fallidos 110, omitidos 14, 94 s)
+  por fuente: {"thedaddy.li":{"extraidos":0,"fallidos":16,"omitidos":0},"livelive24.com":{"extraidos":0,"fallidos":24,"omitidos":0},"tvenvivo.org":{"extraidos":0,"fallidos":70,"omitidos":0}}
+  motivos: {"cadena de embed: HTTP 403":7,"la cadena no expone m3u8":94,"cadena de embed: fetch failed":9}
+Verificación: 1860 canales en 183 s · vivos 1724 · caídos 136 · bloqueados 269 · tiempo agotado 168 · sin verificar 0 · omitidos 0
+Listas escritas en reports/: all (2711), es (299), latam (2412), deportes (1)
