@@ -7,6 +7,10 @@ const scopeOf = channel => (isCountry(channel.origin) ? channel.origin : (channe
 
 const escapeAttr = value => String(value ?? '').replace(/"/g, "'").replace(/[\r\n]+/g, ' ').trim();
 
+// En `#EXTINF` la coma separa los atributos del nombre del canal: una coma en el
+// nombre rompe la entrada en la mayoría de reproductores.
+const escapeName = value => escapeAttr(value).replace(/,/g, ' ');
+
 /**
  * Convierte canales en M3U extendido. Solo incluye canales con al menos una URL
  * reproducible; `resolve` permite convertir fuentes `kind:'page'` en medios
@@ -41,7 +45,7 @@ async function buildM3u(channels, { resolve, siteName = 'TV en español', siteUr
         // "Latinoamérica" y los canales argentinos perdían su país en el M3U.
         ` tvg-logo="${escapeAttr(channel.logo || '')}" group-title="${escapeAttr(groupFor(scopeOf(channel), channel.category))}"` +
         ` tvg-country="${escapeAttr(scopeOf(channel))}"` +
-        ` source="${escapeAttr(stream.source || channel.sources[0] || siteName)}",${escapeAttr(channel.name)}`
+        ` source="${escapeAttr(stream.source || channel.sources[0] || siteName)}",${escapeName(channel.name)}`
       );
       if (stream.referer) lines.push(`#EXTVLCOPT:http-referrer=${stream.referer}`);
       lines.push(`#EXTVLCOPT:http-user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36`);

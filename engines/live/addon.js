@@ -63,7 +63,9 @@ function toMeta(channel) {
     id: channel.id,
     type: 'tv',
     name: channel.name,
-    poster: channel.logo || undefined,
+    // Sin logo, Stremio muestra una tarjeta vacía. Un póster generado con las
+    // iniciales y el color del país da algo reconocible sin inventar imágenes.
+    poster: channel.logo || `https://placehold.co/300x300/1f2933/ffffff/png?text=${encodeURIComponent(initials(channel.name))}`,
     posterShape: 'square',
     genres: genres.filter(Boolean),
     description: [
@@ -78,6 +80,14 @@ function toMeta(channel) {
       `fuentes: ${channel.sources.join(', ')}`
     ].filter(Boolean).join(' · ')
   };
+}
+
+/** Iniciales del canal para el póster de reserva (`La 1` → `L1`). */
+function initials(name) {
+  const words = String(name || '?').replace(/[^\p{L}\p{N}\s]/gu, ' ').trim().split(/\s+/).filter(Boolean);
+  if (!words.length) return 'TV';
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return (words[0][0] + words[1][0]).toUpperCase();
 }
 
 /** Etiqueta de país para mostrar de un canal. */
@@ -191,4 +201,6 @@ function findChannel(channels, id) {
   return channels.find(channel => channel.id === id) || null;
 }
 
-module.exports = { manifest, catalog, streams, findChannel, toMeta, listed, PAGE_SIZE, ID_PATTERN, slug };
+module.exports = {
+  manifest, catalog, streams, findChannel, toMeta, listed, initials, PAGE_SIZE, ID_PATTERN, slug
+};

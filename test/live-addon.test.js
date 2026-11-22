@@ -148,6 +148,8 @@ test('catálogo Stremio: solo canales publicables, paginado y filtros', () => {
   assert.deepEqual(all.metas.map(meta => meta.id), ['es-la-1', 'es-antena-3']);
   assert.equal(all.metas[0].type, 'tv');
   assert.equal(all.metas[0].poster, 'https://logos.example/la1.png');
+  // Sin logo, hay póster de reserva (si no, la tarjeta sale vacía en Stremio).
+  assert.match(all.metas[1].poster, /^https:\/\/placehold\.co\//);
 
   assert.deepEqual(addon.catalog(CHANNELS, 'espana', '', 0).metas.length, 2);
   assert.equal(addon.catalog(CHANNELS, 'latinoamerica', '', 0).metas.length, 0);

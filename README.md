@@ -114,6 +114,8 @@ cualquier otra fuente:
 | D9Kod | `s.id/d9Kod` | lo que publique el acortador, verificado antes de listarse |
 | Estados Unidos | `iptv-org/iptv` (`streams/us.m3u` + base de idiomas) | canales hispanos de EE. UU. y cadenas mayoritarias en inglés |
 | iptv-org por país | `iptv-org/iptv` (`streams/<cc>.m3u`) | rellena los países con pocas fuentes (Cuba, Uruguay, Nicaragua, Panamá…) |
+| TDTChannels | `tdtchannels.com/lists/tv.m3u8` | la TDT española en abierto: La 1, La 2, 24h, Teledeporte, autonómicas |
+| Free-TV | `Free-TV/IPTV` (`playlist.m3u8`) | lista mundial de 2.200 canales; se filtran los 159 hispanos |
 
 Detalles de la normalización:
 
@@ -152,17 +154,53 @@ feed en español» entraban ABC, CNN y compañía como si fueran canales en espa
 Univision, Telemundo y otros 24 canales están en una lista de «siempre en
 español», porque la base de iptv-org los marca como `eng` por error.
 
+### Listas que no son solo de un país
+
+Dos de las listas mezclan países, y cada una necesita un trato distinto:
+
+- **Free-TV** es mundial (2.203 entradas). Se aplica el filtro estricto: solo
+  entra lo que declara `tvg-language` español, `tvg-country` hispano, o un país
+  desconocido con nombre acentuado. Quedan **159 canales**; sin ese filtro se
+  colaban 2.044 en albanés, italiano, árabe o ruso. Un canal de EE. UU. solo
+  entra si su nombre lo delata (`CNN en Español`), porque el resto emite en
+  inglés.
+- **TDTChannels** es la TDT española. Su `group-title` no es el país sino la
+  categoría (`Generalistas`, `Informativos`, `Deportivos`), así que se mapea a
+  las categorías del addon. Trae la misma cadena con varias señales (DVR,
+  Rakuten, Ottera) y el catálogo las agrupa.
+
 ### Medición en CI (última pasada)
 
-Catálogo **3661 canales, 3123 con medio directo**. Listas: `all` **5576**, `es`
-**516**, `latam` **4660**, `deportes` **176**.
+Catálogo **4115 canales, 3570 vivos**. Listas: `all` **6491**, `es` **1032**,
+`latam` **5056**, `deportes` **186**.
 
-Canales vivos por país: Internacional 1276 · AR 505 · ES 369 · US 290 · CL 250 ·
-DO 238 · MX 234 · PE 192 · CO 136 · VE 81 · EC 80 · BO 75 · PY 72 · HN 69 ·
-CR 68 · GT 53 · SV 43 · PR 43 · PA 22 · NI 18 · UY 8 · CU 4.
+Canales vivos por país: Internacional 1546 · ES 754 · AR 553 · US 293 · CL 271 ·
+MX 246 · DO 240 · PE 195 · CO 136 · VE 89 · BO 79 · EC 79 · HN 75 · PY 74 ·
+CR 71 · GT 53 · SV 46 · PR 42 · PA 22 · NI 18 · UY 8 · CU 4.
 
 **Internacional** son los canales cuya fuente no dice el país (la mayoría de Pluto
 TV, CineCity y D9Kod). Se quedan así en lugar de asignarles un país inventado.
+
+## Revisión del addon y del M3U
+
+Comprobaciones hechas sobre el addon y las listas, con sus arreglos:
+
+| Comprobación | Estado |
+|---|---|
+| Manifiesto por debajo de 8 KB (Stremio puede rechazar los grandes) | 6.586 bytes; los 126 géneros `país · categoría` se movieron al `extra` de cada país |
+| `idPrefixes` cubre todos los ids de canal | Faltaba `latam-`: 1.546 canales sin país habrían fallado. Añadido |
+| Paginación de 100 en 100 | Correcta (`skip=0/100/200/300`) |
+| `extra` en una sola cadena (`genre=…&skip=…`) | Correcta en los dos órdenes, con acentos y espacios |
+| Manifest válido para el SDK | Sin errores: id, versión, tipos, ids y `extra` permitidos |
+| `#EXTINF` con coma en el nombre | Se rompía la entrada; ahora la coma se sustituye |
+| `tvg-country` y `group-title` en el M3U | Ponían la región (`LATAM`); ahora el país real (`AR`, `Argentina · Generalista`) |
+| Guía de programación | `x-tvg-url` iba vacío (la desactiva). Ahora declara la EPG y conserva el `tvg-id` original de la lista |
+| Póster de los canales sin logo | Se generaba una tarjeta vacía; ahora hay póster con las iniciales |
+| Catálogos con nombre engañoso | «Latinoamérica» mostraba canales de México; ahora hay `Sin país asignado` |
+
+Lo que no se puede arreglar desde aquí: los reproductores de tvenvivo, thedaddy y
+livelive24 montan la URL por JavaScript en el navegador, así que la extracción de
+HLS sigue en 0 (ver más abajo).
 
 ## Listas M3U
 
