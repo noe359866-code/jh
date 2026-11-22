@@ -1,13 +1,14 @@
 {
   "name": "tv-espanol-stremio-addon",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "Addon Stremio y listas M3U de canales de TV en español (España y Latinoamérica)",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
     "test": "node --test",
-    "check": "node --check index.js && node --check engines/live/addon.js && node --check engines/live/catalog.js && node --check engines/live/http.js && node --check engines/live/limit.js && node --check engines/live/m3u.js && node --check engines/live/sources/eja.js && node --check engines/live/sources/globalfreetv.js && node --check engines/live/sources/index.js && node --check engines/live/sources/iptvcat.js && node --check engines/live/sources/livelive24.js && node --check engines/live/sources/thedaddy.js && node --check engines/live/sources/tvenvivo.js && node --check engines/live/sources/tvgarden.js && node --check engines/live/text.js && node --check scripts/live-check.js",
-    "test:live": "node scripts/live-check.js"
+    "check": "node --check index.js && node --check engines/live/addon.js && node --check engines/live/catalog.js && node --check engines/live/checker.js && node --check engines/live/http.js && node --check engines/live/limit.js && node --check engines/live/m3u.js && node --check engines/live/sources/eja.js && node --check engines/live/sources/globalfreetv.js && node --check engines/live/sources/index.js && node --check engines/live/sources/iptvcat.js && node --check engines/live/sources/livelive24.js && node --check engines/live/sources/thedaddy.js && node --check engines/live/sources/tvenvivo.js && node --check engines/live/sources/tvgarden.js && node --check engines/live/text.js && node --check scripts/live-check.js && node --check scripts/verify.js",
+    "test:live": "node scripts/live-check.js",
+    "verify": "node scripts/verify.js"
   },
   "engines": {
     "node": ">=22.0.0"

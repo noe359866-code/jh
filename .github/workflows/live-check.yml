@@ -23,8 +23,8 @@ jobs:
       - run: npm ci
       - name: Ejecutar verificación en vivo
         run: node scripts/live-check.js || true
-        env:
-          SOURCE: ${{ inputs.sources }}
+      - name: Verificar señales (canales caídos)
+        run: node scripts/verify.js || true
       - name: Resumen
         if: always()
         run: |
@@ -40,6 +40,9 @@ jobs:
         if: always()
         with:
           name: live-check
-          path: reports/live-check.json
+          path: |
+            reports/live-check.json
+            reports/health.json
+            reports/dead.txt
           if-no-files-found: warn
           retention-days: 7

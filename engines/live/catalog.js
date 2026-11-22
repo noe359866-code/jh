@@ -3,6 +3,7 @@
 const { get } = require('./http');
 const { MODE } = require('./sources');
 const { slug } = require('./text');
+const { applyReport, summarize } = require('./checker');
 
 const TTL_MS = 30 * 60 * 1000;
 
@@ -60,6 +61,7 @@ function createCatalog({
 } = {}) {
   let cache = null;
   let pending = null;
+  let healthReport = null;
 
   async function refresh() {
     const startedAt = now();
@@ -116,8 +118,24 @@ function createCatalog({
     };
   }
 
+  // Informe de salud aplicado al catálogo (sin volver a recolectar). Se guarda
+  // aparte de `cache` para que `load()` no tenga que repetir el sondeo cada vez.
+  function withHealth(entry) {
+    if (!entry) return entry;
+    const health = healthReport;
+    if (!health || !health.results) return entry;
+    const channels = applyReport(entry.channels, health);
+    const dead = channels.filter(channel => channel.dead).length;
+    return {
+      ...entry,
+      channels,
+      health: summarize(channels, health),
+      counts: { ...entry.counts, dead, alive: entry.counts.total - dead }
+    };
+  }
+
   async function load({ force = false } = {}) {
-    if (!force && cache && now() - cache.loadedAt < ttlMs) return cache;
+    if (!force && cache && now() - cache.loadedAt < ttlMs) return withHealth(cache);
     if (pending) return pending;
     pending = Promise.race([
       refresh(),
@@ -128,23 +146,26 @@ function createCatalog({
       }, timeoutMs).unref?.())
     ]).then(result => {
       cache = result;
-      return result;
+      return withHealth(result);
     }).catch(error => {
       if (cache) {
         // Con caché previa se sirve la última copia buena durante un ciclo más.
         cache.stale = true;
-        return { ...cache, stale: true, staleReason: error.message };
+        return { ...withHealth(cache), stale: true, staleReason: error.message };
       }
       throw error;
     }).finally(() => { pending = null; });
     return pending;
   }
 
-  return {
+  const self = {
     load,
-    peek: () => cache,
-    reset: () => { cache = null; }
+    peek: () => withHealth(cache),
+    reset: () => { cache = null; healthReport = null; },
+    setHealth: (health) => { healthReport = health || null; },
+    health: () => healthReport
   };
+  return self;
 }
 
 module.exports = { createCatalog, mergeSources, TTL_MS };

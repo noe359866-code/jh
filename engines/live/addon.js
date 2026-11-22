@@ -14,7 +14,7 @@ function manifest() {
     'Latinoamérica · Noticias', 'Latinoamérica · Música', 'España · Noticias', 'España · Música'];
   return {
     id: 'org.tvespanol.live',
-    version: '3.0.0',
+    version: '3.1.0',
     name: 'TV en Español (directo)',
     description: 'Canales de televisión en español (España y Latinoamérica) recopilados de eja.tv, iptvcat, TV Garden, Global Free TV, TVEnVivo, DaddyLive y Live24. Solo canales; los medios dudosos se marcan.',
     resources: ['catalog', 'meta', 'stream'],
@@ -24,7 +24,8 @@ function manifest() {
       { type: 'tv', id: 'todos', name: 'TV en español · Todos', extra: [{ name: 'genre', options: genres }, { name: 'skip' }] },
       { type: 'tv', id: 'espana', name: 'TV · España', extra: [{ name: 'skip' }] },
       { type: 'tv', id: 'latinoamerica', name: 'TV · Latinoamérica', extra: [{ name: 'skip' }] },
-      { type: 'tv', id: 'deportes', name: 'TV · Deportes', extra: [{ name: 'skip' }] }
+      { type: 'tv', id: 'deportes', name: 'TV · Deportes', extra: [{ name: 'skip' }] },
+      { type: 'tv', id: 'caidos', name: 'TV · Caídos (verificador)', extra: [{ name: 'skip' }] }
     ],
     behaviorHints: { configurable: false, configurationRequired: false }
   };
@@ -49,6 +50,8 @@ function toMeta(channel) {
       channel.origin && channel.origin !== channel.country && !/^[a-z]{2}$/i.test(channel.origin)
         ? `origen: ${channel.origin}` : null,
       channel.category,
+      channel.dead ? `⚠ señal caída (${channel.health && channel.health.error ? channel.health.error : 'no responde'})` : null,
+      channel.unverified ? 'sin verificar (no se pudo comprobar)' : null,
       channel.geoBlocked ? 'puede estar geobloqueado' : null,
       `fuentes: ${channel.sources.join(', ')}`
     ].filter(Boolean).join(' · ')
@@ -57,7 +60,11 @@ function toMeta(channel) {
 
 /** Catálogo paginado con filtro por `genre`. */
 function catalog(channels, id, genre, skip = 0) {
-  let items = listed(channels);
+  // El catálogo normal oculta los caídos; `caidos` es justo lo contrario, para
+  // poder verlos en Stremio con el motivo.
+  let items = id === 'caidos'
+    ? (channels || []).filter(channel => channel.dead)
+    : listed(channels).filter(channel => !channel.dead);
   if (id === 'espana') items = items.filter(channel => channel.country === 'ES');
   if (id === 'latinoamerica') items = items.filter(channel => channel.country === 'LATAM');
   if (id === 'deportes') items = items.filter(channel => /deporte|sport/i.test(channel.category));
