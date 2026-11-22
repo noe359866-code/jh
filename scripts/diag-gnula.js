@@ -101,7 +101,73 @@ async function principal() {
   }
 }
 
-principal().catch(error => {
+const fase = (process.argv[2] || 'todo');
+const ejecutar = fase === 'unpack' ? faseUnpack
+  : fase === 'rutas' ? principal
+    : async () => { await principal(); await faseUnpack(); };
+
+ejecutar().catch(error => {
   console.error(`diagnóstico falló: ${error.message}`);
   process.exit(1);
 });
+
+// ---------------------------------------------------------------------------
+// Fase 2: el decodificador del player (gnrdUnpack) y la forma del payload
+// ---------------------------------------------------------------------------
+// El cliente hace `fetch(ruta + _gnrdPid + '?tok=' + _gnrdTok)` y pasa la
+// respuesta por `gnrdUnpack(...)`. Para replicarlo sin ejecutar JavaScript hace
+// falta (a) el código del decodificador y (b) la forma del payload. Aquí se
+// imprime el código con literales redactados y del payload solo su longitud y
+// alfabeto: nunca su contenido.
+async function faseUnpack() {
+  const fetcher = createFetcher({ allowedHosts: [...hostsPermitidos({})], maxBytes: 4 * 1024 * 1024 });
+  const html = await fetcher.getText(FICHA);
+
+  const valor = (nombre) => {
+    const m = new RegExp(`(?:var|let|const)\\s+${nombre}\\s*=\\s*(["'])(.*?)\\1`).exec(html);
+    return m ? { valor: m[2], largo: m[2].length } : null;
+  };
+  const pid = valor('_gnrdPid');
+  const tok = valor('_gnrdTok');
+  console.log(`pid=${pid ? `largo=${pid.largo} forma=${/^\d+$/.test(pid.valor) ? 'numerico' : /^[a-z0-9]+$/i.test(pid.valor) ? 'alfanum' : 'otro'}` : 'no encontrado'}`);
+  console.log(`tok=${tok ? `largo=${tok.largo}` : 'no encontrado'}`);
+
+  // Cuerpo de gnrdUnpack: se equilibran llaves para cortar la función entera.
+  const inicio = html.search(/function\s+gnrdUnpack\s*\(/);
+  if (inicio === -1) {
+    console.log('gnrdUnpack: no encontrado en la ficha');
+  } else {
+    let i = html.indexOf('{', inicio);
+    let nivel = 0;
+    for (; i < html.length; i++) {
+      if (html[i] === '{') nivel++;
+      else if (html[i] === '}' && --nivel === 0) break;
+    }
+    const cuerpo = html.slice(inicio, i + 1);
+    console.log(`--- gnrdUnpack (${cuerpo.length} B, literales redactados) ---`);
+    console.log(redactar(cuerpo).slice(0, 3000));
+  }
+
+  if (!pid || !tok) return;
+  // Sondeo real del endpoint con los parámetros que usa el cliente.
+  const url = `${BASE}/wp-json/gnrd/v1/${pid.valor}?tok=${encodeURIComponent(tok.valor)}`;
+  try {
+    const texto = await fetcher.getText(url, { Accept: 'application/json', Referer: FICHA, 'X-Requested-With': 'XMLHttpRequest' });
+    let json;
+    try { json = JSON.parse(texto); } catch { json = null; }
+    console.log(`player: bytes=${texto.length} json=${json ? 'si' : 'no'}${json ? ` claves=[${Object.keys(json).sort().join(',')}]` : ''}`);
+    if (json && typeof json.p === 'string') {
+      const p = json.p;
+      const clases = {
+        base64: /^[A-Za-z0-9+/=]+$/.test(p),
+        hex: /^[0-9a-f]+$/i.test(p),
+        numeros: /^[0-9,;|]+$/.test(p),
+        conSeparadores: /[|:;,~]/.test(p),
+        conLlaves: /[{}[\]]/.test(p)
+      };
+      console.log(`p: largo=${p.length} ${JSON.stringify(clases)}`);
+    }
+  } catch (error) {
+    console.log(`player: ${error.message.slice(0, 140)}`);
+  }
+}
