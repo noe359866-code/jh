@@ -61,7 +61,8 @@ function createCatalog({
   sources,
   ttlMs = TTL_MS,
   now = Date.now,
-  timeoutMs = 90000,
+  // Debe superar al presupuesto de extracción: son fases secuenciales.
+  timeoutMs = 240000,
   // Extracción de HLS de las fuentes con embeds. `null` la desactiva; los tests
   // la inyectan o la omiten para no tocar la red.
   extract = null,

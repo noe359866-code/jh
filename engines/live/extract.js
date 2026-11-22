@@ -31,7 +31,7 @@ const DEFAULTS = {
   // Bajo a propósito: los orígenes con embeds (DaddyLive, TVEnVivo) devuelven
   // 403 si se les piden decenas de cadenas a la vez.
   concurrency: 3,
-  budgetMs: 120000,
+  budgetMs: 100000,
   probeTimeoutMs: 6000,
   // Pausa entre canales del mismo origen para no disparar su limitador.
   pauseMs: 250
