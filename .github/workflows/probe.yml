@@ -16,9 +16,11 @@ jobs:
         with:
           node-version: 22
       - run: node scripts/probe.js
-      - uses: actions/upload-artifact@v4
+      - name: Commit probe output
         if: always()
-        with:
-          name: probe
-          path: reports/probe.json
-          if-no-files-found: warn
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f reports/probe.json
+          git diff --cached --quiet || git commit -m "Probe output (generated)"
+          git push
