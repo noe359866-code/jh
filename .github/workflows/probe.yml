@@ -6,6 +6,9 @@ on:
       - '.github/workflows/probe.yml'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   probe:
     runs-on: ubuntu-latest
