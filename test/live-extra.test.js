@@ -140,3 +140,57 @@ test('lista combinada: varias listas privadas en un solo M3U', async () => {
   assert.equal(choque.es, PLAYLISTS.es);
   assert.equal(choque['mi-iptv'].private, true);
 });
+
+test('servidor: la combinada sale por HTTP y el público solo con ?publico=1', async () => {
+  const { createApp } = require('../index');
+  const { once } = require('node:events');
+  const channels = [
+    { id: 'es-1', name: 'La 1', origin: 'ES', country: 'ES', category: 'Generalista', sources: ['extra-nexon'], playable: true, dead: false, streams: [{ url: 'https://a/1.m3u8', kind: 'hls', source: 'Nexon IPTV' }] },
+    { id: 'ar-1', name: 'Público', origin: 'AR', country: 'LATAM', category: 'Generalista', sources: ['cinecity'], playable: true, dead: false, streams: [{ url: 'https://a/3.m3u8', kind: 'hls', source: 'cinecity' }] }
+  ];
+  const loaded = { channels, loadedAt: Date.now(), counts: {}, status: {}, health: null };
+  const catalog = {
+    load: async () => loaded,
+    peek: () => loaded,
+    setHealth: () => {},
+    health: () => null,
+    reset: () => {}
+  };
+  const extraConfig = {
+    sources: [{ id: 'extra-nexon', name: 'Nexon IPTV' }],
+    merge: { id: 'nexon', name: 'Nexon' },
+    mergeSourceIds: ['extra-nexon'],
+    definitions: [{ id: 'extra-nexon', name: 'Nexon IPTV', label: 'nexon.example', country: null }]
+  };
+  const app = createApp({ catalog, checker: null, autoVerify: false, extraConfig });
+  const server = app.listen(0, '127.0.0.1');
+  await once(server, 'listening');
+  const base = `http://127.0.0.1:${server.address().port}`;
+  try {
+    // La combinada solo trae la lista privada.
+    const combinada = await fetch(base + '/playlist/nexon.m3u');
+    assert.equal(combinada.status, 200);
+    assert.equal(combinada.headers.get('x-channel-count'), '1');
+    assert.match(await combinada.text(), /La 1/);
+
+    // `/playlist.m3u` redirige a la combinada, no a `all`.
+    const raiz = await fetch(base + '/playlist.m3u', { redirect: 'manual' });
+    assert.equal(raiz.headers.get('location'), '/playlist/nexon.m3u');
+
+    // La lista de una sola fuente privada también existe.
+    const suelta = await fetch(base + '/playlist/nexon-iptv.m3u');
+    assert.equal(suelta.status, 200);
+
+    const indice = await (await fetch(base + '/playlists.json')).json();
+    assert.equal(indice.publicLists, false);
+    assert.equal(indice.playlists.find(entry => entry.id === 'nexon').private, true);
+
+    // `/config` informa de las listas sin enseñar la URL con credenciales.
+    const config = await (await fetch(base + '/config')).json();
+    assert.equal(config.extraPlaylists.configured, 1);
+    assert.equal(config.extraPlaylists.lists[0].label, 'nexon.example');
+    assert.ok(!JSON.stringify(config).includes('s3creta'));
+  } finally {
+    await new Promise(resolve => server.close(resolve));
+  }
+});

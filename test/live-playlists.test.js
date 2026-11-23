@@ -105,18 +105,29 @@ test('lista CineCity real: tolera líneas EXTINF sin `#`', () => {
   assert.ok(entries.every(entry => !entry.name.includes('tvg-logo')));
 });
 
-test('las listas externas están registradas', () => {
-  for (const id of ['cinecity', 'telechancho', 'iptvchile', 'samsungtvplus', 'pluto', 'd9kod', 'usa', 'iptvorg', 'tdtchannels', 'freetv']) {
-    const source = byId(id);
-    assert.ok(source, `falta la fuente ${id}`);
+test('el registro arranca solo con las listas privadas', () => {
+  const registry = require('../engines/live/sources');
+  // Sin `PUBLIC_LISTS=1` el catálogo público no se recolecta: el agregador es
+  // privado por defecto y solo publica lo que el usuario configuró.
+  assert.equal(registry.publicEnabled({}), false);
+  for (const env of [{}, { PUBLIC_LISTS: '0' }, { PUBLIC_LISTS: 'no' }]) {
+    assert.ok(!registry.buildSources({ env }).some(source => registry.PUBLIC_IDS.includes(source.id)));
+  }
+  assert.deepEqual(registry.buildSources({ env: {} }).map(source => source.id),
+    registry.extra.sources.map(source => source.id));
+  // Y la variable de entorno lo activa.
+  const publicas = registry.buildSources({ env: { PUBLIC_LISTS: '1' } });
+  for (const id of registry.PUBLIC_IDS) {
+    const source = publicas.find(entry => entry.id === id);
+    assert.ok(source, `falta la fuente pública ${id}`);
     assert.equal(typeof source.collect, 'function');
   }
-  // Siete sitios, seis listas, USA, iptv-org por país, TDT y Free-TV. Las listas
-  // privadas configuradas (`config/extra-playlists.json`) se suman al final, así
-  // que el recuento se mide sobre las públicas.
-  const { extra } = require('../engines/live/sources');
-  assert.equal(sources.length, 17 + extra.sources.length);
-  for (const source of extra.sources) assert.ok(source.id.startsWith('extra-'), `${source.id} sin prefijo`);
+  // `PUBLIC_SOURCES` limita cuáles se recolectan.
+  const filtradas = registry.buildSources({ env: { PUBLIC_LISTS: '1', PUBLIC_SOURCES: 'pluto, freetv' } })
+    .filter(source => registry.PUBLIC_IDS.includes(source.id))
+    .map(source => source.id)
+    .sort();
+  assert.deepEqual(filtradas, ['freetv', 'pluto']);
 });
 
 test('group-title se convierte en categoría y no en país', () => {

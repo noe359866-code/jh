@@ -116,12 +116,8 @@ function createCatalog({
   sources,
   ttlMs = TTL_MS,
   now = Date.now,
-  // Debe superar al presupuesto de extracción: son fases secuenciales.
-  timeoutMs = 240000,
-  // Extracción de HLS de las fuentes con embeds. `null` la desactiva; los tests
-  // la inyectan o la omiten para no tocar la red.
-  extract = null,
-  extractBudgetMs = 90 * 1000
+  // Tiempo máximo de recolección (varios proveedores en paralelo).
+  timeoutMs = 180000
 } = {}) {
   let cache = null;
   let pending = null;
@@ -159,26 +155,6 @@ function createCatalog({
     });
     await Promise.all(workers);
     const channels = mergeSources(results);
-
-    // Fase 2: resolver los embeds y dejar el HLS en el catálogo. Se hace después
-    // de fusionar para resolver cada canal una sola vez (varias fuentes pueden
-    // aportar el mismo canal) y para que el sondeo sea el mínimo.
-    if (extract && channels.length) {
-      const extractStarted = now();
-      try {
-        const extracted = await extract(channels, { get: url => fetchGet(url, { allowHttp: true }), budgetMs: extractBudgetMs });
-        if (extracted) {
-          status._extract = { ...extracted, ms: now() - extractStarted };
-        }
-      } catch (error) {
-        // Nunca romper la recolección por un embed roto.
-        status._extract = { ok: false, error: error.message, ms: now() - extractStarted };
-      }
-      // La extracción puede convertir una página en medio directo: recalcular.
-      for (const channel of channels) {
-        channel.playable = channel.streams.some(stream => stream.kind !== 'page' && /^https?:\/\//i.test(stream.url || ''));
-      }
-    }
     // Todas las fuentes pueden caer a la vez: en ese caso no se cachea un
     // catálogo vacío, porque sustituiría a uno bueno y publicaría listas M3U sin
     // canales. Se conserva el catálogo anterior y se informa del fallo.

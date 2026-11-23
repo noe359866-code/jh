@@ -1,6 +1,5 @@
 // Generación y lectura de listas M3U con atributos IPTV.
 const { groupFor, slug } = require('./text');
-const { mapLimit } = require('./limit');
 const { isCountry } = require('./countries');
 
 // País del canal para el M3U: el real si se conoce, la región si no.
@@ -14,48 +13,26 @@ const escapeName = value => escapeAttr(value).replace(/,/g, ' ');
 
 /**
  * Convierte canales en M3U extendido. Solo incluye canales con al menos una URL
- * reproducible; `resolve` permite convertir fuentes `kind:'page'` en medios
- * bajo demanda (devuelve `{ url, referer }` o `null`).
+ * reproducible. En este agregador todos los medios llegan ya resueltos desde las
+ * listas (HLS/MPEG-TS), así que no se resuelven páginas: el archivo se escribe en
+ * una sola pasada y en orden determinista.
  */
 async function buildM3u(channels, {
-  resolve, siteName = 'TV en español', siteUrl = '', epgUrl = '',
-  // Resolver páginas de una en una tarda ~300 ms por canal: con miles de canales
-  // una lista no terminaba y `verify.js` se quedaba a medias.
-  resolveConcurrency = 8
+  siteName = 'Agregador IPTV', siteUrl = '', epgUrl = ''
 } = {}) {
   // `x-tvg-url` vacío desactiva la guía en la mayoría de reproductores; si hay
   // EPG se declara, y si no se omite el atributo en vez de dejarlo en blanco.
   const lines = [epgUrl ? `#EXTM3U x-tvg-url="${escapeAttr(epgUrl)}"` : '#EXTM3U'];
   let count = 0;
 
-  // Fase 1: resolver en paralelo las señales de página de todos los canales.
-  // Sin `resolve` no hay fase 1 (solo se publican medios directos).
-  const resueltas = resolve
-    ? await mapLimit(channels, resolveConcurrency, async channel => {
-      const out = [];
-      for (const stream of channel.streams || []) {
-        if (stream.kind !== 'page') continue;
-        try {
-          const resolved = await resolve(stream);
-          if (resolved && /^https?:\/\//i.test(resolved.url || '')) {
-            out.push({ url: resolved.url, referer: resolved.referer || null, source: stream.source });
-          }
-        } catch {
-          // Una página que no resuelve no rompe la lista.
-        }
-      }
-      return out;
-    })
-    : channels.map(() => []);
-
   // Un `tvg-id` puede venir de la EPG de la fuente y estar repetido entre
   // canales distintos ("13 Cultura" y "13C" comparten `13C.cl`). El id interno
-  // del addon sí es único, así que solo se desambigua cuando el choque es real:
-  // las señales del mismo canal conservan su id.
+  // del catálogo sí es único, así que solo se desambigua cuando el choque es
+  // real: las señales del mismo canal conservan su id.
   //
   // El dueño se identifica por nombre: dos variantes del mismo canal pueden
-  // compartir el id interno del addon ("us-axn" para AXN Andes y AXN South)
-  // pero siguen siendo canales distintos.
+  // compartir el id interno ("us-axn" para AXN Andes y AXN South) pero siguen
+  // siendo canales distintos.
   const nombres = new Map();
   for (const channel of channels) {
     const base = channel.epgId || channel.id;
@@ -68,18 +45,19 @@ async function buildM3u(channels, {
   }
   const compartido = base => (nombres.get(base) || new Set()).size > 1;
 
-  // Fase 2: escribir en orden, que es lo que hace determinista el archivo.
-  for (const [index, channel] of channels.entries()) {
+  // Escribir en orden, que es lo que hace determinista el archivo.
+  for (const channel of channels) {
     const streams = [];
     for (const stream of channel.streams || []) {
+      // Una entrada sin medio reproducible (`page`) no se publica: en un
+      // reproductor sería una línea que no abre nada.
       if (stream.kind === 'page') continue;
       if (/^https?:\/\//i.test(stream.url || '')) streams.push(stream);
     }
-    streams.push(...resueltas[index]);
     if (!streams.length) continue;
     for (const stream of streams) {
       // Si la lista de origen trae `tvg-id` (el que usa la EPG), se publica ese;
-      // si no, el id interno del addon.
+      // si no, el id interno del catálogo.
       const base = channel.epgId || channel.id;
       const tvgId = compartido(base) ? `${base}-${slug(channel.name || channel.id, 'canal')}` : base;
       lines.push(

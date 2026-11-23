@@ -15,7 +15,8 @@ const { createCatalog } = require('../engines/live/catalog');
 const { createChecker } = require('../engines/live/checker');
 const { buildM3u } = require('../engines/live/m3u');
 const { get } = require('../engines/live/http');
-const { byId } = require('../engines/live/sources');
+const { sources } = require('../engines/live/sources');
+const { playlistDefinitions } = require('../index');
 
 const number = name => {
   const value = Number(process.env[name]);
@@ -26,38 +27,19 @@ const LIMIT = number('LIMIT');
 const CONCURRENCY = number('CONCURRENCY');
 const BUDGET_MS = number('CHECK_BUDGET_MS');
 
-// Las listas del servidor, sin duplicar la definición: antes este script tenía
-// su propia copia (solo all/es/latam/deportes) y no generaba ninguna de país.
-const { PLAYLISTS } = require('../index');
-
-function resolvePage(stream) {
-  const source = { 'www.tvenvivo.org': 'tvenvivo', 'thedaddy.li': 'thedaddy' }[new URL(stream.url).hostname];
-  if (!source) return Promise.resolve(null);
-  return byId(source).resolve(stream.url, { get });
-}
+// Las listas del servidor, sin duplicar la definición (incluye la combinada de
+// las listas privadas si están configuradas).
+const PLAYLISTS = playlistDefinitions();
 
 async function main() {
-  const catalog = createCatalog({
-    sources: require('../engines/live/sources').sources,
-    fetchGet: get,
-    // Misma extracción de embeds que el servidor.
-    extract: (channels, options) => {
-      const ex = require('../engines/live/extract');
-      return ex.enrich(channels, { ...options, byId: require('../engines/live/sources').byId, stats: ex.sharedStats });
-    }
-  });
+  const catalog = createCatalog({ sources, fetchGet: get });
   const loaded = await catalog.load({ force: true });
   console.log(`Catálogo: ${loaded.counts.total} canales (${loaded.counts.playable} con medio directo)`);
-  if (loaded.status._extract) {
-    const ex = loaded.status._extract;
-    console.log(`Extracción de embeds: ${ex.extracted} HLS extraídos de ${ex.targets} canales con página ` +
-      `(fallidos ${ex.failed}, omitidos ${ex.skipped}, ${Math.round((ex.ms || 0) / 1000)} s)`);
-    if (ex.bySource) console.log('  por fuente:', JSON.stringify(ex.bySource));
-    if (ex.reasons) console.log('  motivos:', JSON.stringify(ex.reasons));
+  for (const [id, status] of Object.entries(loaded.status)) {
+    console.log(`  - ${id}: ${status.ok ? `${status.entries} canales` : `error: ${status.error}`}`);
   }
 
-  const extractStats = loaded.status._extract || null;
-  const checker = createChecker({ get, resolvePage, channels: loaded.channels, concurrency: CONCURRENCY, budgetMs: BUDGET_MS });
+  const checker = createChecker({ get, channels: loaded.channels, concurrency: CONCURRENCY, budgetMs: BUDGET_MS });
   const report = await checker.run({ limit: LIMIT });
   const bloqueados = Object.values(report.results).filter(result => result.blocked).length;
   const sinConfirmar = Object.values(report.results).filter(result => result.unconfirmed).length;
@@ -80,7 +62,6 @@ async function main() {
     checkedAt: report.checkedAt,
     durationMs: report.durationMs,
     inconclusive: report.selfCheck.inconclusive,
-    extraction: extractStats,
     totals: {
       checked: report.total,
       alive: report.alive,
@@ -121,7 +102,7 @@ async function main() {
     const definition = PLAYLISTS[variant];
     if (!definition) continue;
     try {
-      const { body, count } = await buildM3u(vivos.filter(definition.filter), { siteName: 'TV en Español' });
+      const { body, count } = await buildM3u(vivos.filter(definition.filter), { siteName: 'Agregador IPTV' });
       fs.writeFileSync(path.join('reports', `playlist-${variant}.m3u`), body);
       written[variant] = count;
     } catch (error) {
@@ -130,8 +111,7 @@ async function main() {
   }
   console.log(`Listas escritas en reports/: ${Object.entries(written).map(([id, count]) => `${id} (${count})`).join(', ')}`);
 
-  // Desglose por país: solo los que tienen canales vivos, de mayor a menor. Es
-  // lo que alimenta las categorías de Stremio, así que se deja en el informe.
+  // Desglose por país: solo los que tienen canales vivos, de mayor a menor.
   const byCountry = new Map();
   for (const channel of channels) {
     if (channel.dead) continue;

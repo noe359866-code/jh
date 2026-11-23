@@ -1,60 +1,63 @@
-// Registro de fuentes del catálogo de TV en español.
+// Registro de fuentes del agregador.
 //
-// `direct`  : el HTML/JSON expone URLs de medio reproducibles tal cual.
-// `page`    : el HLS sale de un embed. Se extrae al recolectar (engines/live/
-//             extract.js); si el embed falla, queda como enlace resoluble.
-// `catalog` : solo catálogo/búsqueda; no hay URL de medio verificada.
-// Las fuentes `direct` incluyen las listas M3U externas (playlist.js).
+// Este proyecto ya **no** recorre webs de terceros ni resuelve embeds: agrega
+// listas M3U. Por defecto solo las privadas del usuario (ver `extra.js`); el
+// catálogo público de listas abiertas solo se recolecta si se pide
+// (`PUBLIC_LISTS=1` o `?publico=1`), y en ese caso se puede limitar con
+// `PUBLIC_SOURCES=cinecity,pluto,…`.
+//
+// `direct`  : la lista trae la URL del medio (HLS/MPEG-TS) tal cual.
+// `catalog` : la lista no da un medio reproducible directo (no se usa hoy).
 const extra = require('./extra');
 
-const sources = [
-  require('./tvgarden'),
-  require('./eja'),
-  require('./iptvcat'),
-  require('./globalfreetv'),
-  require('./tvenvivo'),
-  require('./thedaddy'),
-  require('./livelive24'),
-  // Listas M3U publicadas por terceros (medios directos ya listos).
-  require('./cinecity'),
-  require('./telechancho'),
-  require('./iptvchile'),
-  require('./samsungtvplus'),
-  require('./pluto'),
-  require('./d9kod'),
-  // Estados Unidos: canales en español + cadenas mayoritarias (iptv-org).
-  require('./usa'),
-  // Listas por país de iptv-org: rellenan los países con pocas fuentes.
-  require('./iptvorg'),
-  // TDT española y lista mundial con filtro estricto de español.
-  require('./tdtchannels'),
-  require('./freetv'),
-  // Listas privadas del usuario (`config/extra-playlists.json` o
-  // `EXTRA_PLAYLISTS`). Van al final y no existen por defecto: sin configuración
-  // el catálogo es exactamente el público.
-  ...extra.sources
+// Listas públicas conocidas, con id, módulo y etiqueta para `/config`.
+const PUBLIC = [
+  { id: 'cinecity', module: './cinecity' },
+  { id: 'telechancho', module: './telechancho' },
+  { id: 'iptvchile', module: './iptvchile' },
+  { id: 'samsungtvplus', module: './samsungtvplus' },
+  { id: 'pluto', module: './pluto' },
+  { id: 'd9kod', module: './d9kod' },
+  { id: 'usa', module: './usa' },
+  { id: 'iptvorg', module: './iptvorg' },
+  { id: 'tdtchannels', module: './tdtchannels' },
+  { id: 'freetv', module: './freetv' }
 ];
 
+const PUBLIC_IDS = PUBLIC.map(entry => entry.id);
+
+/** ¿Se recolecta el catálogo público? `PUBLIC_LISTS=1` o `PUBLIC_LISTS=0`. */
+function publicEnabled(env = process.env) {
+  const value = String(env.PUBLIC_LISTS ?? '').trim().toLowerCase();
+  return value === '1' || value === 'true' || value === 'si' || value === 'sí';
+}
+
+/** Ids públicos permitidos (`PUBLIC_SOURCES=a,b`); vacío = todas. */
+function publicFilter(env = process.env) {
+  const list = String(env.PUBLIC_SOURCES || '').split(',').map(value => value.trim()).filter(Boolean);
+  return list.length ? list : PUBLIC_IDS;
+}
+
+/**
+ * Fuentes activas. Las privadas van primero: si el usuario pide una lista
+ * combinada, lo que más importa es que sus canales estén en el catálogo.
+ */
+function buildSources({ env = process.env, extraConfig = extra } = {}) {
+  const sources = [...extraConfig.sources];
+  if (!publicEnabled(env)) return sources;
+  const allowed = new Set(publicFilter(env));
+  for (const entry of PUBLIC) {
+    if (!allowed.has(entry.id)) continue;
+    sources.push(require(entry.module));
+  }
+  return sources;
+}
+
+const sources = buildSources();
+
 const MODE = {
-  tvgarden: 'direct',
-  eja: 'direct',
-  iptvcat: 'direct',
-  globalfreetv: 'direct',
-  tvenvivo: 'page',
-  thedaddy: 'page',
-  livelive24: 'catalog',
-  // Listas M3U: medio directo ya incluido en la lista.
-  cinecity: 'direct',
-  telechancho: 'direct',
-  iptvchile: 'direct',
-  samsungtvplus: 'direct',
-  pluto: 'direct',
-  d9kod: 'direct',
-  usa: 'direct',
-  iptvorg: 'direct',
-  tdtchannels: 'direct',
-  freetv: 'direct',
-  // Las listas privadas publican medios directos (Xtream/`mpegts`).
+  // Las listas (públicas y privadas) publican medios directos.
+  ...Object.fromEntries(PUBLIC_IDS.map(id => [id, 'direct'])),
   ...Object.fromEntries(extra.sources.map(source => [source.id, 'direct']))
 };
 
@@ -62,4 +65,16 @@ function byId(id) {
   return sources.find(source => source.id === id) || null;
 }
 
-module.exports = { sources, byId, MODE, extra };
+module.exports = {
+  sources,
+  byId,
+  MODE,
+  extra,
+  PUBLIC,
+  PUBLIC_IDS,
+  buildSources,
+  publicEnabled,
+  publicFilter,
+  // Compatibilidad con scripts/tests antiguos.
+  allSources: () => buildSources({ env: { PUBLIC_LISTS: '1' } })
+};

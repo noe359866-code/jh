@@ -165,9 +165,14 @@ function applyReport(channels, report) {
   return (channels || []).map(channel => {
     const result = results[channel.id];
     if (!result) return channel;
+    const error = firstAttemptWith(result, 'error').error || null;
     return {
       ...channel,
       dead: result.dead === true,
+      // Motivo legible para `/health/dead.json` y la portada.
+      deadReason: result.dead === true
+        ? (error || (firstAttemptWith(result, 'status').status != null ? `HTTP ${firstAttemptWith(result, 'status').status}` : 'sin confirmar'))
+        : null,
       unverified: result.ok === null,
       health: {
         checkedAt: report.checkedAt,

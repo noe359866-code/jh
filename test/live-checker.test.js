@@ -5,7 +5,6 @@ const assert = require('node:assert/strict');
 const { once } = require('node:events');
 const { createApp } = require('../index');
 const { createCatalog } = require('../engines/live/catalog');
-const addon = require('../engines/live/addon');
 const {
   createChecker, checkChannel, probeMedia, looksPlayable, summarize, applyReport, checkable
 } = require('../engines/live/checker');
@@ -229,13 +228,13 @@ test('M3U excluye los caídos y ?dead=1 los recupera', async () => {
     assert.equal(listado.playlists.find(entry => entry.id === 'es').channels, 1);
     assert.equal(listado.health.dead, 1);
 
-    // Las páginas resueltas tampoco desaparecen de la lista de Latinoamérica.
-    const latam = await (await fetch(base + '/playlist/latam.m3u?pages=1')).text();
-    assert.match(latam, /Solo Página/);
-  }, { checker, resolve: async () => ({ url: 'https://edge.example/p.m3u8', referer: null }) });
+    // `?publico=1` añade el catálogo público de listas abiertas a esa respuesta.
+    const publico = await fetch(base + '/playlist/es.m3u?publico=1');
+    assert.equal(publico.status, 200);
+  }, { checker });
 });
 
-test('rutas de salud: resumen con recuento, caídos en formato Stremio y ?check=1', async () => {
+test('rutas de salud: resumen con recuento, caídos con motivo y ?check=1', async () => {
   const catalog = fakeCatalog();
   let sondeos = 0;
   const checker = createChecker({
@@ -261,12 +260,9 @@ test('rutas de salud: resumen con recuento, caídos en formato Stremio y ?check=
 
     const muertos = await (await fetch(base + '/health/dead.json')).json();
     assert.equal(muertos.total, 1);
-    assert.equal(muertos.metas[0].id, 'es-viva');
-    assert.equal(muertos.metas[0].type, 'tv');
-
-    // Los canales caídos siguen visibles en Stremio, pero marcados.
-    const meta = await (await fetch(base + '/meta/tv/es-viva.json')).json();
-    assert.equal(meta.meta.id, 'es-viva');
+    assert.equal(muertos.channels[0].id, 'es-viva');
+    assert.equal(muertos.channels[0].reason, 'HTTP 404');
+    assert.ok(Array.isArray(muertos.channels[0].streams));
   }, { checker });
 });
 
@@ -288,7 +284,7 @@ test('un verificador que revienta no rompe el servidor', async () => {
 });
 
 
-test('Stremio: catálogo de caídos con motivo y ocultos en el catálogo normal', () => {
+test('verificador: los caídos quedan con motivo y se excluyen de las listas', () => {
   const report = {
     checkedAt: '2026-01-01T00:00:00.000Z',
     results: {
@@ -297,17 +293,11 @@ test('Stremio: catálogo de caídos con motivo y ocultos en el catálogo normal'
     }
   };
   const channels = applyReport(CHANNELS, report);
-
-  const todos = addon.catalog(channels, 'todos', '', 0);
-  assert.ok(!todos.metas.some(meta => meta.id === 'es-viva'), 'los caídos no salen en el catálogo normal');
-
-  const caidos = addon.catalog(channels, 'caidos', '', 0);
-  assert.equal(caidos.metas.length, 1);
-  assert.equal(caidos.metas[0].id, 'es-viva');
-  assert.match(caidos.metas[0].description, /señal caída/);
-
-  const manifest = addon.manifest();
-  assert.ok(manifest.catalogs.some(entry => entry.id === 'caidos'));
+  const muerto = channels.find(channel => channel.id === 'es-viva');
+  assert.equal(muerto.dead, true);
+  // El motivo queda en el canal para /health/dead.json.
+  assert.equal(muerto.deadReason, 'HTTP 404');
+  assert.equal(channels.filter(channel => !channel.dead).length, CHANNELS.length - 1);
 });
 
 
@@ -391,31 +381,10 @@ test('verifyNow usa los ids normalizados del catálogo (regresión)', async () =
     // El id real del catálogo es `es-viva` (slug del nombre), no el de entrada.
     const muertos = await (await fetch(base + '/health/dead.json')).json();
     assert.equal(muertos.total, 1, 'el informe debe casar con los ids del catálogo');
-    assert.equal(muertos.metas[0].id, 'es-viva');
+    assert.equal(muertos.channels[0].id, 'es-viva');
   } finally {
     await new Promise(resolve => server.close(resolve));
   }
 });
 
 
-test('un canal caído no ofrece medios inválidos en /stream', async () => {
-  const report = {
-    checkedAt: '2026-01-01T00:00:00.000Z',
-    results: {
-      'es-la-1': { ok: true, dead: false, via: 'direct', attempts: [{ status: 200 }] },
-      'es-viva': { ok: false, dead: true, via: 'direct', attempts: [{ status: 404, error: 'HTTP 404' }] }
-    }
-  };
-  const channels = applyReport(CHANNELS, report);
-  const viva = channels.find(channel => channel.id === 'es-viva');
-  assert.deepEqual(await addon.streams(viva), [], 'sin web de origen → sin opciones');
-
-  const conWeb = { ...viva, externalUrl: 'https://livelive24.com/?ch=9' };
-  const opciones = await addon.streams(conWeb);
-  assert.equal(opciones.length, 1);
-  assert.equal(opciones[0].externalUrl, 'https://livelive24.com/?ch=9');
-  assert.match(opciones[0].title, /señal caída/);
-
-  const vivaOk = channels.find(channel => channel.id === 'es-la-1');
-  assert.equal((await addon.streams(vivaOk)).length, 1, 'un canal vivo mantiene sus medios');
-});

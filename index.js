@@ -1,19 +1,32 @@
+// Agregador de listas M3U privadas (IPTV/Xtream).
+//
+// Junta varias listas propias en una sola y sirve el resultado como M3U. Por
+// defecto **solo** se ven esas listas; el catálogo público de listas abiertas
+// solo entra si se pide (`PUBLIC_LISTS=1` o `?publico=1` en una lista).
+//
+// Rutas:
+//   GET /                       portada con enlaces
+//   GET /playlist/:id.m3u       listas (combinada, por lista, por país…)
+//   GET /playlists.json         índice con recuentos
+//   GET /health.json            informe del verificador
+//   GET /health/dead.json       canales caídos con su motivo
+//   GET /config                 estado de cada fuente y tiempos
 const express = require('express');
 const path = require('node:path');
 const { createCatalog } = require('./engines/live/catalog');
 const { get } = require('./engines/live/http');
-const { sources, byId, extra } = require('./engines/live/sources');
-const { COUNTRIES, isCountry } = require('./engines/live/countries');
+const { sources, byId, extra, buildSources, publicEnabled } = require('./engines/live/sources');
+const { COUNTRIES } = require('./engines/live/countries');
+const { slug } = require('./engines/live/text');
 const { buildM3u } = require('./engines/live/m3u');
-const addon = require('./engines/live/addon');
 const { createChecker } = require('./engines/live/checker');
-const extractor = require('./engines/live/extract');
 
-// Guía de programación usada en las listas M3U. TDTChannels publica una EPG
-// abierta de la TDT española; cubre una parte del catálogo, no todo.
-const EPG_URL = process.env.EPG_URL || 'https://www.tdtchannels.com/epg/TV.xml.gz';
+// Guía de programación de las listas M3U (opcional, `EPG_URL=` la desactiva).
+const EPG_URL = process.env.EPG_URL === undefined
+  ? 'https://www.tdtchannels.com/epg/TV.xml.gz'
+  : process.env.EPG_URL;
 
-const SITE_NAME = 'TV en Español';
+const SITE_NAME = process.env.SITE_NAME || 'Agregador IPTV';
 
 // TTL del catálogo configurable por entorno (`CACHE_TTL` en ms, mínimo 60 s).
 function catalogTtl() {
@@ -21,33 +34,13 @@ function catalogTtl() {
   return Number.isFinite(value) && value >= 60000 ? value : undefined;
 }
 
-// Resolutores por fuente para canales `kind:'page'` (se ejecutan bajo demanda,
-// nunca en el arranque). Solo se permite resolver páginas de las dos fuentes
-// cuyo reproductor es estable y público.
-const PAGE_RESOLVERS = {
-  'tvenvivo.org': {
-    host: 'www.tvenvivo.org',
-    resolve: async stream => byId('tvenvivo').resolve(stream.url, { get })
-  },
-  'thedaddy.li': {
-    host: 'thedaddy.li',
-    resolve: async stream => byId('thedaddy').resolve(stream.url, { get })
-  }
-};
-
-function resolvePage(stream) {
-  const resolver = PAGE_RESOLVERS[stream.source];
-  if (!resolver) return Promise.resolve(null);
-  if (new URL(stream.url).hostname !== resolver.host) return Promise.resolve(null);
-  return resolver.resolve(stream);
-}
-
 /**
  * Extrae el id y los extras de una ruta tipo
- * `/catalog/tv/todos/genre=España&skip=100.json`.
+ * `/playlist/nexon.m3u` o `/health.json?check=1`. Se conserva el parser del
+ * proyecto anterior para no cambiar el contrato de `/config`.
  */
 function parseRoute(raw, { withExtra = false } = {}) {
-  const withoutJson = raw.replace(/\.json$/i, '');
+  const withoutJson = raw.replace(/\.(json|m3u)$/i, '');
   const parts = withoutJson.split('/').filter(Boolean);
   const id = parts.shift() || '';
   const extras = new Map();
@@ -66,83 +59,84 @@ function parseRoute(raw, { withExtra = false } = {}) {
   return { id, extras };
 }
 
-// Listas M3U: las generales de siempre más una por país (la que se navega en
-// Stremio). El país se mira en `origin`, que es el dato real del canal.
+// Listas por región y por país del catálogo.
 const REGION_PLAYLISTS = {
   all: { label: 'Todos los canales', filter: () => true },
-  es: { label: 'España (región)', filter: channel => channel.country === 'ES' },
-  latam: { label: 'Latinoamérica (región)', filter: channel => channel.country === 'LATAM' },
-  deportes: { label: 'Deportes', filter: channel => /deporte|sport/i.test(channel.category) }
+  es: { label: 'España', filter: channel => channel.country === 'ES' },
+  latam: { label: 'Latinoamérica', filter: channel => channel.country === 'LATAM' },
+  deportes: { label: 'Deportes', filter: channel => /deporte|sport/i.test(channel.category || '') }
 };
 
 const COUNTRY_PLAYLISTS = Object.fromEntries(COUNTRIES.map(country => [
   country.code.toLowerCase(),
-  {
-    label: country.name,
-    filter: channel => (channel.origin || channel.country) === country.code
-  }
+  { label: country.name, filter: channel => (channel.origin || channel.country) === country.code }
 ]));
 
-const PLAYLISTS = {
-  ...REGION_PLAYLISTS,
-  ...COUNTRY_PLAYLISTS
-};
+const PLAYLISTS = { ...REGION_PLAYLISTS, ...COUNTRY_PLAYLISTS };
 
 /**
- * Listas que se sirven por HTTP: las públicas (región y país) más la lista
- * combinada de las privadas. Esa combinada se llama como el usuario quiera
- * (`{ "name": "Nexon" }` en `config/extra-playlists.json`) y junta **todas**
- * sus listas privadas en un solo `.m3u`, igual que el M3U del proveedor, así que
- * no hay que pegar una URL por lista en el reproductor.
+ * Listas que se sirven por HTTP. Además de las de región/país hay:
  *
- * `all` sigue siendo el catálogo completo (públicas + privadas). Si el nombre de
- * la combinada choca con una lista existente (`all`, `es`…), no se pisa nada:
- * se publica como `mi-iptv` para no perder canales por un nombre.
+ *   - una por cada lista configurada (`/playlist/<id-lista>.m3u`), para sacar
+ *     solo esa lista, y
+ *   - la **combinada** (`/playlist/nexon.m3u`), que junta todas las privadas en
+ *     un único archivo, como el M3U del proveedor.
+ *
+ * `all` es todo lo recolectado. Si el nombre de la combinada choca con una lista
+ * existente (`all`, `es`…), no se pisa: se publica como `mi-iptv`.
  */
 function playlistDefinitions({ extraConfig = extra } = {}) {
   const definitions = { ...PLAYLISTS };
   const privateIds = new Set(extraConfig.mergeSourceIds || []);
   if (!privateIds.size) return definitions;
+
+  // La combinada va primero: su nombre es el que eligió el usuario y manda.
   const merge = extraConfig.merge || { id: 'mi-iptv', name: 'Mi IPTV' };
-  const id = definitions[merge.id] ? 'mi-iptv' : merge.id;
-  definitions[id] = {
-    // `label` es lo que muestran `/` y `/playlists.json`.
+  const combinedId = definitions[merge.id] ? 'mi-iptv' : merge.id;
+  definitions[combinedId] = {
     label: merge.name,
     filter: channel => (channel.sources || []).some(source => privateIds.has(source)),
     private: true
   };
+
+  // Y una lista por fuente privada, con el nombre de la lista (`nexon-iptv`),
+  // para poder sacar una sola sin editar la configuración.
+  for (const source of extraConfig.sources || []) {
+    const candidates = [
+      slug(String(source.name || ''), ''),
+      String(source.id).replace(/^extra-/, '')
+    ].filter(Boolean);
+    const id = candidates.find(candidate => !definitions[candidate]);
+    if (!id) continue;
+    definitions[id] = {
+      label: source.name,
+      filter: channel => (channel.sources || []).includes(source.id),
+      single: true
+    };
+  }
   return definitions;
 }
-
-// Enriquecimiento de embeds para el catálogo por defecto: resuelve el HLS de
-// tvenvivo/thedaddy al recolectar, con presupuesto propio.
-const defaultExtract = (channels, options) => extractor.enrich(channels, { ...options, byId, stats: extractor.sharedStats });
 
 function createApp({
   catalog = createCatalog({
     sources,
-    ...(catalogTtl() ? { ttlMs: catalogTtl() } : {}),
-    extract: process.env.EXTRACT_HLS === '0' ? null : defaultExtract
+    ...(catalogTtl() ? { ttlMs: catalogTtl() } : {})
   }),
-  resolve = resolvePage,
+  // Configuración de listas privadas (inyectable en pruebas).
+  extraConfig = extra,
   playlistTtlMs = 5 * 60 * 1000,
   now = Date.now,
   logger = console,
   // Verificador de señales. Se puede inyectar (pruebas) o desactivar con
-  // `checker: null`; por defecto verifica bajo demanda con `get`.
-  // `channels` se resuelve perezosamente del catálogo: al construir `createApp`
-  // el catálogo aún no ha recolectado y una lista vacía dejaría canales sin
-  // informe (y por tanto sin veredicto de salud).
+  // `checker: null`; `channels` se resuelve perezosamente del catálogo.
   checker = createChecker({
     get,
-    resolvePage: resolve,
     channels: async () => (await catalog.load()).channels,
     logger
   }),
-  // Persistencia opcional del informe (`{ read, write }`). El servidor real usa
-  // `reports/health.json` para no re-sondear todo tras un reinicio.
+  // Persistencia opcional del informe (`{ read, write }`).
   healthStore = null,
-  // Verificación automática al arrancar el catálogo (por defecto sí).
+  // Verificación automática al arrancar (por defecto sí).
   autoVerify = true
 } = {}) {
   const app = express();
@@ -166,11 +160,7 @@ function createApp({
     }
   }
 
-  /**
-   * Verifica todo el catálogo y deja el resultado listo para las rutas.
-   * Carga el catálogo primero: los ids de los canales los normaliza el catálogo
-   * (slug del nombre), así que la lista debe salir de él y no de fuera.
-   */
+  /** Verifica el catálogo y deja el informe listo para las rutas. */
   async function verifyNow(list) {
     if (!checker) return null;
     const target = list || (await catalog.load()).channels;
@@ -181,17 +171,13 @@ function createApp({
     return report;
   }
 
-  // Sin presupuesto suficiente, `?check=1` responde con el informe anterior en
-  // vez de dejar la petición colgada.
   const CHECK_BUDGET_MS = Number(process.env.CHECK_BUDGET_MS) > 0 ? Number(process.env.CHECK_BUDGET_MS) : 25 * 1000;
 
-  // Lanza la verificación en segundo plano sin bloquear la petición actual.
   function verifyInBackground(list) {
     if (!checker) return;
     if (checker.fresh()) return;
     checker.run({ list }).then(report => {
       catalog.setHealth(report);
-      // El filtrado cambia: las listas cacheadas dejan de valer.
       playlistCache.clear();
       persistHealth(report);
     }).catch(error => {
@@ -199,9 +185,8 @@ function createApp({
     });
   }
 
-  // `?check=1` fuerza verificación antes de responder; el resto de peticiones
-  // responde al instante con el último informe y refresca en segundo plano.
-  // Un fallo del verificador nunca rompe la respuesta.
+  // `?check=1` fuerza verificación antes de responder; el resto responde al
+  // instante con el último informe y refresca en segundo plano.
   async function ensureHealth(req, loaded) {
     if (!checker) return loaded;
     const forced = req.query.check === '1' || req.query.check === 'true';
@@ -214,8 +199,6 @@ function createApp({
         if (report) return await catalog.load();
         logger.warn('[checker] verificación lenta: se responde con el informe anterior');
       }
-      // Solo se responde con el informe existente: la verificación va siempre en
-      // segundo plano para no bloquear rutas de lista (ni pruebas ni usuarios).
       if (!checker.peek() || !checker.fresh()) verifyInBackground(loaded.channels);
       return loaded;
     } catch (error) {
@@ -242,89 +225,19 @@ function createApp({
   });
   app.options('*', (req, res) => res.sendStatus(204));
 
-  app.get('/manifest.json', (req, res) => res.json(addon.manifest()));
-
-  // Icono del addon: un SVG pequeño, sin depender de servicios externos.
-  app.get(addon.LOGO_PATH, (req, res) => {
-    res.type('image/svg+xml').set('Cache-Control', 'public, max-age=86400').send(
-      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">' +
-      '<rect width="100" height="100" rx="18" fill="#111827"/>' +
-      '<rect x="16" y="26" width="68" height="42" rx="6" fill="#f9fafb"/>' +
-      '<rect x="26" y="36" width="48" height="22" rx="3" fill="#111827"/>' +
-      '<path d="M44 41l14 6-14 6z" fill="#f9fafb"/>' +
-      '<rect x="32" y="74" width="36" height="5" rx="2.5" fill="#f9fafb"/>' +
-      '</svg>'
-    );
-  });
-
   app.get('/robots.txt', (req, res) => {
     res.type('text/plain').send('User-agent: *\nAllow: /\n');
   });
 
-  // Catálogo: `/catalog/tv/todos.json`, `/catalog/tv/todos/skip=100.json`,
-  // `/catalog/tv/todos/genre=España&skip=100.json`.
-  app.get(/^\/catalog\/([^/]+)\/(.+)\.json$/, async (req, res) => {
-    const type = decodeURIComponent(req.params[0]);
-    if (type !== 'tv') return res.status(404).json({ error: 'Tipo no soportado' });
-    const { id, extras } = parseRoute(req.params[1], { withExtra: true });
-    const known = ['todos', 'espana', 'usa', 'latinoamerica', 'sinpais', 'deportes', 'caidos'];
-    const countryCatalog = /^pais-([a-z]{2})$/.exec(id);
-    if (!known.includes(id) && !(countryCatalog && isCountry(countryCatalog[1].toUpperCase()))) {
-      return res.status(404).json({ error: 'Catálogo desconocido' });
-    }
-    const loaded = await channelsOr503(res);
-    if (!loaded) return undefined;
-    const genre = req.query.genre || extras.get('genre') || '';
-    const rawSkip = Number(req.query.skip ?? extras.get('skip') ?? 0);
-    const skip = Number.isFinite(rawSkip) && rawSkip > 0 ? Math.floor(rawSkip) : 0;
-    return res.json(addon.catalog(loaded.channels, id, typeof genre === 'string' ? genre : '', skip));
-  });
-
-  // Express 4 (path-to-regexp 0.1) no admite comodines dentro de un segmento:
-  // las rutas de Stremio terminan en `.json` y se capturan con regex explícitas.
-  app.get(/^\/meta\/([^/]+)\/([^/]+?)(?:\.json)?$/, async (req, res) => {
-    if (req.params[0] !== 'tv') return res.status(404).json({ error: 'Tipo no soportado' });
-    const loaded = await channelsOr503(res);
-    if (!loaded) return undefined;
-    const channel = addon.findChannel(loaded.channels, req.params[1]);
-    if (!channel) return res.status(404).json({ error: 'Canal desconocido' });
-    return res.json({ meta: addon.toMeta(channel) });
-  });
-
-  app.get(/^\/stream\/([^/]+)\/([^/]+?)(?:\.json)?$/, async (req, res) => {
-    const type = req.params[0];
-    const id = req.params[1];
-    if (type !== 'tv') return res.status(404).json({ error: 'Tipo no soportado' });
-    if (!addon.ID_PATTERN.test(id)) return res.status(400).json({ error: 'Identificador de canal inválido' });
-    let loaded;
-    try {
-      loaded = await catalog.load();
-    } catch (error) {
-      logger.warn(`[stream] catálogo no disponible: ${error.message}`);
-      return res.json({ streams: [] });
-    }
-    const channel = addon.findChannel(loaded.channels, id);
-    if (!channel) return res.json({ streams: [] });
-    try {
-      const streams = await addon.streams(channel, { resolvePage: resolve });
-      return res.json({ streams });
-    } catch (error) {
-      logger.warn(`[stream] ${channel.id}: ${error.message}`);
-      return res.json({ streams: [] });
-    }
-  });
-
-  // Listas M3U. `?pages=1` intenta resolver las fuentes `kind:'page'`
-  // (tvenvivo, DaddyLive); sin ese parámetro solo se publican medios directos.
+  // Listas M3U. `?dead=1` incluye los canales caídos; `?check=1` verifica antes
+  // de responder; `?publico=1` añade el catálogo público a esa respuesta.
   app.get('/playlist/:variant.m3u', async (req, res) => {
     const variant = String(req.params.variant).toLowerCase();
-    const definition = playlistDefinitions()[variant];
+    const definition = playlistDefinitions({ extraConfig })[variant];
     if (!definition) return res.status(404).json({ error: 'Lista desconocida' });
-    const includePages = req.query.pages === '1';
-    // `?dead=0` (por defecto) excluye los canales que el verificador dio por
-    // caídos; `?dead=1` los incluye para depurar.
     const includeDead = req.query.dead === '1';
-    const cacheKey = `${variant}:${includePages ? 'pages' : 'direct'}:${includeDead ? 'con-caidos' : 'sin-caidos'}`;
+    const withPublic = publicEnabled() || req.query.publico === '1';
+    const cacheKey = `${variant}:${includeDead ? 'con-caidos' : 'sin-caidos'}:${withPublic ? 'con-publico' : 'privado'}`;
     const hit = playlistCache.get(cacheKey);
     if (hit && hit.expires > now()) {
       res.set('X-Channel-Count', String(hit.count));
@@ -334,13 +247,25 @@ function createApp({
     let loaded = await channelsOr503(res);
     if (!loaded) return undefined;
     loaded = await ensureHealth(req, loaded);
-    const channels = loaded.channels
+
+    // Con `?publico=1` se recolectan también las listas abiertas, solo para esta
+    // petición: el catálogo cacheado no se toca.
+    let pool = loaded.channels;
+    if (withPublic && !publicEnabled()) {
+      try {
+        const publicCatalog = createCatalog({
+          sources: buildSources({ env: { PUBLIC_LISTS: '1' } }).filter(source => !String(source.id).startsWith('extra-'))
+        });
+        pool = (await publicCatalog.load()).channels.concat(pool);
+      } catch (error) {
+        logger.warn(`[playlist] catálogo público no disponible: ${error.message}`);
+      }
+    }
+
+    const channels = pool
       .filter(definition.filter)
       .filter(channel => includeDead || !channel.dead);
     const { body, count } = await buildM3u(channels, {
-      // Se usa el resolutor inyectado (`resolve`), no el global, para que las
-      // pruebas y los despliegues puedan sustituirlo.
-      resolve: includePages ? resolve : null,
       siteName: SITE_NAME,
       epgUrl: EPG_URL,
       siteUrl: `${req.protocol}://${req.get('host')}`
@@ -353,7 +278,11 @@ function createApp({
     return undefined;
   });
 
-  app.get('/playlist.m3u', (req, res) => res.redirect(302, '/playlist/all.m3u'));
+  app.get('/playlist.m3u', (req, res) => {
+    const definitions = playlistDefinitions({ extraConfig });
+    const combined = Object.entries(definitions).find(([, definition]) => definition.private);
+    return res.redirect(302, combined ? `/playlist/${combined[0]}.m3u` : '/playlist/all.m3u');
+  });
 
   app.get('/playlists.json', async (req, res) => {
     const base = `${req.protocol}://${req.get('host')}`;
@@ -362,18 +291,15 @@ function createApp({
     res.json({
       updatedAt: new Date(loaded.loadedAt).toISOString(),
       counts: loaded.counts,
+      publicLists: publicEnabled(),
       health: loaded.health || null,
-      playlists: Object.entries(playlistDefinitions()).map(([id, definition]) => ({
+      playlists: Object.entries(playlistDefinitions({ extraConfig })).map(([id, definition]) => ({
         id,
         name: definition.label,
         url: `${base}/playlist/${id}.m3u`,
-        // Cuenta lo que la lista entrega de verdad: medio directo o página que
-        // el servidor sabe resolver.
-        // `private` marca la lista combinada de las listas privadas.
         private: Boolean(definition.private),
         channels: loaded.channels.filter(definition.filter)
-          .filter(channel => !channel.dead)
-          .filter(channel => channel.playable || channel.streams.some(stream => stream.kind === 'page')).length,
+          .filter(channel => !channel.dead).length,
         withDeadUrl: `${base}/playlist/${id}.m3u?dead=1`
       }))
     });
@@ -398,15 +324,15 @@ function createApp({
         stale: Boolean(loaded.stale),
         staleReason: loaded.staleReason || null
       },
+      publicLists: publicEnabled(),
       health: loaded.health || null,
-      extract: loaded.status._extract || null,
       // Listas privadas: solo id, nombre y host. Las URLs llevan usuario y
       // contraseña del proveedor y no se publican ni en este endpoint.
       extraPlaylists: {
-        configured: extra.definitions.length,
-        file: extra.configFile ? path.basename(String(extra.configFile)) : null,
-        error: extra.configError,
-        lists: extra.definitions.map(({ id, name, label, country }) => ({ id, name, label, country }))
+        configured: (extraConfig.definitions || []).length,
+        file: extraConfig.configFile ? path.basename(String(extraConfig.configFile)) : null,
+        error: extraConfig.configError || null,
+        lists: (extraConfig.definitions || []).map(({ id, name, label, country }) => ({ id, name, label, country }))
       },
       sources: loaded.status
     });
@@ -428,7 +354,6 @@ function createApp({
     });
   });
 
-  // Lista de canales caídos en formato Stremio (solo los que el addon publica).
   app.get('/health/dead.json', async (req, res) => {
     if (!checker) return res.status(404).json({ error: 'Verificador desactivado' });
     let loaded = await channelsOr503(res);
@@ -438,69 +363,57 @@ function createApp({
     return res.json({
       checkedAt: (loaded.health && loaded.health.checkedAt) || null,
       total: dead.length,
-      metas: dead.map(addon.toMeta)
+      channels: dead.map(channel => ({
+        id: channel.id,
+        name: channel.name,
+        country: channel.origin,
+        category: channel.category,
+        sources: channel.sources,
+        reason: channel.deadReason || null,
+        streams: channel.streams.map(stream => stream.url)
+      }))
     });
-  });
-
-  // Resolución explícita de una página de origen (mismo contrato que antes:
-  // solo devuelve `{ streams }`, sin catálogos ni metadatos).
-  app.get('/stream/page', async (req, res) => {
-    const url = req.query.url;
-    if (typeof url !== 'string' || !url.trim()) return res.status(400).json({ error: 'Falta el parámetro url' });
-    let parsed;
-    try {
-      parsed = new URL(url);
-    } catch {
-      return res.status(400).json({ error: 'URL inválida' });
-    }
-    if (parsed.protocol !== 'https:' || parsed.username || parsed.password) {
-      return res.status(400).json({ error: 'Se requiere HTTPS sin credenciales' });
-    }
-    const allowed = Object.values(PAGE_RESOLVERS).map(entry => entry.host);
-    if (!allowed.includes(parsed.hostname)) return res.status(400).json({ error: `Host no soportado: ${parsed.hostname}` });
-    try {
-      const stream = await resolve({ url: parsed.href, kind: 'page', source: parsed.hostname === 'thedaddy.li' ? 'thedaddy.li' : 'tvenvivo.org' });
-      return res.json({ streams: stream ? [{ name: SITE_NAME, title: 'HLS', url: stream.url }] : [] });
-    } catch (error) {
-      return res.status(502).json({ error: 'No se pudo resolver el canal', detail: error.message });
-    }
   });
 
   app.get('/', (req, res) => {
     const base = `${req.protocol}://${req.get('host')}`;
+    const definitions = Object.entries(playlistDefinitions({ extraConfig }));
+    const configured = extraConfig.definitions || [];
+    const rows = definitions.map(([id, definition]) =>
+      `<li>${definition.label}${definition.private ? ' <em>(combinada)</em>' : ''}: <a href="/playlist/${id}.m3u">${base}/playlist/${id}.m3u</a></li>`
+    ).join('');
     res.type('html').send(`<!doctype html><html lang="es"><meta charset="utf-8">
-<title>${SITE_NAME} · Addon Stremio y listas M3U</title>
-<style>body{font-family:system-ui,sans-serif;max-width:46rem;margin:2rem auto;padding:0 1rem;line-height:1.6}
-code{background:#f2f2f2;padding:.1rem .3rem;border-radius:4px}</style>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${SITE_NAME} · listas M3U</title>
+<style>body{font-family:system-ui,sans-serif;max-width:48rem;margin:2rem auto;padding:0 1rem;line-height:1.6}
+code{background:#f2f2f2;padding:.1rem .3rem;border-radius:4px}
+table{border-collapse:collapse;width:100%}td,th{border-bottom:1px solid #e5e5e5;padding:.35rem;text-align:left;font-size:.95rem}
+.aviso{background:#fff7e6;border-left:4px solid #f0b429;padding:.6rem .8rem}</style>
 <h1>${SITE_NAME}</h1>
-<p>Canales de televisión en español (España y Latinoamérica) recopilados de
-eja.tv, iptvcat, TV Garden, Global Free TV, TVEnVivo, DaddyLive y Live24.</p>
-<h2>Stremio</h2>
-<p>Instala el addon con <a href="/manifest.json">${base}/manifest.json</a>.</p>
+<p>Agrega tus listas M3U privadas (IPTV/Xtream) en una sola lista, con verificador
+de señales. ${configured.length
+    ? `Listas configuradas: <strong>${configured.length}</strong>.`
+    : 'No hay listas configuradas todavía.'}</p>
+${configured.length ? `<table><tr><th>Lista</th><th>Host</th><th>País</th></tr>${
+    configured.map(list => `<tr><td>${list.name}</td><td>${list.label}</td><td>${list.country || '—'}</td></tr>`).join('')
+  }</table>` : `<p class="aviso">Crea <code>config/extra-playlists.json</code> (hay un
+<code>config/extra-playlists.example.json</code>) o define <code>EXTRA_PLAYLISTS</code>.</p>`}
 <h2>Listas M3U</h2>
-<ul>${Object.entries(playlistDefinitions()).map(([id, definition]) => `<li>${definition.label}: <a href="/playlist/${id}.m3u">${base}/playlist/${id}.m3u</a></li>`).join('')}</ul>
-<h2>Stremio: un catálogo por país</h2>
-<p>España, Estados Unidos, México, Argentina, Colombia, Chile, Perú, Venezuela,
-Ecuador, Guatemala, Honduras, El Salvador, Nicaragua, Costa Rica, Panamá, Cuba,
-República Dominicana, Puerto Rico, Uruguay, Paraguay y Bolivia.</p>
-<p>Añade <code>?pages=1</code> a una lista para resolver también las fuentes que
-requieren una petición extra (TVEnVivo y DaddyLive); sin ese parámetro solo se
-publican medios directos.</p>
-<p class="nota">DaddyLive y Live24 funcionan como <strong>mejor esfuerzo</strong>: su CDN
-solo entrega los tokens a un navegador real, así que esos canales pueden requerir
-abrir la página del origen.</p>
-<h2>Verificación de señales</h2>
-<p>Los canales caídos se detectan sondeando cada medio y se excluyen de las listas.
-Estado: <a href="/health.json">/health.json</a> · caídos: <a href="/health/dead.json">/health/dead.json</a>.
-Añade <code>?check=1</code> a una lista o a <a href="/health.json?check=1">/health.json</a>
-para verificar ahora mismo; con <code>?dead=1</code> se incluyen también los caídos.</p>
-<p>El estado real de las fuentes está en <a href="/config">/config</a>.</p>
+<ul>${rows}</ul>
+<p>La lista <strong>combinada</strong> junta todas tus listas privadas en un solo
+archivo: es la URL que se pega en VLC, Kodi, TiviMate o IPTVnator.</p>
+<p>Parámetros: <code>?dead=1</code> incluye los canales caídos ·
+<code>?check=1</code> verifica antes de responder ·
+<code>?publico=1</code> añade el catálogo público de listas abiertas (${publicEnabled() ? 'activado' : 'desactivado'} por defecto).</p>
+<h2>Verificación</h2>
+<p>Los canales caídos se excluyen de las listas. Estado: <a href="/health.json">/health.json</a> ·
+detalle: <a href="/health/dead.json">/health/dead.json</a> ·
+fuentes: <a href="/config">/config</a>.</p>
 </html>`);
   });
 
   app.use((req, res) => res.status(404).json({ error: 'No encontrado' }));
 
-  // Permite a `npm start` lanzar la verificación inicial sin bloquear el listen.
   app.locals.verifyNow = verifyNow;
   app.locals.autoVerify = autoVerify;
   return app;
@@ -526,9 +439,13 @@ if (require.main === module) {
   const port = process.env.PORT || 8080;
   const app = createApp({ healthStore: fileHealthStore() });
   app.listen(port, '0.0.0.0', () => {
-    console.log(`${SITE_NAME} addon escuchando en el puerto ${port}`);
-    // Verificación inicial en segundo plano: no retrasa el arranque y, si falla
-    // (sin red), el servidor sigue sirviendo el catálogo completo.
+    console.log(`${SITE_NAME} escuchando en el puerto ${port}`);
+    if (!extra.definitions.length) {
+      console.warn('[config] no hay listas privadas: crea config/extra-playlists.json o define EXTRA_PLAYLISTS');
+    } else {
+      console.log(`[config] ${extra.definitions.length} lista(s) privada(s): ${extra.definitions.map(list => list.label).join(', ')}`);
+    }
+    console.log(`[config] catálogo público de listas abiertas: ${publicEnabled() ? 'activado' : 'desactivado'}`);
     if (app.locals.autoVerify) {
       setImmediate(async () => {
         try {

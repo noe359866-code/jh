@@ -1,4 +1,4 @@
-name: Addon tests
+name: Tests
 
 on:
   push:
@@ -26,6 +26,6 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - run: docker build -t tv-espanol:test .
+      - run: docker build -t agregador-iptv:test .
       - name: Check image loads the app and sources
-        run: docker run --rm tv-espanol:test node -e "const {createApp}=require('./index');createApp();require('./engines/live/sources');console.log('Módulos OK')"
+        run: docker run --rm agregador-iptv:test node -e "const {createApp}=require('./index');createApp();const r=require('./engines/live/sources');console.log('Módulos OK · fuentes:', r.sources.length)"
