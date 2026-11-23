@@ -75,16 +75,44 @@ const REGION_PLAYLISTS = {
   deportes: { label: 'Deportes', filter: channel => /deporte|sport/i.test(channel.category) }
 };
 
+const COUNTRY_PLAYLISTS = Object.fromEntries(COUNTRIES.map(country => [
+  country.code.toLowerCase(),
+  {
+    label: country.name,
+    filter: channel => (channel.origin || channel.country) === country.code
+  }
+]));
+
 const PLAYLISTS = {
   ...REGION_PLAYLISTS,
-  ...Object.fromEntries(COUNTRIES.map(country => [
-    country.code.toLowerCase(),
-    {
-      label: country.name,
-      filter: channel => (channel.origin || channel.country) === country.code
-    }
-  ]))
+  ...COUNTRY_PLAYLISTS
 };
+
+/**
+ * Listas que se sirven por HTTP: las públicas (región y país) más la lista
+ * combinada de las privadas. Esa combinada se llama como el usuario quiera
+ * (`{ "name": "Nexon" }` en `config/extra-playlists.json`) y junta **todas**
+ * sus listas privadas en un solo `.m3u`, igual que el M3U del proveedor, así que
+ * no hay que pegar una URL por lista en el reproductor.
+ *
+ * `all` sigue siendo el catálogo completo (públicas + privadas). Si el nombre de
+ * la combinada choca con una lista existente (`all`, `es`…), no se pisa nada:
+ * se publica como `mi-iptv` para no perder canales por un nombre.
+ */
+function playlistDefinitions({ extraConfig = extra } = {}) {
+  const definitions = { ...PLAYLISTS };
+  const privateIds = new Set(extraConfig.mergeSourceIds || []);
+  if (!privateIds.size) return definitions;
+  const merge = extraConfig.merge || { id: 'mi-iptv', name: 'Mi IPTV' };
+  const id = definitions[merge.id] ? 'mi-iptv' : merge.id;
+  definitions[id] = {
+    // `label` es lo que muestran `/` y `/playlists.json`.
+    label: merge.name,
+    filter: channel => (channel.sources || []).some(source => privateIds.has(source)),
+    private: true
+  };
+  return definitions;
+}
 
 // Enriquecimiento de embeds para el catálogo por defecto: resuelve el HLS de
 // tvenvivo/thedaddy al recolectar, con presupuesto propio.
@@ -290,7 +318,7 @@ function createApp({
   // (tvenvivo, DaddyLive); sin ese parámetro solo se publican medios directos.
   app.get('/playlist/:variant.m3u', async (req, res) => {
     const variant = String(req.params.variant).toLowerCase();
-    const definition = PLAYLISTS[variant];
+    const definition = playlistDefinitions()[variant];
     if (!definition) return res.status(404).json({ error: 'Lista desconocida' });
     const includePages = req.query.pages === '1';
     // `?dead=0` (por defecto) excluye los canales que el verificador dio por
@@ -335,12 +363,14 @@ function createApp({
       updatedAt: new Date(loaded.loadedAt).toISOString(),
       counts: loaded.counts,
       health: loaded.health || null,
-      playlists: Object.entries(PLAYLISTS).map(([id, definition]) => ({
+      playlists: Object.entries(playlistDefinitions()).map(([id, definition]) => ({
         id,
         name: definition.label,
         url: `${base}/playlist/${id}.m3u`,
         // Cuenta lo que la lista entrega de verdad: medio directo o página que
         // el servidor sabe resolver.
+        // `private` marca la lista combinada de las listas privadas.
+        private: Boolean(definition.private),
         channels: loaded.channels.filter(definition.filter)
           .filter(channel => !channel.dead)
           .filter(channel => channel.playable || channel.streams.some(stream => stream.kind === 'page')).length,
@@ -448,7 +478,7 @@ eja.tv, iptvcat, TV Garden, Global Free TV, TVEnVivo, DaddyLive y Live24.</p>
 <h2>Stremio</h2>
 <p>Instala el addon con <a href="/manifest.json">${base}/manifest.json</a>.</p>
 <h2>Listas M3U</h2>
-<ul>${Object.entries(PLAYLISTS).map(([id, definition]) => `<li>${definition.label}: <a href="/playlist/${id}.m3u">${base}/playlist/${id}.m3u</a></li>`).join('')}</ul>
+<ul>${Object.entries(playlistDefinitions()).map(([id, definition]) => `<li>${definition.label}: <a href="/playlist/${id}.m3u">${base}/playlist/${id}.m3u</a></li>`).join('')}</ul>
 <h2>Stremio: un catálogo por país</h2>
 <p>España, Estados Unidos, México, Argentina, Colombia, Chile, Perú, Venezuela,
 Ecuador, Guatemala, Honduras, El Salvador, Nicaragua, Costa Rica, Panamá, Cuba,
@@ -512,4 +542,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { createApp, parseRoute, PLAYLISTS, SITE_NAME, path, fileHealthStore };
+module.exports = { createApp, parseRoute, PLAYLISTS, playlistDefinitions, SITE_NAME, path, fileHealthStore };

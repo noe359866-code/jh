@@ -1,7 +1,17 @@
-[
-  {
-    "id": "plex",
-    "name": "Mi IPTV",
-    "url": "http://PEGA-AQUI-TU-LISTA/get.php?username=USUARIO&password=CLAVE&type=m3u_plus&output=mpegts"
-  }
-]
+{
+  "id": "nexon",
+  "name": "Nexon",
+  "playlists": [
+    {
+      "id": "nexon",
+      "name": "Nexon IPTV",
+      "url": "http://PEGA-AQUI/get.php?username=USUARIO&password=CLAVE&type=m3u_plus&output=mpegts"
+    },
+    {
+      "id": "segunda",
+      "name": "Otra lista",
+      "url": "https://ejemplo.example/lista.m3u8",
+      "country": "MX"
+    }
+  ]
+}

@@ -111,8 +111,12 @@ test('las listas externas están registradas', () => {
     assert.ok(source, `falta la fuente ${id}`);
     assert.equal(typeof source.collect, 'function');
   }
-  // Siete sitios, seis listas, USA, iptv-org por país, TDT y Free-TV.
-  assert.equal(sources.length, 17);
+  // Siete sitios, seis listas, USA, iptv-org por país, TDT y Free-TV. Las listas
+  // privadas configuradas (`config/extra-playlists.json`) se suman al final, así
+  // que el recuento se mide sobre las públicas.
+  const { extra } = require('../engines/live/sources');
+  assert.equal(sources.length, 17 + extra.sources.length);
+  for (const source of extra.sources) assert.ok(source.id.startsWith('extra-'), `${source.id} sin prefijo`);
 });
 
 test('group-title se convierte en categoría y no en país', () => {

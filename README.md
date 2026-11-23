@@ -151,7 +151,33 @@ $EDITOR config/extra-playlists.json
 EXTRA_PLAYLISTS="Mi IPTV=http://mi-host/get.php?username=USUARIO&password=CLAVE&type=m3u_plus&output=mpegts" npm start
 ```
 
-Cada elemento del JSON acepta:
+**Varias listas en una sola.** El archivo admite varias listas y genera además una
+**lista combinada** con todas ellas en un único `.m3u`, al estilo del M3U del
+proveedor: se pega una sola URL en VLC/Kodi/TiviMate y ya está.
+
+```json
+{
+  "id": "nexon",
+  "name": "Nexon",
+  "playlists": [
+    { "id": "nexon", "name": "Nexon IPTV", "url": "http://nexon…/get.php?username=…&password=…&type=m3u_plus&output=mpegts" },
+    { "id": "otra",  "name": "Otra lista",  "url": "https://ejemplo.example/lista.m3u8", "country": "MX" }
+  ]
+}
+```
+
+| Lista | Qué trae |
+|---|---|
+| `/playlist/nexon.m3u` | **solo** los canales de tus listas privadas (las dos de arriba), sin duplicados entre ellas |
+| `/playlist/all.m3u` | todo el catálogo: lo público de siempre **más** tus listas privadas |
+| `/playlist/es.m3u`, `/playlist/mx.m3u`… | por país; incluye los canales privados de ese país |
+
+`id`/`name` de arriba son el nombre de la lista combinada; si se omiten, se llama
+`mi-iptv` / «Mi IPTV». Si el nombre choca con una lista que ya existe (`all`,
+`es`…) no se pisa nada: la combinada se publica como `mi-iptv`. La combinada
+aparece marcada con `private: true` en `/playlists.json`.
+
+Cada elemento de `playlists` acepta:
 
 | Campo | Por defecto | Para qué |
 |---|---|---|
@@ -370,7 +396,7 @@ HLS de forma estática, se publicará automáticamente sin tocar código.
 | `GET /catalog/tv/:id.json` | catálogo paginado (`skip`, `genre`) |
 | `GET /meta/tv/:id.json` | metadatos de un canal |
 | `GET /stream/tv/:id.json` | señales reproducibles de un canal |
-| `GET /playlist/:variant.m3u` | listas M3U (`all`, `es`, `latam`, `deportes`) |
+| `GET /playlist/:variant.m3u` | listas M3U (`all`, `es`, `latam`, `deportes`, `mx`… y la combinada de las privadas) |
 | `GET /playlists.json` | índice de listas con recuentos y salud |
 | `GET /health.json` | informe del verificador (vivos, caídos, bloqueados) |
 | `GET /health/dead.json` | canales caídos en formato Stremio |

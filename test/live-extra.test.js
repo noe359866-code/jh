@@ -102,3 +102,41 @@ test('una lista privada se recolecta como cualquier otra fuente', async () => {
   assert.equal(entries.length, 1);
   assert.equal(entries[0].streams[0].kind, 'hls');
 });
+
+test('lista combinada: varias listas privadas en un solo M3U', async () => {
+  const { playlistDefinitions, PLAYLISTS } = require('../index');
+  const { buildM3u } = require('../engines/live/m3u');
+  const fakeExtra = {
+    merge: { id: 'nexon', name: 'Nexon' },
+    mergeSourceIds: ['extra-nexon', 'extra-otra']
+  };
+  const definitions = playlistDefinitions({ extraConfig: fakeExtra });
+  assert.equal(definitions.nexon.label, 'Nexon');
+  assert.equal(definitions.nexon.private, true);
+  // `all` sigue siendo el catálogo completo, no solo las privadas.
+  assert.deepEqual(PLAYLISTS.all.filter({}), true);
+  assert.ok(!PLAYLISTS.nexon, 'la combinada no debe colarse en las listas públicas');
+
+  const channels = [
+    // Dos canales de dos listas privadas distintas, y uno público.
+    { id: 'es-1', name: 'La 1', origin: 'ES', country: 'ES', category: 'Generalista', sources: ['extra-nexon'], streams: [{ url: 'https://a/1.m3u8', kind: 'hls', source: 'Nexon IPTV' }] },
+    { id: 'mx-1', name: 'Azteca 7', origin: 'MX', country: 'LATAM', category: 'Generalista', sources: ['extra-otra'], streams: [{ url: 'https://a/2.m3u8', kind: 'hls', source: 'Otra lista' }] },
+    { id: 'ar-1', name: 'Público', origin: 'AR', country: 'LATAM', category: 'Generalista', sources: ['cinecity'], streams: [{ url: 'https://a/3.m3u8', kind: 'hls', source: 'cinecity' }] }
+  ];
+  const merged = await buildM3u(channels.filter(definitions.nexon.filter), {});
+  assert.equal(merged.count, 2, 'las dos listas privadas, en un archivo');
+  assert.match(merged.body, /La 1/);
+  assert.match(merged.body, /Azteca 7/);
+  assert.ok(!merged.body.includes('Público'));
+
+  // Un canal aportado por varias fuentes entra una vez sola en la combinada.
+  const both = { ...channels[0], sources: ['extra-nexon', 'cinecity'] };
+  assert.equal((await buildM3u([both].filter(definitions.nexon.filter), {})).count, 1);
+
+  // Sin listas privadas no hay lista combinada.
+  assert.equal(playlistDefinitions({ extraConfig: { mergeSourceIds: [] } }).nexon, undefined);
+  // Un nombre que choca con una lista pública no la pisa.
+  const choque = playlistDefinitions({ extraConfig: { merge: { id: 'es', name: 'España' }, mergeSourceIds: ['extra-nexon'] } });
+  assert.equal(choque.es, PLAYLISTS.es);
+  assert.equal(choque['mi-iptv'].private, true);
+});

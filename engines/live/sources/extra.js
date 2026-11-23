@@ -94,6 +94,26 @@ function normalizeDefinition(raw, index, { requireUrl = true } = {}) {
 }
 
 /**
+ * Lista de definiciones de un JSON ya parseado. Admite el array directo o el
+ * objeto `{ id, name, playlists: [...] }`, donde `name`/`id` nombran la **lista
+ * combinada** que reúne todas las listas privadas en un solo M3U.
+ */
+function definitionsOf(data) {
+  return Array.isArray(data) ? data : (Array.isArray(data && data.playlists) ? data.playlists : []);
+}
+
+/**
+ * Nombre e id de la lista combinada. Sugerencia del archivo (`{ "name": "Nexon" }`);
+ * si no lo hay, «Mi IPTV» / `mi-iptv`.
+ */
+function mergeNameOf(data, fallback = {}) {
+  const source = data && !Array.isArray(data) && typeof data === 'object' ? data : {};
+  const name = String(source.mergeName || source.name || fallback.name || '').trim() || 'Mi IPTV';
+  const id = slug(String(source.mergeId || source.id || name), 'mi-iptv');
+  return { id, name };
+}
+
+/**
  * Definiciones a partir del contenido de `config/extra-playlists.json`.
  * Acepta un array de URLs o de objetos `{ id, name, url, country }`.
  */
@@ -104,7 +124,7 @@ function parseExtraConfig(text) {
   } catch {
     return [];
   }
-  const list = Array.isArray(data) ? data : (Array.isArray(data && data.playlists) ? data.playlists : []);
+  const list = definitionsOf(data);
   const out = [];
   const seen = new Set();
   for (const [index, raw] of list.entries()) {
@@ -166,16 +186,31 @@ function loadDefinitions({ env = process.env, readFile = null, file = null } = {
     if (!fs.existsSync(target)) return null;
     return fs.readFileSync(target, 'utf8');
   });
+  let merge = null;
   try {
     const text = reader(target);
-    if (text) add(parseExtraConfig(text));
+    if (text) {
+      add(parseExtraConfig(text));
+      try {
+        merge = mergeNameOf(JSON.parse(text));
+      } catch {
+        // JSON roto: ya lo cubre `parseExtraConfig`; la lista combinada usa el
+        // nombre por defecto.
+      }
+    }
   } catch (cause) {
     error = `No se pudo leer ${path.basename(String(target))}: ${cause.message}`;
   }
 
   if (env.EXTRA_PLAYLISTS) add(parseExtraEnv(env.EXTRA_PLAYLISTS));
 
-  return { definitions: definitions.slice(0, MAX_LISTS), file: target, error };
+  return {
+    definitions: definitions.slice(0, MAX_LISTS),
+    // La lista combinada reúne todas las privadas en un solo M3U.
+    merge: merge || { id: 'mi-iptv', name: 'Mi IPTV' },
+    file: target,
+    error
+  };
 }
 
 /** Convierte una definición en una fuente del catálogo. */
@@ -195,8 +230,16 @@ function createSource(definition) {
 
 const loaded = loadDefinitions();
 
+const sources = loaded.definitions.map(createSource);
+
 module.exports = {
-  sources: loaded.definitions.map(createSource),
+  sources,
+  // Nombre e id de la lista combinada (`/playlist/<id>.m3u`): todas las listas
+  // privadas en un solo archivo, al estilo de un M3U de proveedor.
+  merge: loaded.merge,
+  // Ids de las fuentes que la lista combinada reúne; con eso el catálogo puede
+  // filtrar por `channel.sources`.
+  mergeSourceIds: sources.map(source => source.id),
   definitions: loaded.definitions.map(({ url, ...rest }) => rest),
   configFile: loaded.file,
   configError: loaded.error,
