@@ -2,7 +2,7 @@ const express = require('express');
 const path = require('node:path');
 const { createCatalog } = require('./engines/live/catalog');
 const { get } = require('./engines/live/http');
-const { sources, byId } = require('./engines/live/sources');
+const { sources, byId, extra } = require('./engines/live/sources');
 const { COUNTRIES, isCountry } = require('./engines/live/countries');
 const { buildM3u } = require('./engines/live/m3u');
 const addon = require('./engines/live/addon');
@@ -370,6 +370,14 @@ function createApp({
       },
       health: loaded.health || null,
       extract: loaded.status._extract || null,
+      // Listas privadas: solo id, nombre y host. Las URLs llevan usuario y
+      // contraseña del proveedor y no se publican ni en este endpoint.
+      extraPlaylists: {
+        configured: extra.definitions.length,
+        file: extra.configFile ? path.basename(String(extra.configFile)) : null,
+        error: extra.configError,
+        lists: extra.definitions.map(({ id, name, label, country }) => ({ id, name, label, country }))
+      },
       sources: loaded.status
     });
   });

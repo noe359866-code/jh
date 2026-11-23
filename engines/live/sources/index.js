@@ -5,6 +5,8 @@
 //             extract.js); si el embed falla, queda como enlace resoluble.
 // `catalog` : solo catálogo/búsqueda; no hay URL de medio verificada.
 // Las fuentes `direct` incluyen las listas M3U externas (playlist.js).
+const extra = require('./extra');
+
 const sources = [
   require('./tvgarden'),
   require('./eja'),
@@ -26,7 +28,11 @@ const sources = [
   require('./iptvorg'),
   // TDT española y lista mundial con filtro estricto de español.
   require('./tdtchannels'),
-  require('./freetv')
+  require('./freetv'),
+  // Listas privadas del usuario (`config/extra-playlists.json` o
+  // `EXTRA_PLAYLISTS`). Van al final y no existen por defecto: sin configuración
+  // el catálogo es exactamente el público.
+  ...extra.sources
 ];
 
 const MODE = {
@@ -47,11 +53,13 @@ const MODE = {
   usa: 'direct',
   iptvorg: 'direct',
   tdtchannels: 'direct',
-  freetv: 'direct'
+  freetv: 'direct',
+  // Las listas privadas publican medios directos (Xtream/`mpegts`).
+  ...Object.fromEntries(extra.sources.map(source => [source.id, 'direct']))
 };
 
 function byId(id) {
   return sources.find(source => source.id === id) || null;
 }
 
-module.exports = { sources, byId, MODE };
+module.exports = { sources, byId, MODE, extra };

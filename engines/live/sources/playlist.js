@@ -112,11 +112,30 @@ function countryFromText(text) {
   // Código ISO suelto (`tvg-country="ES"`, `tvg-country="MX"`), que es como lo
   // publican la mayoría de las listas.
   if (/^[a-z]{2}$/.test(plain) && isCountry(upper)) return upper;
+  // Código delante del nombre o del grupo: `ES - La 1`, `ESPAÑA | GENERALISTAS`,
+  // `MX: Canal 5`. Es el formato de las listas Xtream privadas, donde el país
+  // nunca aparece suelto.
+  const prefixed = /^([a-z]{2})\s*[-_|:/·]\s*\S/i.exec(value.trim());
+  if (prefixed && isCountry(prefixed[1].toUpperCase())) return prefixed[1].toUpperCase();
   // País no hispano por su nombre en inglés (`Italy`, `Germany`). Saber que lo
   // es evita clasificarlo como internacional y colarlo en el catálogo cuando la
   // lista es mundial. No se publica: estas listas se filtran después.
   const foreign = FOREIGN_COUNTRIES[plain];
   if (foreign) return foreign;
+  // Grupos compuestos: `ESPAÑA | GENERALISTAS`, `Mexico - Deportes`,
+  // `Chile · Noticias`. Se busca el país en cada trozo antes de darse por vencido.
+  for (const segment of value.split(/\s*[|·›»>]\s*|\s+[-–—]\s+|\s*\/\s*/)) {
+    const clean = segment
+      .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu, ' ')
+      .replace(/[^\p{L}\s]/gu, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toLowerCase();
+    if (!clean || clean === plain) continue;
+    const hit = COUNTRY_NAMES[clean] || FOREIGN_COUNTRIES[clean];
+    if (hit) return hit;
+    if (/^[a-z]{2}$/.test(clean) && isCountry(clean.toUpperCase())) return clean.toUpperCase();
+  }
   // "Buenos Aires" y otras regiones de Argentina.
   if (/buenos aires|cordoba|córdoba|rosario|mendoza/.test(plain)) return 'AR';
   const flag = value.match(FLAG_PATTERN);
@@ -134,10 +153,13 @@ function countryFromText(text) {
  * desde las fuentes que necesitan filtrar antes (por idioma o por nombre) y
  * evita duplicar la limpieza de nombres, el país y el tipo de medio.
  */
-function entryFromItem(item, { source, defaultCountry = null, forcedCountry = null, spanishOnly = false } = {}) {
+function entryFromItem(item, { source, defaultCountry = null, forcedCountry = null, spanishOnly = false, assumeHls = false } = {}) {
   const url = String(item.url || '').trim();
   if (!/^https?:\/\//i.test(url)) return null;
-  const kind = /\.(m3u8|mp4|ts|m3u)(\?|$)/i.test(url) || REDIRECTORS.test(url) ? 'hls' : 'page';
+  // `assumeHls`: listas privadas (Xtream y similares) sirven los medios sin
+  // extensión (`/live/usuario/clave/1234`). Sin esto se publicarían como
+  // `page` y no llegarían al reproductor ni a las listas M3U.
+  const kind = /\.(m3u8|mp4|ts|m3u)(\?|$)/i.test(url) || REDIRECTORS.test(url) || assumeHls ? 'hls' : 'page';
   const rawName = item.name || item.attrs['tvg-name'] || '';
   // El país se busca en el nombre ORIGINAL: `cleanChannelName` recorta los
   // sufijos entre corchetes (`Mega [CL]` → `Mega`).
@@ -196,11 +218,11 @@ function entryFromItem(item, { source, defaultCountry = null, forcedCountry = nu
 }
 
 /** Convierte una lista M3U en entradas del catálogo. */
-function parsePlaylist(text, { source, defaultCountry = null, spanishOnly = false } = {}) {
+function parsePlaylist(text, { source, defaultCountry = null, spanishOnly = false, assumeHls = false } = {}) {
   const entries = [];
   for (const item of parseM3u(text)) {
     const entry = entryFromItem(item, {
-      source, defaultCountry, spanishOnly: spanishOnly || Boolean(defaultCountry)
+      source, defaultCountry, spanishOnly: spanishOnly || Boolean(defaultCountry), assumeHls
     });
     if (entry) entries.push(entry);
   }
@@ -213,7 +235,7 @@ function parsePlaylist(text, { source, defaultCountry = null, spanishOnly = fals
  */
 function createPlaylistSource({
   id, name, urls, defaultCountry = null, defaultCategory = null, spanishOnly = false,
-  maxEntries = 4000, labels = {}
+  maxEntries = 4000, labels = {}, assumeHls = false
 }) {
   async function collect({ get, onSource }) {
     const all = [];
@@ -227,7 +249,7 @@ function createPlaylistSource({
         counts[labels[url] || url] = `error: ${String(error.message).slice(0, 60)}`;
         continue;
       }
-      const parsed = parsePlaylist(text, { source: name, defaultCountry, spanishOnly });
+      const parsed = parsePlaylist(text, { source: name, defaultCountry, spanishOnly, assumeHls });
       if (defaultCategory) {
         for (const entry of parsed) {
           if (!entry.category || entry.category === 'Generalista') entry.category = defaultCategory;

@@ -4,5 +4,6 @@ test
 scripts
 .github
 reports
+config/extra-playlists.json
 *.log
 .env

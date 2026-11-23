@@ -16,6 +16,13 @@ test('detecta el país por bandera, sufijo, nombre y región', () => {
   assert.equal(countryFromText('🏙️ Buenos Aires'), 'AR');
   assert.equal(countryFromText('🇨🇴 Bogotá'), 'CO');
   assert.equal(countryFromText('🎬 Cine'), null);
+  // Grupos compuestos y códigos delante, como los publican las listas Xtream.
+  assert.equal(countryFromText('ESPAÑA | GENERALISTAS'), 'ES');
+  assert.equal(countryFromText('MEXICO | GENERALISTAS'), 'MX');
+  assert.equal(countryFromText('Mexico - Deportes'), 'MX');
+  assert.equal(countryFromText('Chile · Noticias'), 'CL');
+  assert.equal(countryFromText('ES - La 1'), 'ES');
+  assert.equal(countryFromText('MX: Canal 5'), 'MX');
 });
 
 test('parsePlaylist: descarta idiomas no hispanos y URLs no http', () => {

@@ -1,0 +1,7 @@
+[
+  {
+    "id": "plex",
+    "name": "Mi IPTV",
+    "url": "http://PEGA-AQUI-TU-LISTA/get.php?username=USUARIO&password=CLAVE&type=m3u_plus&output=mpegts"
+  }
+]

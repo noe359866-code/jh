@@ -136,6 +136,49 @@ Detalles de la normalización:
   se ignoran sin romper la lista. Una lista que no responde no tumba el catálogo:
   las demás siguen aportando canales.
 
+### Listas privadas (IPTV/Xtream propias)
+
+Además del catálogo público, el addon puede sumar **tus propias listas M3U**
+(proveedores IPTV, Xtream Codes con `get.php?username=…&password=…&type=m3u_plus`).
+Se configuran sin tocar el código y **sin subir credenciales al repositorio**:
+
+```bash
+# opción 1: archivo (ignorado por git)
+cp config/extra-playlists.example.json config/extra-playlists.json
+$EDITOR config/extra-playlists.json
+
+# opción 2: variable de entorno (útil en Docker)
+EXTRA_PLAYLISTS="Mi IPTV=http://mi-host/get.php?username=USUARIO&password=CLAVE&type=m3u_plus&output=mpegts" npm start
+```
+
+Cada elemento del JSON acepta:
+
+| Campo | Por defecto | Para qué |
+|---|---|---|
+| `url` | — | URL de la lista (`get.php…`, `.m3u`, `.m3u8`) |
+| `name` | host de la URL | nombre de la fuente en `/config` y en Stremio |
+| `id` | `extra-<slug>` | id de la fuente |
+| `country` | ninguno | país por defecto si la lista no lo dice (`"MX"`) |
+| `spanishOnly` | `false` | filtro estricto de español, para listas mundiales |
+| `assumeHls` | `true` | Xtream sirve medios sin extensión (`/live/usuario/clave/1234`): se publican como directos en vez de páginas |
+| `maxEntries` | `8000` | tope de canales de esa lista (máximo 20000) |
+
+Detalles que importan con estas listas:
+
+- **Las credenciales no se publican.** `config/extra-playlists.json` está en
+  `.gitignore` y el informe de `/config` solo muestra el host de cada lista
+  (`nexon.flixip.vip`), nunca la URL con usuario y contraseña. Los mensajes de
+  error también van redactados.
+- **`mpegts` y URLs sin extensión** se tratan como medios directos: si no, cada
+  canal quedaría como «página» y no habría nada que reproducir.
+- **`group-title` tipo Xtream** (`ESPAÑA | GENERALISTAS`, `Mexico - Deportes`,
+  `ES - La 1`) se usa para el país, así que esos canales aparecen en su categoría
+  (`TV · España`, `TV · México`…) y no todos como internacionales.
+- **Máximo 12 listas.** Una lista que no responde no tumba el catálogo; queda con
+  `ok: false` en `/config` y el resto sigue publicándose.
+- **El verificador también las sondea**, así que los canales caídos de tu
+  proveedor no se publican en las listas M3U ni en Stremio.
+
 ### Estados Unidos
 
 `us.m3u` de iptv-org trae más de mil canales y **no dice el idioma**. Su base de
